@@ -1,10 +1,10 @@
-# Sub-agent Prompt Template
+# 子代理提示模板
 
-This template is used by the orchestrator to spawn each reviewer sub-agent. Variable substitution slots are filled at spawn time.
+編排者用此模板分派每位審閱者子代理。變數替換位於分派時填充。
 
 ---
 
-## Template
+## 模板
 
 ```
 You are a specialist code reviewer.
@@ -115,16 +115,16 @@ Diff:
 </review-context>
 ```
 
-## Variable Reference
+## 變數參照
 
-| Variable | Source | Description |
+| 變數 | 來源 | 述 |
 |----------|--------|-------------|
-| `{persona_file}` | Agent markdown file content | The full persona definition (identity, failure modes, calibration, suppress conditions) |
-| `{diff_scope_rules}` | `references/diff-scope.md` content | Primary/secondary/pre-existing tier rules |
-| `{schema}` | `references/findings-schema.json` content | The JSON schema reviewers must conform to |
-| `{intent_summary}` | Stage 2 output | 2-3 line description of what the change is trying to accomplish |
-| `{pr_metadata}` | Stage 1 output | PR title, body, and URL when reviewing a PR. Empty string when reviewing a branch or standalone checkout |
-| `{file_list}` | Stage 1 output | List of changed files from the scope step |
-| `{diff}` | Stage 1 output | The actual diff content to review |
-| `{run_id}` | Stage 4 output | Unique review run identifier for the artifact directory |
-| `{reviewer_name}` | Stage 3 output | Persona or agent name used as the artifact filename stem |
+| `{persona_file}` | 代理 markdown 檔內容 | 完整角色定義（身份、失敗模式、校準、抑制條件） |
+| `{diff_scope_rules}` | `references/diff-scope.md` 內容 | 主要/次要/預存層規則 |
+| `{schema}` | `references/findings-schema.json` 內容 | 審閱者須遵之 JSON schema |
+| `{intent_summary}` | Stage 2 輸出 | 2-3 行描述變更意圖 |
+| `{pr_metadata}` | Stage 1 輸出 | PR 標題、正文及 URL。審閱分支或獨立 checkout 時為空字串 |
+| `{file_list}` | Stage 1 輸出 | 範圍步驟之變更檔列表 |
+| `{diff}` | Stage 1 輸出 | 待審之實際 diff 內容 |
+| `{run_id}` | Stage 4 輸出 | 產物目錄之唯一審閱運行識別碼 |
+| `{reviewer_name}` | Stage 3 輸出 | 角色或代理名，用為產物檔名詞幹 |

@@ -1,37 +1,37 @@
-# Coding Tutor
+# 程式教學師
 
-Your personal AI tutor that creates tutorials tailored to you - using real code from your projects, building on what you already know, and tracking your progress over time.
+個人AI導師，以專案真實程式碼為材，因材施教，追蹤進度。
 
-## Why
+## 緣起
 
-AI is already smarter than any single human being across the breadth of tasks it can perform. It beats PhDs, aces entrance exams in every field, and this gap will only widen.
+AI於各領域已超越所有人類個體。勝博士、通諸試，此差距唯增不減。
 
-In this world, humans have two paths: let their cognitive capabilities decline, or rise to match AI. The long-term future of humanity depends heavily on which path we take.
+世人有兩途：任認知退化，或與AI齊驅。人類長遠未來取決於此。
 
-My belief is simple: today's AI is smarter than any private tutor anyone on the planet can hire. So why not use it to give every human access to the best personal tutor imaginable? One that knows your background, adapts to your pace, uses your actual work as teaching material, and helps you retain what you learn.
+吾見簡單：今日AI勝於世上任何私人導師。何不以之為每人配備最佳導師？知汝背景、應汝節奏、以汝工作為教材、助汝所學。
 
-This project starts with programming - the domain where AI has the most immediate economic impact. Use it to learn about the programs you're vibe coding and level up your skills. Don't just vibe code, vibe learn.
+始於程式設計——AI經濟影響最速之域。用以學習汝所vibe coding之程式，提升技藝。莫止vibe code，宜vibe learn。
 
-## Install
+## 安裝
 
 ```
 /plugin install coding-tutor@claude-code-essentials
 ```
 
-## Features
+## 功能
 
-- Personalized onboarding to understand your learning goals
-- Tutorials that use YOUR code as examples
-- Spaced repetition quiz system to reinforce learning
-- Tracks your progress across tutorials
-- Curriculum planning based on your current knowledge
+- 個人化引導，了解學習目標
+- 以汝程式碼為例之教程
+- 間隔重複測驗系統
+- 跨教程追蹤進度
+- 基於現有知識之課程規劃
 
-## Commands
+## 指令
 
-- `/teach-me` - Learn something new
-- `/quiz-me` - Test your retention with spaced repetition
-- `/sync-tutorials` - Sync your tutorials to GitHub for backup
+- `/teach-me` - 學新知
+- `/quiz-me` - 間隔重複測驗
+- `/sync-tutorials` - 同步教程至GitHub備份
 
-## Storage
+## 儲存
 
-Tutorials are stored at `~/coding-tutor-tutorials/`. This is auto-created on first use and shared across all your projects. The `source_repo` field in each tutorial tracks which codebase the examples came from.
+教程存於 `~/coding-tutor-tutorials/`。首次使用自動建立，跨專案共用。各教程之 `source_repo` 欄位追蹤範例來源碼庫。

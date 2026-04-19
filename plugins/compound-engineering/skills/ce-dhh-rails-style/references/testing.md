@@ -1,25 +1,25 @@
-# Testing - DHH Rails Style
+# 測試 — DHH Rails風
 
-## Core Philosophy
+## 核心哲學
 
-"Minitest with fixtures - simple, fast, deterministic." The approach prioritizes pragmatism over convention.
+「Minitest配fixtures — 簡、快、確定性。」此法重實用勝慣例。
 
-## Why Minitest Over RSpec
+## 何以Minitest勝RSpec
 
-- **Simpler**: Less DSL magic, plain Ruby assertions
-- **Ships with Rails**: No additional dependencies
-- **Faster boot times**: Less overhead
-- **Plain Ruby**: No specialized syntax to learn
+- **更簡**：少DSL魔術，純Ruby斷言
+- **Rails內建**：無額外依賴
+- **啟動更快**：負擔更少
+- **純Ruby**：無特殊語法可學
 
-## Fixtures as Test Data
+## Fixtures為測試資料
 
-Rather than factories, fixtures provide preloaded data:
-- Loaded once, reused across tests
-- No runtime object creation overhead
-- Explicit relationship visibility
-- Deterministic IDs for easier debugging
+工廠之外，fixtures提供預載資料：
+- 載一次，跨測試複用
+- 無運行時物件建立負擔
+- 關聯一目了然
+- 確定性ID便於除錯
 
-### Fixture Structure
+### Fixture結構
 ```yaml
 # test/fixtures/users.yml
 david:
@@ -45,7 +45,7 @@ greeting:
   creator: david
 ```
 
-### Using Fixtures in Tests
+### 於測試中用Fixtures
 ```ruby
 test "sending a message" do
   user = users(:david)
@@ -55,8 +55,8 @@ test "sending a message" do
 end
 ```
 
-### Dynamic Fixture Values
-ERB enables time-sensitive data:
+### 動態Fixture值
+ERB啟用時間敏感資料：
 ```yaml
 recent_card:
   title: Recent Card
@@ -67,10 +67,10 @@ old_card:
   created_at: <%= 1.month.ago %>
 ```
 
-## Test Organization
+## 測試組織
 
-### Unit Tests
-Verify business logic using setup blocks and standard assertions:
+### 單元測試
+以setup區塊與標準斷言驗證業務邏輯：
 
 ```ruby
 class CardTest < ActiveSupport::TestCase
@@ -100,8 +100,8 @@ class CardTest < ActiveSupport::TestCase
 end
 ```
 
-### Integration Tests
-Test full request/response cycles:
+### 整合測試
+測完整請求/回應週期：
 
 ```ruby
 class CardsControllerTest < ActionDispatch::IntegrationTest
@@ -131,8 +131,8 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
 end
 ```
 
-### System Tests
-Browser-based tests using Capybara:
+### 系統測試
+以Capybara做瀏覽器測試：
 
 ```ruby
 class MessagesTest < ApplicationSystemTestCase
@@ -174,10 +174,10 @@ class MessagesTest < ApplicationSystemTestCase
 end
 ```
 
-## Advanced Patterns
+## 進階模式
 
-### Time Testing
-Use `travel_to` for deterministic time-dependent assertions:
+### 時間測試
+以`travel_to`做確定性時間斷言：
 
 ```ruby
 test "card expires after 30 days" do
@@ -189,8 +189,8 @@ test "card expires after 30 days" do
 end
 ```
 
-### External API Testing with VCR
-Record and replay HTTP interactions:
+### 外部API測試以VCR
+錄製並重播HTTP互動：
 
 ```ruby
 test "fetches user data from API" do
@@ -202,8 +202,8 @@ test "fetches user data from API" do
 end
 ```
 
-### Background Job Testing
-Assert job enqueueing and email delivery:
+### 背景作業測試
+斷言作業排入與信件投遞：
 
 ```ruby
 test "closing card enqueues notification job" do
@@ -221,7 +221,7 @@ test "welcome email is sent on signup" do
 end
 ```
 
-### Testing Turbo Streams
+### 測Turbo Streams
 ```ruby
 test "message creation broadcasts to room" do
   room = rooms(:watercooler)
@@ -232,19 +232,19 @@ test "message creation broadcasts to room" do
 end
 ```
 
-## Testing Principles
+## 測試原則
 
-### 1. Test Observable Behavior
-Focus on what the code does, not how it does it:
+### 1. 測可觀察行為
+聚焦於做什麼，非怎麼做：
 
 ```ruby
-# ❌ Testing implementation
+# ❌ 測實作
 test "calls notify method on each watcher" do
   card.expects(:notify).times(3)
   card.close
 end
 
-# ✅ Testing behavior
+# ✅ 測行為
 test "watchers receive notifications when card closes" do
   assert_difference -> { Notification.count }, 3 do
     card.close
@@ -252,10 +252,10 @@ test "watchers receive notifications when card closes" do
 end
 ```
 
-### 2. Don't Mock Everything
+### 2. 勿萬事皆mock
 
 ```ruby
-# ❌ Over-mocked test
+# ❌ 過度mock
 test "sending message" do
   room = mock("room")
   user = mock("user")
@@ -267,7 +267,7 @@ test "sending message" do
   MessagesController.new.create
 end
 
-# ✅ Test the real thing
+# ✅ 測真實物
 test "sending message" do
   sign_in users(:david)
   post room_messages_url(rooms(:watercooler)),
@@ -278,31 +278,31 @@ test "sending message" do
 end
 ```
 
-### 3. Tests Ship with Features
-Same commit, not TDD-first but together. Neither before (strict TDD) nor after (deferred testing).
+### 3. 測試隨功能交付
+同一commit，非TDD先行亦非延後。非先（嚴格TDD）非後（遞延測試）。
 
-### 4. Security Fixes Always Include Regression Tests
-Every security fix must include a test that would have caught the vulnerability.
+### 4. 安全修復恆附回歸測試
+每項安全修復須含一能捕捉該漏洞之測試。
 
-### 5. Integration Tests Validate Complete Workflows
-Don't just test individual pieces - test that they work together.
+### 5. 整合測試驗完整工作流
+勿僅測個別部件 — 測其協作。
 
-## File Organization
+## 檔案組織
 
 ```
 test/
-├── controllers/         # Integration tests for controllers
-├── fixtures/           # YAML fixtures for all models
-├── helpers/            # Helper method tests
-├── integration/        # API integration tests
-├── jobs/               # Background job tests
-├── mailers/            # Mailer tests
-├── models/             # Unit tests for models
-├── system/             # Browser-based system tests
-└── test_helper.rb      # Test configuration
+├── controllers/         # 控制器整合測試
+├── fixtures/           # 全model之YAML fixtures
+├── helpers/            # 輔助方法測試
+├── integration/        # API整合測試
+├── jobs/               # 背景作業測試
+├── mailers/            # Mailer測試
+├── models/             # Model單元測試
+├── system/             # 瀏覽器系統測試
+└── test_helper.rb      # 測試配置
 ```
 
-## Test Helper Setup
+## Test Helper設定
 
 ```ruby
 # test/test_helper.rb
@@ -325,7 +325,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 end
 ```
 
-## Sign In Helper
+## 登入輔助
 
 ```ruby
 # test/support/sign_in_helper.rb

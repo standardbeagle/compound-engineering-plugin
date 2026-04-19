@@ -1,21 +1,21 @@
-# Next.js dev-server recipe (auto-detect fallback)
+# Next.js 開發伺服器配方（自動偵測後備）
 
-Loaded when `detect-project-type.sh` returns `next` and there is no `.claude/launch.json` to consult.
+當 `detect-project-type.sh` 回傳 `next` 且無 `.claude/launch.json` 可查時載入。
 
-## Signature
+## 簽名
 
-- `next.config.js`, `next.config.mjs`, `next.config.ts`, or `next.config.cjs` exists
-- `package.json` contains a `next` dependency
+- `next.config.js`、`next.config.mjs`、`next.config.ts` 或 `next.config.cjs` 存在
+- `package.json` 含 `next` 依賴
 
-## Start command
+## 啟動命令
 
-Standard:
+標準：
 
 ```bash
 npm run dev
 ```
 
-Also valid (read `package.json` scripts to confirm which the project uses):
+亦有效（讀 `package.json` scripts 確認專案使用何者）：
 
 ```bash
 pnpm dev
@@ -23,21 +23,21 @@ yarn dev
 bun run dev
 ```
 
-Prefer the package manager indicated by the lockfile:
+依 lockfile 指示之套件管理器偏好：
 - `pnpm-lock.yaml` -> `pnpm dev`
 - `yarn.lock` -> `yarn dev`
 - `bun.lock` / `bun.lockb` -> `bun run dev`
-- `package-lock.json` or none -> `npm run dev`
+- `package-lock.json` 或無 -> `npm run dev`
 
-## Port
+## 埠號
 
-Default: `3000`. Next.js respects `-p <port>` / `--port <port>` and the `PORT` env var. Overrides follow the cascade in `references/dev-server-detection.md`.
+預設：`3000`。Next.js 接受 `-p <port>` / `--port <port>` 及 `PORT` 環境變數。覆寫遵循 `references/dev-server-detection.md` 中之層疊。
 
 ## Turbopack
 
-Next.js 14+ supports `--turbo` (and 15+ makes it default). If the `dev` script in `package.json` includes `--turbo`, preserve it. Turbopack changes reload behavior but not port or URL conventions.
+Next.js 14+ 支援 `--turbo`（15+ 預設啟用）。若 `package.json` 中之 `dev` 腳本含 `--turbo`，保留之。Turbopack 改變重新載入行為但不改變埠號或 URL 慣例。
 
-## Stub generation
+## 存根生成
 
 ```json
 {
@@ -53,10 +53,10 @@ Next.js 14+ supports `--turbo` (and 15+ makes it default). If the `dev` script i
 }
 ```
 
-Substitute the resolved package manager (`npm` / `pnpm` / `yarn` / `bun`) and port.
+替換為已解析之套件管理器（`npm` / `pnpm` / `yarn` / `bun`）及埠號。
 
-## Common gotchas
+## 常見陷阱
 
-- **App Router vs Pages Router:** dev-server behavior is the same; polish doesn't care. Checklist generation (Unit 5) does — pages in `app/` and `pages/` are different surfaces.
-- **Monorepo roots:** in a pnpm/Turborepo monorepo, `npm run dev` at the root typically fans out to multiple packages. Users should set `cwd` in `.claude/launch.json` to the specific Next app (`cwd: "apps/web"`).
-- **Env loading:** `.env.local` is loaded automatically by Next; polish does not need to export it.
+- **App Router vs Pages Router：** 開發伺服器行為相同；polish 不在乎。檢查清單生成（單元 5）在乎——`app/` 及 `pages/` 中之頁面為不同介面。
+- **Monorepo 根目錄：** pnpm/Turborepo monorepo 中，根目錄之 `npm run dev` 通常展開至多個套件。用戶應於 `.claude/launch.json` 中設 `cwd` 為特定 Next 應用（`cwd: "apps/web"`）。
+- **環境載入：** `.env.local` 由 Next 自動載入；polish 不需匯出。

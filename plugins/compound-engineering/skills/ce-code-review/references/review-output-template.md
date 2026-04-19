@@ -1,10 +1,10 @@
-# Code Review Output Template
+# 碼審輸出模板
 
-Use this **exact format** when presenting synthesized review findings. Findings are grouped by severity, not by reviewer.
+呈現綜合審閱發現時用此**確切格式**。發現按嚴重度分組，非按審閱者。
 
-**IMPORTANT:** Use pipe-delimited markdown tables (`| col | col |`). Do NOT use ASCII box-drawing characters.
+**重要：** 用管線分隔 markdown 表格（`| col | col |`）。勿用 ASCII 製圖字元。
 
-## Example
+## 範例
 
 ```markdown
 ## Code Review Results
@@ -92,9 +92,9 @@ Use this **exact format** when presenting synthesized review findings. Findings 
 > **Fix order:** P0 auth bypass -> P1 memory/pagination -> P2 error handling if straightforward
 ```
 
-## Anti-patterns
+## 反範式
 
-Do NOT produce output like this. The following is wrong:
+勿產出如下內容。以下為錯誤：
 
 ```markdown
 Findings
@@ -111,38 +111,38 @@ File: bar.go:99
 Issue: Another problem
 ```
 
-This fails because: no pipe-delimited tables, no severity-grouped `###` headers, uses box-drawing horizontal rules, no numbered findings, no `## Code Review Results` title, and the verdict is not in a blockquote. Always use the table format from the example above.
+此為失敗：無管線分隔表格、無嚴重度分組之 `###` 標頭、用製圖字元水平線、無編號發現、無 `## Code Review Results` 標題、判定非引言塊。恆用上方範例之表格格式。
 
-## Formatting Rules
+## 格式規則
 
-- **Pipe-delimited markdown tables** for findings -- never ASCII box-drawing characters or per-finding horizontal-rule separators between entries (the report-level `---` before the verdict is still required)
-- **Severity-grouped sections** -- `### P0 -- Critical`, `### P1 -- High`, `### P2 -- Moderate`, `### P3 -- Low`. Omit empty severity levels.
-- **Always include file:line location** for code review issues
-- **Reviewer column** shows which persona(s) flagged the issue. Multiple reviewers = cross-reviewer agreement.
-- **Confidence column** shows the finding's confidence score
-- **Route column** shows the synthesized handling decision as ``<autofix_class> -> <owner>``.
-- **Header includes** scope, intent, and reviewer team with per-conditional justifications
-- **Mode line** -- include `interactive`, `autofix`, `report-only`, or `headless`
-- **Applied Fixes section** -- include only when a fix phase ran in this review invocation
-- **Residual Actionable Work section** -- include only when unresolved actionable findings were handed off for later work
-- **Pre-existing section** -- separate table, no confidence column (these are informational)
-- **Learnings & Past Solutions section** -- results from ce-learnings-researcher, with links to docs/solutions/ files
-- **Agent-Native Gaps section** -- results from ce-agent-native-reviewer. Omit if no gaps found.
-- **Schema Drift Check section** -- results from ce-schema-drift-detector. Omit if the agent did not run.
-- **Deployment Notes section** -- key checklist items from ce-deployment-verification-agent. Omit if the agent did not run.
-- **Coverage section** -- suppressed count, residual risks, testing gaps, failed reviewers
-- **Summary uses blockquotes** for verdict, reasoning, and fix order
-- **Horizontal rule** (`---`) separates findings from verdict
-- **`###` headers** for each section -- never plain text headers
+- **管線分隔 markdown 表格**呈現發現 — 勿用 ASCII 製圖字元或每發現間之水平線分隔（判定前之報告層 `---` 仍需）
+- **嚴重度分組段落** — `### P0 -- Critical`、`### P1 -- High`、`### P2 -- Moderate`、`### P3 -- Low`。省略空嚴重度。
+- **恆含 file:line 位置** 於碼審問題
+- **Reviewer 欄** 顯示哪些角色標記該問題。多位審閱者 = 跨審閱者共識。
+- **Confidence 欄** 顯示發現之信心分數
+- **Route 欄** 顯示綜合處理決策為 ``<autofix_class> -> <owner>``。
+- **標頭含** 範圍、意圖、及附每條件理據之審閱團隊
+- **Mode 行** — 含 `interactive`、`autofix`、`report-only`、或 `headless`
+- **Applied Fixes 段** — 僅於本次審閱調用執行修復階段時包含
+- **Residual Actionable Work 段** — 僅於有未解決可操作發現移交後續工作時包含
+- **Pre-existing 段** — 獨立表格，無 confidence 欄（此為資訊性）
+- **Learnings & Past Solutions 段** — ce-learnings-researcher 結果，附 docs/solutions/ 檔連結
+- **Agent-Native Gaps 段** — ce-agent-native-reviewer 結果。無缺口時省略。
+- **Schema Drift Check 段** — ce-schema-drift-detector 結果。代理未運行時省略。
+- **Deployment Notes 段** — ce-deployment-verification-agent 關鍵清單項。代理未運行時省略。
+- **Coverage 段** — 抑制計數、殘餘風險、測試缺口、失敗審閱者
+- **摘要用引言塊** 含判定、理據及修復順序
+- **水平線**（`---`）分隔發現與判定
+- **`###` 標頭** 於每段 — 勿用純文字標頭
 
-## Headless Mode Format
+## Headless 模式格式
 
-In `mode:headless`, replace the interactive pipe-delimited table report with a structured text envelope. The headless format is defined in the `### Headless output format` section of SKILL.md. Key differences from the interactive format:
+`mode:headless` 中，以結構化文字信封取代互動式管線分隔表格報告。headless 格式定義於 SKILL.md 之 `### Headless output format` 段。與互動格式之關鍵差異：
 
-- **No pipe-delimited tables.** Findings use `[severity][autofix_class -> owner] File: <file:line> -- <title>` line format with indented Why/Evidence/Suggested fix lines.
-- **Findings grouped by autofix_class** (gated-auto, manual, advisory) instead of severity. Within each group, findings are sorted by severity.
-- **Verdict in header** (top of output) instead of bottom, so programmatic callers get it first.
-- **`Artifact:` line** in metadata header gives callers the path to the full run artifact.
-- **`[needs-verification]` marker** on findings where `requires_verification: true`.
-- **Evidence lines** included per finding.
-- **Completion signal:** "Review complete" as the final line.
+- **無管線分隔表格。** 發現用 `[severity][autofix_class -> owner] File: <file:line> -- <title>` 行格式，附縮排 Why/Evidence/Suggested fix 行。
+- **發現按 autofix_class 分組**（gated-auto、manual、advisory）而非嚴重度。組內按嚴重度排序。
+- **判定在標頭**（輸出頂部）而非底部，俾程式化呼叫者先得。
+- **`Artifact:` 行** 於元資料標頭提供呼叫者完整運行產物路徑。
+- **`[needs-verification]` 標記** 於 `requires_verification: true` 之發現。
+- **Evidence 行** 每發現包含。
+- **完成信號：** "Review complete" 為末行。

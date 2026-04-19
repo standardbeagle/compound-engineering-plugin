@@ -1,283 +1,283 @@
 ---
 name: ce-worktree
-description: This skill manages Git worktrees for isolated parallel development. It handles creating, listing, switching, and cleaning up worktrees with a simple interactive interface, following KISS principles.
+description: 此技能管理 Git worktree 以實現隔離之並行開發。以簡潔互動介面處理 worktree 之建立、列表、切換與清理，遵循 KISS 原則。
 ---
 
-# Git Worktree Manager
+# Git Worktree 管理器
 
-This skill provides a unified interface for managing Git worktrees across your development workflow. Whether you're reviewing PRs in isolation or working on features in parallel, this skill handles all the complexity.
+此技能提供跨開發工作流管理 Git worktree 之統一介面。無論是隔離審查 PR 或並行開發功能，此技能處理所有複雜性。
 
-## What This Skill Does
+## 此技能做什麼
 
-- **Create worktrees** from main branch with clear branch names
-- **List worktrees** with current status
-- **Switch between worktrees** for parallel work
-- **Clean up completed worktrees** automatically
-- **Interactive confirmations** at each step
-- **Automatic .gitignore management** for worktree directory
-- **Automatic .env file copying** from main repo to new worktrees
-- **Automatic dev tool trusting** for mise and direnv configs with review-safe guardrails
+- **建立 worktree** 自主分支，附清晰分支名稱
+- **列出 worktree** 及當前狀態
+- **切換 worktree** 以進行並行工作
+- **清理已完成之 worktree** 自動處理
+- **互動確認** 每一步
+- **自動 .gitignore 管理** worktree 目錄
+- **自動 .env 檔案複製** 自主倉庫至新 worktree
+- **自動開發工具信任** mise 與 direnv 配置，附審查安全護欄
 
-## CRITICAL: Always Use the Manager Script
+## 要務：一律使用管理腳本
 
-**NEVER call `git worktree add` directly.** Always use the `worktree-manager.sh` script.
+**絕不直接呼叫 `git worktree add`。** 一律使用 `worktree-manager.sh` 腳本。
 
-The script handles critical setup that raw git commands don't:
-1. Copies `.env`, `.env.local`, `.env.test`, etc. from main repo
-2. Trusts dev tool configs with branch-aware safety rules:
-   - mise: auto-trust only when unchanged from a trusted baseline branch
-   - direnv: auto-allow only for trusted base branches; review worktrees stay manual
-3. Ensures `.worktrees` is in `.gitignore`
-4. Creates consistent directory structure
+腳本處理原生 git 指令不做之關鍵設定：
+1. 自主倉庫複製 `.env`、`.env.local`、`.env.test` 等
+2. 以分支感知安全規則信任開發工具配置：
+   - mise：僅當與受信任基線分支相比未變更時方自動信任
+   - direnv：僅為受信任基礎分支自動允許；審查 worktree 保持手動
+3. 確保 `.worktrees` 在 `.gitignore` 中
+4. 建立一致之目錄結構
 
 ```bash
-# ✅ CORRECT - Always use the script
+# ✅ 正確 — 一律使用腳本
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh create feature-name
 
-# ❌ WRONG - Never do this directly
+# ❌ 錯誤 — 絕不直接執行
 git worktree add .worktrees/feature-name -b feature-name main
 ```
 
-## When to Use This Skill
+## 何時使用此技能
 
-Use this skill in these scenarios:
+以下情境使用此技能：
 
-1. **Code Review (`/ce-code-review`)**: If NOT already on the target branch (PR branch or requested branch), offer worktree for isolated review
-2. **Feature Work (`/ce-work`)**: Always ask if user wants parallel worktree or live branch work
-3. **Parallel Development**: When working on multiple features simultaneously
-4. **Cleanup**: After completing work in a worktree
+1. **碼審（`/ce-code-review`）**：若尚未在目標分支（PR 分支或請求之分支）上，提供 worktree 以進行隔離審查
+2. **功能開發（`/ce-work`）**：一律詢問用戶要並行 worktree 還是活分支工作
+3. **並行開發**：同時處理多個功能時
+4. **清理**：worktree 中工作完成後
 
-## How to Use
+## 使用方式
 
-### In Claude Code Workflows
+### 在 Claude Code 工作流中
 
-The skill is automatically called from `/ce-code-review` and `/ce-work` commands:
+技能自 `/ce-code-review` 與 `/ce-work` 指令自動呼叫：
 
 ```
-# For review: offers worktree if not on PR branch
-# For work: always asks - new branch or worktree?
+# 審查：若不在 PR 分支上則提供 worktree
+# 工作：一律詢問——新分支或 worktree？
 ```
 
-### Manual Usage
+### 手動使用
 
-You can also invoke the skill directly from bash:
+亦可直接自 bash 呼叫：
 
 ```bash
-# Create a new worktree (copies .env files automatically)
+# 建立新 worktree（自動複製 .env 檔案）
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh create feature-login
 
-# List all worktrees
+# 列出所有 worktree
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh list
 
-# Switch to a worktree
+# 切換至 worktree
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh switch feature-login
 
-# Copy .env files to an existing worktree (if they weren't copied)
+# 複製 .env 檔案至既有 worktree（若先前未複製）
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh copy-env feature-login
 
-# Clean up completed worktrees
+# 清理已完成之 worktree
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh cleanup
 ```
 
-## Commands
+## 指令
 
 ### `create <branch-name> [from-branch]`
 
-Creates a new worktree with the given branch name.
+以給定分支名建立新 worktree。
 
-**Options:**
-- `branch-name` (required): The name for the new branch and worktree
-- `from-branch` (optional): Base branch to create from (defaults to `main`)
+**選項：**
+- `branch-name`（必要）：新分支與 worktree 之名稱
+- `from-branch`（選填）：建立之基礎分支（預設 `main`）
 
-**Example:**
+**範例：**
 ```bash
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh create feature-login
 ```
 
-**What happens:**
-1. Checks if worktree already exists
-2. Updates the base branch from remote
-3. Creates new worktree and branch
-4. **Copies all .env files from main repo** (.env, .env.local, .env.test, etc.)
-5. **Trusts dev tool configs** with branch-aware safety rules:
-   - trusted bases (`main`, `develop`, `dev`, `trunk`, `staging`, `release/*`) compare against themselves
-   - other branches compare against the default branch
-   - direnv auto-allow is skipped on non-trusted bases because `.envrc` can source unchecked files
-6. Shows path for cd-ing to the worktree
+**會發生什麼：**
+1. 檢查 worktree 是否已存在
+2. 自遠端更新基礎分支
+3. 建立新 worktree 與分支
+4. **自主倉庫複製所有 .env 檔案**（.env、.env.local、.env.test 等）
+5. **以分支感知安全規則信任開發工具配置：**
+   - 受信任基礎（`main`、`develop`、`dev`、`trunk`、`staging`、`release/*`）與自身比較
+   - 其他分支與預設分支比較
+   - 非受信任基礎跳過 direnv 自動允許，因 `.envrc` 可能引用未檢查之檔案
+6. 顯示 cd 至 worktree 之路徑
 
-### `list` or `ls`
+### `list` 或 `ls`
 
-Lists all available worktrees with their branches and current status.
+列出所有可用 worktree 及其分支與當前狀態。
 
-**Example:**
+**範例：**
 ```bash
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh list
 ```
 
-**Output shows:**
-- Worktree name
-- Branch name
-- Which is current (marked with ✓)
-- Main repo status
+**輸出顯示：**
+- Worktree 名稱
+- 分支名稱
+- 何者為當前（以 ✓ 標記）
+- 主倉庫狀態
 
-### `switch <name>` or `go <name>`
+### `switch <name>` 或 `go <name>`
 
-Switches to an existing worktree and cd's into it.
+切換至既有 worktree 並 cd 進入。
 
-**Example:**
+**範例：**
 ```bash
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh switch feature-login
 ```
 
-**Optional:**
-- If name not provided, lists available worktrees and prompts for selection
+**選填：**
+- 若未提供名稱，列出可用 worktree 並提示選擇
 
-### `cleanup` or `clean`
+### `cleanup` 或 `clean`
 
-Interactively cleans up inactive worktrees with confirmation.
+互動式清理非活躍之 worktree，需確認。
 
-**Example:**
+**範例：**
 ```bash
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh cleanup
 ```
 
-**What happens:**
-1. Lists all inactive worktrees
-2. Asks for confirmation
-3. Removes selected worktrees
-4. Cleans up empty directories
+**會發生什麼：**
+1. 列出所有非活躍之 worktree
+2. 請求確認
+3. 移除選定之 worktree
+4. 清理空目錄
 
-## Workflow Examples
+## 工作流範例
 
-### Code Review with Worktree
+### 以 Worktree 進行碼審
 
 ```bash
-# Claude Code recognizes you're not on the PR branch
-# Offers: "Use worktree for isolated review? (y/n)"
+# Claude Code 認出你不在 PR 分支上
+# 提供："Use worktree for isolated review? (y/n)"
 
-# You respond: yes
-# Script runs (copies .env files automatically):
+# 你回應：yes
+# 腳本執行（自動複製 .env 檔案）：
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh create pr-123-feature-name
 
-# You're now in isolated worktree for review with all env vars
+# 你現在在隔離 worktree 中審查，所有環境變數俱備
 cd .worktrees/pr-123-feature-name
 
-# After review, return to main:
+# 審查後返回主倉庫：
 cd ../..
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh cleanup
 ```
 
-### Parallel Feature Development
+### 並行功能開發
 
 ```bash
-# For first feature (copies .env files):
+# 第一個功能（複製 .env 檔案）：
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh create feature-login
 
-# Later, start second feature (also copies .env files):
+# 稍後，第二個功能（亦複製 .env 檔案）：
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh create feature-notifications
 
-# List what you have:
+# 列出你有的：
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh list
 
-# Switch between them as needed:
+# 依需切換：
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh switch feature-login
 
-# Return to main and cleanup when done:
+# 完成後返回主倉庫並清理：
 cd .
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh cleanup
 ```
 
-## Key Design Principles
+## 關鍵設計原則
 
-### KISS (Keep It Simple, Stupid)
+### KISS（保持簡單）
 
-- **One manager script** handles all worktree operations
-- **Simple commands** with sensible defaults
-- **Interactive prompts** prevent accidental operations
-- **Clear naming** using branch names directly
+- **一個管理腳本** 處理所有 worktree 操作
+- **簡單指令** 附合理預設
+- **互動提示** 防止意外操作
+- **清晰命名** 直接使用分支名
 
-### Opinionated Defaults
+### 意見預設
 
-- Worktrees always created from **main** (unless specified)
-- Worktrees stored in **.worktrees/** directory
-- Branch name becomes worktree name
-- **.gitignore** automatically managed
+- Worktree 一律自 **main** 建立（除非指定）
+- Worktree 存放於 **.worktrees/** 目錄
+- 分支名即 worktree 名
+- **.gitignore** 自動管理
 
-### Safety First
+### 安全第一
 
-- **Confirms before creating** worktrees
-- **Confirms before cleanup** to prevent accidental removal
-- **Won't remove current worktree**
-- **Clear error messages** for issues
+- **建立前確認** worktree
+- **清理前確認** 以防意外移除
+- **不會移除當前 worktree**
+- **清晰錯誤訊息** 遇問題時
 
-## Integration with Workflows
+## 與工作流之整合
 
 ### `/ce-code-review`
 
-Instead of always creating a worktree:
+非一律建立 worktree：
 
 ```
-1. Check current branch
-2. If ALREADY on target branch (PR branch or requested branch) → stay there, no worktree needed
-3. If DIFFERENT branch than the review target → offer worktree:
+1. 檢查當前分支
+2. 若已在目標分支（PR 分支或請求之分支）→ 留在該處，無需 worktree
+3. 若與審查目標不同分支 → 提供 worktree：
    "Use worktree for isolated review? (y/n)"
-   - yes → call ce-worktree skill
-   - no → proceed with PR diff on current branch
+   - yes → 呼叫 ce-worktree 技能
+   - no → 以當前分支之 PR diff 繼續
 ```
 
 ### `/ce-work`
 
-Always offer choice:
+一律提供選擇：
 
 ```
-1. Ask: "How do you want to work?
+1. 詢問："How do you want to work?
    1. New branch on current worktree (live work)
    2. Worktree (parallel work)"
 
-2. If choice 1 → create new branch normally
-3. If choice 2 → call ce-worktree skill to create from main
+2. 若選擇 1 → 正常建立新分支
+3. 若選擇 2 → 呼叫 ce-worktree 技能自主分支建立
 ```
 
-## Troubleshooting
+## 疑難排解
 
 ### "Worktree already exists"
 
-If you see this, the script will ask if you want to switch to it instead.
+若見此訊息，腳本會詢問是否改為切換至既有者。
 
 ### "Cannot remove worktree: it is the current worktree"
 
-Switch out of the worktree first (to main repo), then cleanup:
+先切換出 worktree（至主倉庫），再清理：
 
 ```bash
 cd $(git rev-parse --show-toplevel)
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh cleanup
 ```
 
-### Lost in a worktree?
+### 在 worktree 中迷路？
 
-See where you are:
+看看在哪裡：
 
 ```bash
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh list
 ```
 
-### .env files missing in worktree?
+### Worktree 中缺少 .env 檔案？
 
-If a worktree was created without .env files (e.g., via raw `git worktree add`), copy them:
+若 worktree 未經 .env 檔案建立（如透過原生 `git worktree add`），複製之：
 
 ```bash
 bash ${CLAUDE_PLUGIN_ROOT}/skills/ce-worktree/scripts/worktree-manager.sh copy-env feature-name
 ```
 
-Navigate back to main:
+返回主倉庫：
 
 ```bash
 cd $(git rev-parse --show-toplevel)
 ```
 
-## Technical Details
+## 技術細節
 
-### Directory Structure
+### 目錄結構
 
 ```
 .worktrees/
@@ -294,17 +294,17 @@ cd $(git rev-parse --show-toplevel)
 .gitignore (updated to include .worktrees)
 ```
 
-### How It Works
+### 運作原理
 
-- Uses `git worktree add` for isolated environments
-- Each worktree has its own branch
-- Changes in one worktree don't affect others
-- Share git history with main repo
-- Can push from any worktree
+- 使用 `git worktree add` 建立隔離環境
+- 每個 worktree 有自己的分支
+- 一個 worktree 中的變更不影響其他
+- 與主倉庫共享 git 歷史
+- 可自任何 worktree 推送
 
-### Performance
+### 效能
 
-- Worktrees are lightweight (just file system links)
-- No repository duplication
-- Shared git objects for efficiency
-- Much faster than cloning or stashing/switching
+- Worktree 輕量（僅檔案系統連結）
+- 無倉庫複製
+- 共享 git 物件以提高效率
+- 比複製或暫存/切換快得多

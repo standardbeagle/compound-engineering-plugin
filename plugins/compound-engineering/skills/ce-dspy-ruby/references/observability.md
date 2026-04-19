@@ -1,12 +1,12 @@
-# DSPy.rb Observability
+# DSPy.rb 可觀察性
 
-DSPy.rb provides an event-driven observability system built on OpenTelemetry. The system replaces monkey-patching with structured event emission, pluggable listeners, automatic span creation, and non-blocking Langfuse export.
+DSPy.rb提供基於OpenTelemetry之事件驅動可觀察性系統。取代monkey-patching，採結構化事件發射、可插拔監聽器、自動span建立與非阻塞Langfuse匯出。
 
-## Event System
+## 事件系統
 
-### Emitting Events
+### 發射事件
 
-Emit structured events with `DSPy.event`:
+以`DSPy.event`發射結構化事件：
 
 ```ruby
 DSPy.event('lm.tokens', {
@@ -18,36 +18,33 @@ DSPy.event('lm.tokens', {
 })
 ```
 
-Event names are **strings** with dot-separated namespaces (e.g., `'llm.generate'`, `'react.iteration_complete'`, `'chain_of_thought.reasoning_complete'`). Do not use symbols for event names.
+事件名稱為**字串**，以點分隔命名空間（如`'llm.generate'`、`'react.iteration_complete'`）。勿用符號。
 
-Attributes must be JSON-serializable. DSPy automatically merges context (trace ID, module stack) and creates OpenTelemetry spans.
+屬性須可JSON序列化。DSPy自動合併上下文（trace ID、module stack）並建立OpenTelemetry span。
 
-### Global Subscriptions
+### 全域訂閱
 
-Subscribe to events across the entire application with `DSPy.events.subscribe`:
+以`DSPy.events.subscribe`跨整個應用訂閱：
 
 ```ruby
-# Exact event name
 subscription_id = DSPy.events.subscribe('lm.tokens') do |event_name, attrs|
   puts "Tokens used: #{attrs[:total_tokens]}"
 end
 
-# Wildcard pattern -- matches llm.generate, llm.stream, etc.
 DSPy.events.subscribe('llm.*') do |event_name, attrs|
   track_llm_usage(attrs)
 end
 
-# Catch-all wildcard
 DSPy.events.subscribe('*') do |event_name, attrs|
   log_everything(event_name, attrs)
 end
 ```
 
-Use global subscriptions for cross-cutting concerns: observability exporters (Langfuse, Datadog), centralized logging, metrics collection.
+全域訂閱用於跨切關注：可觀察性匯出器（Langfuse、Datadog）、集中日誌、指標收集。
 
-### Module-Scoped Subscriptions
+### Module域訂閱
 
-Declare listeners inside a `DSPy::Module` subclass. Subscriptions automatically scope to the module instance and its descendants:
+於`DSPy::Module`子類別內宣告監聽器。訂閱自動限域於module實例及其後代：
 
 ```ruby
 class ResearchReport < DSPy::Module
@@ -74,22 +71,22 @@ class ResearchReport < DSPy::Module
 end
 ```
 
-The `scope:` parameter accepts:
-- `:descendants` (default) -- receives events from the module **and** every nested module invoked inside it.
-- `DSPy::Module::SubcriptionScope::SelfOnly` -- restricts delivery to events emitted by the module instance itself; ignores descendants.
+`scope:`參數接受：
+- `:descendants`（預設）— 接收module及**所有**巢狀module所發事件。
+- `DSPy::Module::SubcriptionScope::SelfOnly` — 僅限module實例自身發出之事件；忽略後代。
 
-Inspect active subscriptions with `registered_module_subscriptions`. Tear down with `unsubscribe_module_events`.
+以`registered_module_subscriptions`檢查。以`unsubscribe_module_events`拆除。
 
-### Unsubscribe and Cleanup
+### 取消訂閱與清理
 
-Remove a global listener by subscription ID:
+以訂閱ID移除全域監聽器：
 
 ```ruby
 id = DSPy.events.subscribe('llm.*') { |name, attrs| }
 DSPy.events.unsubscribe(id)
 ```
 
-Build tracker classes that manage their own subscription lifecycle:
+建構追蹤器類別管理自身訂閱生命週期：
 
 ```ruby
 class TokenBudgetTracker
@@ -110,9 +107,9 @@ class TokenBudgetTracker
 end
 ```
 
-### Clearing Listeners in Tests
+### 測試中清除監聽器
 
-Call `DSPy.events.clear_listeners` in `before`/`after` blocks to prevent cross-contamination between test cases:
+於`before`/`after`區塊呼叫`DSPy.events.clear_listeners`以防跨測試污染：
 
 ```ruby
 RSpec.configure do |config|
@@ -122,15 +119,15 @@ end
 
 ## dspy-o11y Gems
 
-Three gems compose the observability stack:
+三gem組成可觀察性棧：
 
-| Gem | Purpose |
+| Gem | 用途 |
 |---|---|
-| `dspy` | Core event bus (`DSPy.event`, `DSPy.events`) -- always available |
-| `dspy-o11y` | OpenTelemetry spans, `AsyncSpanProcessor`, `DSPy::Context.with_span` helpers |
-| `dspy-o11y-langfuse` | Langfuse adapter -- configures OTLP exporter targeting Langfuse endpoints |
+| `dspy` | 核心事件匯流排（`DSPy.event`、`DSPy.events`）— 恆可用 |
+| `dspy-o11y` | OpenTelemetry span、`AsyncSpanProcessor`、`DSPy::Context.with_span`輔助 |
+| `dspy-o11y-langfuse` | Langfuse適配器 — 配置OTLP匯出器指向Langfuse端點 |
 
-### Installation
+### 安裝
 
 ```ruby
 # Gemfile
@@ -139,46 +136,37 @@ gem 'dspy-o11y'           # core spans + helpers
 gem 'dspy-o11y-langfuse'  # Langfuse/OpenTelemetry adapter (optional)
 ```
 
-If the optional gems are absent, DSPy falls back to logging-only mode with no errors.
+可選gem缺時，DSPy退回僅日誌模式，無錯誤。
 
-## Langfuse Integration
+## Langfuse整合
 
-### Environment Variables
+### 環境變數
 
 ```bash
-# Required
 export LANGFUSE_PUBLIC_KEY=pk-lf-your-public-key
 export LANGFUSE_SECRET_KEY=sk-lf-your-secret-key
-
-# Optional (defaults to https://cloud.langfuse.com)
 export LANGFUSE_HOST=https://us.cloud.langfuse.com
 
-# Tuning (optional)
-export DSPY_TELEMETRY_BATCH_SIZE=100        # spans per export batch (default 100)
-export DSPY_TELEMETRY_QUEUE_SIZE=1000       # max queued spans (default 1000)
-export DSPY_TELEMETRY_EXPORT_INTERVAL=60    # seconds between timed exports (default 60)
-export DSPY_TELEMETRY_SHUTDOWN_TIMEOUT=10   # seconds to drain on shutdown (default 10)
+export DSPY_TELEMETRY_BATCH_SIZE=100
+export DSPY_TELEMETRY_QUEUE_SIZE=1000
+export DSPY_TELEMETRY_EXPORT_INTERVAL=60
+export DSPY_TELEMETRY_SHUTDOWN_TIMEOUT=10
 ```
 
-### Automatic Configuration
+### 自動配置
 
-Call `DSPy::Observability.configure!` once at boot (it is already called automatically when `require 'dspy'` runs and Langfuse env vars are present):
+啟動時呼叫`DSPy::Observability.configure!`一次（`require 'dspy'`且Langfuse環境變數存在時自動執行）：
 
 ```ruby
 require 'dspy'
-# If LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY are set,
-# DSPy::Observability.configure! runs automatically and:
-#   1. Configures the OpenTelemetry SDK with an OTLP exporter
-#   2. Creates dual output: structured logs AND OpenTelemetry spans
-#   3. Exports spans to Langfuse using proper authentication
-#   4. Falls back gracefully if gems are missing
+# 自動配置：OTLP匯出器、結構化日誌+OTel span、匯出至Langfuse、缺gem時優雅退化
 ```
 
-Verify status with `DSPy::Observability.enabled?`.
+以`DSPy::Observability.enabled?`驗證狀態。
 
-### Automatic Tracing
+### 自動追蹤
 
-With observability enabled, every `DSPy::Module#forward` call, LM request, and tool invocation creates properly nested spans. Langfuse receives hierarchical traces:
+可觀察性啟用後，每次`DSPy::Module#forward`呼叫、LM請求與工具調用皆建立正確巢狀span。Langfuse接收層級追蹤：
 
 ```
 Trace: abc-123-def
@@ -188,9 +176,9 @@ Trace: abc-123-def
         Tokens: 100 in / 50 out / 150 total
 ```
 
-DSPy maps module classes to Langfuse observation types automatically via `DSPy::ObservationType.for_module_class`:
+DSPy經`DSPy::ObservationType.for_module_class`自動映射module類別至Langfuse觀察類型：
 
-| Module | Observation Type |
+| Module | 觀察類型 |
 |---|---|
 | `DSPy::LM` (raw chat) | `generation` |
 | `DSPy::ChainOfThought` | `chain` |
@@ -201,47 +189,33 @@ DSPy maps module classes to Langfuse observation types automatically via `DSPy::
 | Evaluation modules | `evaluator` |
 | Generic operations | `span` |
 
-## Score Reporting
+## 評分報告
 
 ### DSPy.score API
 
-Report evaluation scores with `DSPy.score`:
+以`DSPy.score`報告評估分數：
 
 ```ruby
-# Numeric (default)
 DSPy.score('accuracy', 0.95)
-
-# With comment
 DSPy.score('relevance', 0.87, comment: 'High semantic similarity')
-
-# Boolean
 DSPy.score('is_valid', 1, data_type: DSPy::Scores::DataType::Boolean)
-
-# Categorical
 DSPy.score('sentiment', 'positive', data_type: DSPy::Scores::DataType::Categorical)
-
-# Explicit trace binding
 DSPy.score('accuracy', 0.95, trace_id: 'custom-trace-id')
 ```
 
-Available data types: `DSPy::Scores::DataType::Numeric`, `::Boolean`, `::Categorical`.
+可用資料型別：`DSPy::Scores::DataType::Numeric`、`::Boolean`、`::Categorical`。
 
-### score.create Events
+### score.create事件
 
-Every `DSPy.score` call emits a `'score.create'` event. Subscribe to react:
+每次`DSPy.score`呼叫發射`'score.create'`事件。訂閱以反應：
 
 ```ruby
 DSPy.events.subscribe('score.create') do |event_name, attrs|
   puts "#{attrs[:score_name]} = #{attrs[:score_value]}"
-  # Also available: attrs[:score_id], attrs[:score_data_type],
-  # attrs[:score_comment], attrs[:trace_id], attrs[:observation_id],
-  # attrs[:timestamp]
 end
 ```
 
-### Async Langfuse Export with DSPy::Scores::Exporter
-
-Configure the exporter to send scores to Langfuse in the background:
+### 以DSPy::Scores::Exporter非同步匯出Langfuse
 
 ```ruby
 exporter = DSPy::Scores::Exporter.configure(
@@ -250,18 +224,15 @@ exporter = DSPy::Scores::Exporter.configure(
   host: 'https://cloud.langfuse.com'
 )
 
-# Scores are now exported automatically via a background Thread::Queue
 DSPy.score('accuracy', 0.95)
-
-# Shut down gracefully (waits up to 5 seconds by default)
 exporter.shutdown
 ```
 
-The exporter subscribes to `'score.create'` events internally, queues them for async processing, and retries with exponential backoff on failure.
+匯出器內部訂閱`'score.create'`事件，排隊非同步處理，失敗時指數退避重試。
 
-### Automatic Export with DSPy::Evals
+### 以DSPy::Evals自動匯出
 
-Pass `export_scores: true` to `DSPy::Evals` to export per-example scores and an aggregate batch score automatically:
+傳`export_scores: true`給`DSPy::Evals`以自動匯出每範例分數與彙總批次分數：
 
 ```ruby
 evaluator = DSPy::Evals.new(
@@ -276,7 +247,7 @@ result = evaluator.evaluate(test_examples)
 
 ## DSPy::Context.with_span
 
-Create manual spans for custom operations. Requires `dspy-o11y`.
+為自訂操作建立手動span。需`dspy-o11y`。
 
 ```ruby
 DSPy::Context.with_span(operation: 'custom.retrieval', 'retrieval.source' => 'pinecone') do |span|
@@ -286,9 +257,9 @@ DSPy::Context.with_span(operation: 'custom.retrieval', 'retrieval.source' => 'pi
 end
 ```
 
-Pass semantic attributes as keyword arguments alongside `operation:`. The block receives an OpenTelemetry span object (or `nil` when observability is disabled). The span automatically nests under the current parent span and records `duration.ms`, `langfuse.observation.startTime`, and `langfuse.observation.endTime`.
+關鍵字引數附`operation:`傳遞語意屬性。區塊接收OpenTelemetry span物件（可觀察性停用時為`nil`）。span自動巢狀於當前父span下，記錄`duration.ms`、`langfuse.observation.startTime`與`langfuse.observation.endTime`。
 
-Assign a Langfuse observation type to custom spans:
+指定Langfuse觀察類型：
 
 ```ruby
 DSPy::Context.with_span(
@@ -300,11 +271,11 @@ DSPy::Context.with_span(
 end
 ```
 
-Scores reported inside a `with_span` block automatically inherit the current trace context.
+`with_span`區塊內回報之分數自動繼承當前trace上下文。
 
-## Module Stack Metadata
+## Module Stack元資料
 
-When `DSPy::Module#forward` runs, the context layer maintains a module stack. Every event includes:
+`DSPy::Module#forward`運行時，上下文層維護module stack。每事件含：
 
 ```ruby
 {
@@ -321,33 +292,33 @@ When `DSPy::Module#forward` runs, the context layer maintains a module stack. Ev
 }
 ```
 
-| Key | Meaning |
+| 鍵 | 意義 |
 |---|---|
-| `module_path` | Ordered array of `{id, class, label}` entries from root to leaf |
-| `module_root` | The outermost module in the current call chain |
-| `module_leaf` | The innermost (currently executing) module |
-| `module_scope.ancestry_token` | Stable string of joined UUIDs representing the nesting path |
-| `module_scope.depth` | Integer depth of the current module in the stack |
+| `module_path` | 由根至葉之`{id, class, label}`有序陣列 |
+| `module_root` | 當前呼叫鏈最外層module |
+| `module_leaf` | 當前呼叫鏈最內層（正執行中）module |
+| `module_scope.ancestry_token` | UUID連接之穩定字串代表巢狀路徑 |
+| `module_scope.depth` | 當前module在stack中之整數深度 |
 
-Labels are set via `module_scope_label=` on a module instance or derived automatically from named predictors. Use this metadata to power Langfuse filters, scoped metrics, or custom event routing.
+標籤以`module_scope_label=`設定於module實例或自命名predictor自動推導。用以驅動Langfuse篩選、域限指標或自訂事件路由。
 
-## Dedicated Export Worker
+## 專屬匯出Worker
 
-The `DSPy::Observability::AsyncSpanProcessor` (from `dspy-o11y`) keeps telemetry export off the hot path:
+`DSPy::Observability::AsyncSpanProcessor`（出自`dspy-o11y`）將遙測匯出排除於熱路徑外：
 
-- Runs on a `Concurrent::SingleThreadExecutor` -- LLM workflows never compete with OTLP networking.
-- Buffers finished spans in a `Thread::Queue` (max size configurable via `DSPY_TELEMETRY_QUEUE_SIZE`).
-- Drains spans in batches of `DSPY_TELEMETRY_BATCH_SIZE` (default 100). When the queue reaches batch size, an immediate async export fires.
-- A background timer thread triggers periodic export every `DSPY_TELEMETRY_EXPORT_INTERVAL` seconds (default 60).
-- Applies exponential backoff (`0.1 * 2^attempt` seconds) on export failures, up to `DEFAULT_MAX_RETRIES` (3).
-- On shutdown, flushes all remaining spans within `DSPY_TELEMETRY_SHUTDOWN_TIMEOUT` seconds, then terminates the executor.
-- Drops the oldest span when the queue is full, logging `'observability.span_dropped'`.
+- 運行於`Concurrent::SingleThreadExecutor` — LLM工作流不與OTLP網路競爭。
+- 以`Thread::Queue`緩衝已完成span（最大佇列經`DSPY_TELEMETRY_QUEUE_SIZE`配置）。
+- 以`DSPY_TELEMETRY_BATCH_SIZE`（預設100）批次排乾。佇列達批次大小時立即非同步匯出。
+- 背景計時器每`DSPY_TELEMETRY_EXPORT_INTERVAL`秒（預設60）觸發週期匯出。
+- 匯出失敗時指數退避（`0.1 * 2^attempt`秒），最多`DEFAULT_MAX_RETRIES`（3）次。
+- 關閉時於`DSPY_TELEMETRY_SHUTDOWN_TIMEOUT`秒內排乾所有剩餘span。
+- 佇列滿時丟棄最舊span，日誌記錄`'observability.span_dropped'`。
 
-No application code interacts with the processor directly. Configure it entirely through environment variables.
+應用程式碼不直接與processor互動。全經環境變數配置。
 
-## Built-in Events Reference
+## 內建事件參考
 
-| Event Name | Emitted By | Key Attributes |
+| 事件名稱 | 發射者 | 關鍵屬性 |
 |---|---|---|
 | `lm.tokens` | `DSPy::LM` | `gen_ai.system`, `gen_ai.request.model`, `input_tokens`, `output_tokens`, `total_tokens` |
 | `chain_of_thought.reasoning_complete` | `DSPy::ChainOfThought` | `dspy.signature`, `cot.reasoning_steps`, `cot.reasoning_length`, `cot.has_reasoning` |
@@ -357,10 +328,10 @@ No application code interacts with the processor directly. Configure it entirely
 | `score.create` | `DSPy.score` | `score_name`, `score_value`, `score_data_type`, `trace_id` |
 | `span.start` | `DSPy::Context.with_span` | `trace_id`, `span_id`, `parent_span_id`, `operation` |
 
-## Best Practices
+## 要訣
 
-- Use dot-separated string names for events. Follow OpenTelemetry `gen_ai.*` conventions for LLM attributes.
-- Always call `unsubscribe` (or `unsubscribe_module_events` for scoped subscriptions) when a tracker is no longer needed to prevent memory leaks.
-- Call `DSPy.events.clear_listeners` in test teardown to avoid cross-contamination.
-- Wrap risky listener logic in a rescue block. The event system isolates listener failures, but explicit rescue prevents silent swallowing of domain errors.
-- Prefer module-scoped `subscribe` for agent internals. Reserve global `DSPy.events.subscribe` for infrastructure-level concerns.
+- 事件名用點分隔字串。LLM屬性依OpenTelemetry `gen_ai.*`慣例。
+- 追蹤器不再需要時恆呼叫`unsubscribe`以防記憶體洩漏。
+- 測試拆卸中呼叫`DSPy.events.clear_listeners`以免跨污染。
+- 風險監聽器邏輯包於rescue區塊。事件系統隔離監聽器失敗，但顯式rescue防領域錯誤靜默吞沒。
+- module內部偏好module域`subscribe`。全域`DSPy.events.subscribe`保留予基礎設施層關注。

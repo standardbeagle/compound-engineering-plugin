@@ -1,29 +1,29 @@
 <overview>
-Agent execution patterns for building robust agent loops. This covers how agents signal completion, track partial progress for resume, select appropriate model tiers, and handle context limits.
+構建穩健代理迴圈之執行模式。涵蓋完成信號、部分完成之恢復追蹤、模型層級選擇、及上下文限制處理。
 </overview>
 
 <completion_signals>
-## Completion Signals
+## 完成信號
 
-Agents need an explicit way to say "I'm done."
+代理需明確表達"吾事已畢"。
 
-### Anti-Pattern: Heuristic Detection
+### 反模式：啟發式偵測
 
-Detecting completion through heuristics is fragile:
+以啟發式偵測完成，脆弱易碎：
 
-- Consecutive iterations without tool calls
-- Checking for expected output files
-- Tracking "no progress" states
-- Time-based timeouts
+- 連續無工具呼叫之迭代
+- 檢查預期輸出檔案
+- 追蹤"無進展"狀態
+- 基於時間之超時
 
-These break in edge cases and create unpredictable behavior.
+此等於邊界情況失效，行為不可預測。
 
-### Pattern: Explicit Completion Tool
+### 模式：明確完成工具
 
-Provide a `complete_task` tool that:
-- Takes a summary of what was accomplished
-- Returns a signal that stops the loop
-- Works identically across all agent types
+提供`complete_task`工具：
+- 接受所完成事項之摘要
+- 回傳停止迴圈之信號
+- 跨所有代理類型一致運作
 
 ```typescript
 tool("complete_task", {
@@ -37,9 +37,9 @@ tool("complete_task", {
 });
 ```
 
-### The ToolResult Pattern
+### ToolResult 模式
 
-Structure tool results to separate success from continuation:
+結構化工具結果以分離成功與繼續：
 
 ```swift
 struct ToolResult {
@@ -67,12 +67,12 @@ extension ToolResult {
 }
 ```
 
-### Key Insight
+### 關鍵洞見
 
-**This is different from success/failure:**
+**此不同於成功/失敗：**
 
-- A tool can **succeed** AND signal **stop** (task complete)
-- A tool can **fail** AND signal **continue** (recoverable error, try something else)
+- 工具可**成功**且發出**停止**信號（任務完成）
+- 工具可**失敗**且發出**繼續**信號（可恢復錯誤，嘗試他法）
 
 ```typescript
 // Examples:
@@ -89,9 +89,9 @@ write_file("/output.md", content)
 // Agent keeps working toward the goal
 ```
 
-### System Prompt Guidance
+### 系統提示指引
 
-Tell the agent when to complete:
+告知代理何時完成：
 
 ```markdown
 ## Completing Tasks
@@ -108,11 +108,11 @@ If you're blocked and can't proceed:
 </completion_signals>
 
 <partial_completion>
-## Partial Completion
+## 部分完成
 
-For multi-step tasks, track progress at the task level for resume capability.
+多步驟任務中，於任務層級追蹤進度以支援恢復。
 
-### Task State Tracking
+### 任務狀態追蹤
 
 ```swift
 enum TaskStatus {
@@ -144,9 +144,9 @@ struct AgentSession {
 }
 ```
 
-### UI Progress Display
+### UI進度顯示
 
-Show users what's happening:
+向使用者展示進展：
 
 ```
 Progress: 3/5 tasks complete (60%)
@@ -157,25 +157,25 @@ Progress: 3/5 tasks complete (60%)
 ⏳ [5] Create outline - Pending
 ```
 
-### Partial Completion Scenarios
+### 部分完成情境
 
-**Agent hits max iterations before finishing:**
-- Some tasks completed, some pending
-- Checkpoint saved with current state
-- Resume continues from where it left off, not from beginning
+**代理達最大迭代數未完成：**
+- 部分任務已完成，部分待處理
+- 檢查點以當前狀態儲存
+- 恢復從中斷處繼續，非從頭開始
 
-**Agent fails on one task:**
-- Task marked `.failed` with error in notes
-- Other tasks may continue (agent decides)
-- Orchestrator doesn't automatically abort entire session
+**代理於一個任務失敗：**
+- 任務標記為`.failed`，錯誤記於notes
+- 其他任務可繼續（代理決定）
+- 編排器不自動中止整個會話
 
-**Network error mid-task:**
-- Current iteration throws
-- Session marked `.failed`
-- Checkpoint preserves messages up to that point
-- Resume possible from checkpoint
+**任務中途網路錯誤：**
+- 當前迭代拋出異常
+- 會話標記為`.failed`
+- 檢查點保留至該點之訊息
+- 可從檢查點恢復
 
-### Checkpoint Structure
+### 檢查點結構
 
 ```swift
 struct AgentCheckpoint: Codable {
@@ -194,27 +194,27 @@ struct AgentCheckpoint: Codable {
 }
 ```
 
-### Resume Flow
+### 恢復流程
 
-1. On app launch, scan for valid checkpoints
-2. Show user: "You have an incomplete session. Resume?"
-3. On resume:
-   - Restore messages to conversation
-   - Restore task states
-   - Continue agent loop from where it left off
-4. On dismiss:
-   - Delete checkpoint
-   - Start fresh if user tries again
+1. 應用啟動時，掃描有效檢查點
+2. 向使用者顯示：「有未完成之會話。恢復？」
+3. 恢復時：
+   - 還原訊息至對話
+   - 還原任務狀態
+   - 從中斷處繼續代理迴圈
+4. 取消時：
+   - 刪除檢查點
+   - 使用者再次嘗試時從頭開始
 </partial_completion>
 
 <model_tier_selection>
-## Model Tier Selection
+## 模型層級選擇
 
-Different agents need different intelligence levels. Use the cheapest model that achieves the outcome.
+不同代理需不同智慧層級。使用能達成結果之最便宜模型。
 
-### Tier Guidelines
+### 層級指引
 
-| Agent Type | Recommended Tier | Reasoning |
+| 代理類型 | 建議層級 | 理由 |
 |------------|-----------------|-----------|
 | Chat/Conversation | Balanced (Sonnet) | Fast responses, good reasoning |
 | Research | Balanced (Sonnet) | Tool loops, not ultra-complex synthesis |
@@ -224,7 +224,7 @@ Different agents need different intelligence levels. Use the cheapest model that
 | Quick Queries | Fast (Haiku) | Simple lookups, quick transformations |
 | Simple Classification | Fast (Haiku) | High volume, simple decisions |
 
-### Implementation
+### 實作
 
 ```swift
 enum ModelTier {
@@ -267,21 +267,21 @@ let quickLookupConfig = AgentConfig(
 )
 ```
 
-### Cost Optimization Strategies
+### 成本優化策略
 
-1. **Start with balanced, upgrade if quality insufficient**
-2. **Use fast tier for tool-heavy loops** where each turn is simple
-3. **Reserve powerful tier for synthesis tasks** (comparing multiple sources)
-4. **Consider token limits per turn** to control costs
-5. **Cache expensive operations** to avoid repeated calls
+1. **以balanced起始，品質不足時升級**
+2. **工具密集迴圈用fast層級**，每輪簡單
+3. **保留powerful層級予合成任務**（比較多來源）
+4. **考慮每輪token限制**以控制成本
+5. **快取昂貴操作**避免重複呼叫
 </model_tier_selection>
 
 <context_limits>
-## Context Limits
+## 上下文限制
 
-Agent sessions can extend indefinitely, but context windows don't. Design for bounded context from the start.
+代理會話可無限期延伸，然上下文視窗不可。從頭設計有限上下文。
 
-### The Problem
+### 問題所在
 
 ```
 Turn 1: User asks question → 500 tokens
@@ -292,11 +292,11 @@ Turn 4: Agent researches → 20,000 tokens
 Turn 10: Context window exceeded
 ```
 
-### Design Principles
+### 設計原則
 
-**1. Tools should support iterative refinement**
+**1. 工具應支援迭代精煉**
 
-Instead of all-or-nothing, design for summary → detail → full:
+非全有全無，設計為summary → detail → full：
 
 ```typescript
 // Good: Supports iterative refinement
@@ -312,9 +312,9 @@ tool("search_files", {
 }, ...);
 ```
 
-**2. Provide consolidation tools**
+**2. 提供整合工具**
 
-Give agents a way to consolidate learnings mid-session:
+給代理於會話中途整合所學之方式：
 
 ```typescript
 tool("summarize_and_continue", {
@@ -327,14 +327,14 @@ tool("summarize_and_continue", {
 });
 ```
 
-**3. Design for truncation**
+**3. 設計截斷**
 
-Assume the orchestrator may truncate early messages. Important context should be:
-- In the system prompt (always present)
-- In files (can be re-read)
-- Summarized in context.md
+假設編排器可能截斷早期訊息。重要上下文應：
+- 在系統提示中（始終存在）
+- 在檔案中（可重新讀取）
+- 摘要於context.md
 
-### Implementation Strategies
+### 實作策略
 
 ```swift
 class AgentOrchestrator {
@@ -355,7 +355,7 @@ class AgentOrchestrator {
 }
 ```
 
-### System Prompt Guidance
+### 系統提示指引
 
 ```markdown
 ## Managing Context
@@ -370,9 +370,9 @@ Don't try to hold everything in memory. Write it down.
 </context_limits>
 
 <orchestrator_pattern>
-## Unified Agent Orchestrator
+## 統一代理編排器
 
-One execution engine, many agent types. All agents use the same orchestrator with different configurations.
+一個執行引擎，多種代理類型。所有代理使用相同編排器，配置不同。
 
 ```swift
 class AgentOrchestrator {
@@ -429,39 +429,39 @@ class AgentOrchestrator {
 }
 ```
 
-### Benefits
+### 益處
 
-- Consistent lifecycle management across all agent types
-- Automatic checkpoint/resume (critical for mobile)
-- Shared tool protocol
-- Easy to add new agent types
-- Centralized error handling and logging
+- 跨所有代理類型之一致生命週期管理
+- 自動檢查點/恢復（對行動裝置至關重要）
+- 共享工具協議
+- 易於新增代理類型
+- 集中錯誤處理與日誌
 </orchestrator_pattern>
 
 <checklist>
-## Agent Execution Checklist
+## 代理執行清單
 
-### Completion Signals
-- [ ] `complete_task` tool provided (explicit completion)
-- [ ] No heuristic completion detection
-- [ ] Tool results include `shouldContinue` flag
-- [ ] System prompt guides when to complete
+### 完成信號
+- [ ] 提供`complete_task`工具（明確完成）
+- [ ] 無啟發式完成偵測
+- [ ] 工具結果含`shouldContinue`標誌
+- [ ] 系統提示指引何時完成
 
-### Partial Completion
-- [ ] Tasks tracked with status (pending, in_progress, completed, failed)
-- [ ] Checkpoints saved for resume
-- [ ] Progress visible to user
-- [ ] Resume continues from where left off
+### 部分完成
+- [ ] 任務以狀態追蹤（pending, in_progress, completed, failed）
+- [ ] 檢查點儲存以供恢復
+- [ ] 進度對使用者可見
+- [ ] 恢復從中斷處繼續
 
-### Model Tiers
-- [ ] Tier selected based on task complexity
-- [ ] Cost optimization considered
-- [ ] Fast tier for simple operations
-- [ ] Powerful tier reserved for synthesis
+### 模型層級
+- [ ] 層級依任務複雜度選擇
+- [ ] 考慮成本優化
+- [ ] 簡單操作用fast層級
+- [ ] 保留powerful層級予合成
 
-### Context Limits
-- [ ] Tools support iterative refinement (preview vs full)
-- [ ] Consolidation mechanism available
-- [ ] Important context persisted to files
-- [ ] Truncation strategy defined
+### 上下文限制
+- [ ] 工具支援迭代精煉（preview vs full）
+- [ ] 整合機制可用
+- [ ] 重要上下文持久化至檔案
+- [ ] 截斷策略已定義
 </checklist>

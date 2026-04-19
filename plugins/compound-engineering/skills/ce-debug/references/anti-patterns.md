@@ -1,91 +1,91 @@
-# Debugging Anti-Patterns
+# 除錯反模式
 
-Read this before forming hypotheses. These patterns describe the most common ways debugging goes wrong. They feel productive in the moment — that is what makes them dangerous.
-
----
-
-## Prediction Quality
-
-The prediction requirement exists to prevent symptom-fixing. A prediction tests whether your understanding of the bug is correct, not just whether a fix makes the error go away.
-
-**Bad prediction (restates the hypothesis):**
-> Hypothesis: The null pointer is because `user` is not initialized.
-> Prediction: `user` will be null when I log it.
-
-This just re-describes the symptom. It cannot be wrong if the hypothesis is right — so it cannot catch a wrong hypothesis.
-
-**Good prediction (tests something non-obvious):**
-> Hypothesis: The null pointer is because the auth middleware skips initialization on cached requests.
-> Prediction: Non-cached requests to the same endpoint will NOT produce the null pointer, and the `X-Cache` header will be present on failing requests.
-
-This tests a different code path and a different observable. If the prediction is wrong — cached and non-cached requests both fail — the hypothesis is wrong even if "initializing user earlier" happens to fix the immediate error.
-
-**Rule of thumb:** A good prediction names something you have not looked at yet. If confirming the prediction requires only looking at the same line of code you already identified, the prediction is not adding information.
+立假說前先讀此。下述乃除錯最常見之誤。當下覺得有效——故其危險。
 
 ---
 
-## Shotgun Debugging
+## 預測品質
 
-Changing multiple things at once to "see if it helps."
+預測之設乃為防「治症不治本」。預測驗證對缺陷之理解是否正確，非僅驗修復是否消錯。
 
-**How it feels:** Productive. You're making changes, running tests, making progress.
+**劣預測（重述假說）：**
+> 假說：空指標乃因 `user` 未初始化。
+> 預測：印出 `user` 必為 null。
 
-**What actually happens:** If the bug goes away, you do not know which change fixed it. If it persists, you do not know which changes are relevant. You have introduced variables instead of eliminating them.
+此僅重述症狀。假說若對，此不可能錯——故無以捕獲錯誤假說。
 
-**The fix:** One hypothesis, one change, one test. If the first change does not fix it, revert it before trying the next. Changes should be additive to understanding, not cumulative to the codebase.
+**良預測（測非顯之事）：**
+> 假說：空指標乃因認證中介於快取請求跳過初始化。
+> 預測：同一端點之非快取請求不會出現空指標，且失敗請求必帶 `X-Cache` 標頭。
 
----
+此測不同路徑與不同可觀量。若預測錯——快取與非快取皆敗——則假說錯，即使「提前初始化 user」恰能消眼前的錯。
 
-## Confirmation Bias
-
-Interpreting ambiguous evidence as supporting your current hypothesis.
-
-**How it looks:**
-- A log line that *could* support your theory — you treat it as proof
-- A test passes after your change — you declare the bug fixed without checking if the test was actually exercising the failure path
-- The error message changes slightly — you interpret the change as "getting closer" instead of recognizing a different failure mode
-
-**The defense:** Before declaring a hypothesis confirmed, ask: "What evidence would DISPROVE this hypothesis?" If you cannot name something that would change your mind, you are not testing — you are justifying.
+**經驗法則：** 良預測命名尚未檢視之物。若確認預測僅需看已識別之同一行，預測未增信息。
 
 ---
 
-## "It Works Now, Move On"
+## 散彈除錯
 
-The bug stops appearing after a change. The temptation is to declare victory and move on.
+同時改多處以「試試看」。
 
-**When this is a trap:** If you cannot explain WHY the change fixed the bug — the full causal chain from your change through the system to the symptom — you may have:
-- Fixed a symptom while the root cause remains
-- Introduced a change that masks the bug without resolving it
-- Gotten lucky with timing (especially for intermittent bugs)
+**感覺：** 高效。改碼、跑測、有進展。
 
-**The test:** Can you explain the fix to someone else without using the words "somehow" or "I think"? If not, the root cause is not confirmed.
+**實情：** 缺陷若消，不知何改生效。若存，不知何改相關。引入變量而非消除。
 
----
-
-## Thoughts That Signal You Are About to Shortcut
-
-These feel like reasonable next steps. They are warning signs that investigation is being skipped.
-
-**Proposing a fix before explaining the cause.** If the words "I think we should change..." come before "the root cause is...", pause. The fix might be right, but without a confirmed causal chain there is no way to know. Explain the cause first.
-
-**Reaching for another attempt without new information.** After 2-3 failed hypotheses, trying a 4th without learning something new from the failures is not debugging — it is guessing with increasing frustration. Stop and diagnose why previous hypotheses failed (see smart escalation).
-
-**Certainty without evidence.** The feeling of "I know what this is" before reading the relevant code. Experienced developers have strong pattern-matching instincts, and they are right often enough to be dangerous when wrong. Read the code even when you are confident.
-
-**Minimizing the scope.** "It is probably just..." — the word "just" signals an assumption that the problem is small. Small problems do not resist 2-3 fix attempts. If you are still debugging, it is not "just" anything.
-
-**Treating environmental differences as irrelevant.** When something works in one environment and fails in another, the difference between environments IS the investigation. Do not dismiss it — compare them systematically.
+**正法：** 一假說、一改動、一測試。首改無效則還原再試下一。改動應遞增理解，非累積於碼庫。
 
 ---
 
-## Smart Escalation Patterns
+## 確認偏誤
 
-When 2-3 hypotheses have been tested and none confirmed, the problem is not "I need hypothesis #4." The problem is usually one of these:
+以歧義證據為支持當前假說。
 
-**Different subsystems keep appearing.** Hypothesis 1 pointed to auth, hypothesis 2 to the database, hypothesis 3 to caching. This scatter pattern means the bug is not in any one subsystem — it is in the interaction between them, or in an architectural assumption that cuts across all of them. This is a design problem, not a localized bug.
+**表現：**
+- 一行日誌「可」支持己說——即視為證
+- 改後測試通過——即宣告修復，未驗測試是否真正觸及失敗路徑
+- 錯誤訊息微變——解讀為「接近了」，未察乃不同失敗模式
 
-**Evidence contradicts itself.** The logs say X happened, but the code makes X impossible. The test fails with error A, but the code path that produces error A is unreachable from the test. When evidence contradicts, the mental model is wrong. Step back. Re-read the code from the entry point without any assumptions about what it does.
+**防禦：** 宣告假說確認前問：「何證據能推翻此假說？」若無法命名能改變想法之物，非測試——乃自圓其說。
 
-**Works locally, fails elsewhere.** The most common causes: environment variables, dependency versions, file system differences (case sensitivity, path separators), timing differences (faster/slower machines), and data differences (test fixtures vs production data). Systematically compare the two environments rather than debugging the code.
+---
 
-**Fix works but prediction was wrong.** This is the most dangerous pattern. The bug appears fixed, but the causal chain you identified was incorrect. The real cause is still present and will resurface. Keep investigating — you found a coincidental fix, not the root cause.
+## 「能用了，繼續吧」
+
+改後缺陷消失。誘惑乃宣告勝利。
+
+**何時為陷阱：** 若無法解釋為何修復生效——從改動經系統至症狀之完整因果鏈——可能：
+- 僅治症狀，根因猶存
+- 引入遮蔽缺陷之改動
+- 時機巧合（間歇性缺陷尤甚）
+
+**檢驗：** 能否不用「不知怎的」或「我覺得」向他人解釋修復？若否，根因未確認。
+
+---
+
+## 捷徑前兆之念
+
+此等念頭看似合理下一步。實為跳過調查之警訊。
+
+**未解釋成因即提修復。** 「我覺得應該改……」出現在「根因是……」之前，當暫停。修復或許正確，然無確認因果鏈無從得知。先解釋成因。
+
+**無新信息即再試。** 2-3假說失敗後，未從失敗中學得新知即試第4個，非除錯——乃漸惱之猜測。停。診斷先前假說為何敗（見智慧升級）。
+
+**無證據之確信。** 讀相關代碼前即覺「我知道這是什麼」。老手模式匹配極強，對的時候夠多，錯時足夠危險。即使自信亦當讀碼。
+
+**縮小範圍。** 「大概只是……」——「只是」暗含問題很小。小問題不會扛住2-3次修復嘗試。若仍在除錯，則非「只是」。
+
+**視環境差異為無關。** 一環境可行、另一失敗時，環境間差異即為調查本身。勿輕忽——系統比較之。
+
+---
+
+## 智慧升級模式
+
+2-3假說測試後無一確認，問題非「需要第4個假說」。通常是以下之一：
+
+**不同子系統反覆出現。** 假說1指認證、假說2指資料庫、假說3指快取。此散布模式表示缺陷不在任何單一子系統——而在其間交互，或跨切所有子系統的架構假設。此乃設計問題，非局部缺陷。
+
+**證據自相矛盾。** 日誌說X發生，但代碼使X不可能。測試以錯誤A失敗，但產生A的代碼路徑從測試不可達。證據矛盾時，心智模型有誤。退一步。從入口點重新讀碼，不帶任何假設。
+
+**本地可行，他處失敗。** 最常見原因：環境變數、依賴版本、檔案系統差異（大小寫敏感、路徑分隔符）、時序差異（快慢機器）、資料差異（測試夾具 vs 生產資料）。系統比較兩環境，而非除錯代碼。
+
+**修復有效但預測錯誤。** 此乃最危險模式。缺陷看似修復，然所識別之因果鏈有誤。真正成因仍在，將再現。繼續調查——所得乃巧合修復，非根因。

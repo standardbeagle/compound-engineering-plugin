@@ -1,40 +1,40 @@
 ---
 name: ce-todo-create
-description: Use when creating durable work items, managing todo lifecycle, or tracking findings across sessions in the file-based todo system
+description: 建立持久工作項目、管理待辦生命週期、或跨對話追蹤發現時使用，適用於檔案式待辦系統
 disable-model-invocation: true
 ---
 
-# File-Based Todo Tracking
+# 檔案式待辦追蹤
 
-## Overview
+## 概述
 
-The `.context/compound-engineering/todos/` directory is a file-based tracking system for code review feedback, technical debt, feature requests, and work items. Each todo is a markdown file with YAML frontmatter.
+`.context/compound-engineering/todos/` 目錄為檔案式追蹤系統，用於碼審回饋、技術債務、功能請求及工作項目。每筆待辦為一含 YAML frontmatter 之 markdown 檔案。
 
-> **Legacy support:** Always check both `.context/compound-engineering/todos/` (canonical) and `todos/` (legacy) when reading. Write new todos only to the canonical path. This directory has a multi-session lifecycle -- do not clean it up as scratch.
+> **舊版支援：** 讀取時須同時檢查 `.context/compound-engineering/todos/`（正規）與 `todos/`（舊版）。新待辦僅寫入正規路徑。此目錄具跨對話生命週期——勿視為臨時空間而清理。
 
-## Directory Paths
+## 目錄路徑
 
-| Purpose | Path |
+| 用途 | 路徑 |
 |---------|------|
-| **Canonical (write here)** | `.context/compound-engineering/todos/` |
-| **Legacy (read-only)** | `todos/` |
+| **正規（寫入此處）** | `.context/compound-engineering/todos/` |
+| **舊版（唯讀）** | `todos/` |
 
-## File Naming Convention
+## 檔案命名慣例
 
 ```
 {issue_id}-{status}-{priority}-{description}.md
 ```
 
-- **issue_id**: Sequential number (001, 002, ...) -- never reused
-- **status**: `pending` | `ready` | `complete`
-- **priority**: `p1` (critical) | `p2` (important) | `p3` (nice-to-have)
-- **description**: kebab-case, brief
+- **issue_id**：序號（001, 002, ...）——永不複用
+- **status**：`pending` | `ready` | `complete`
+- **priority**：`p1`（關鍵）| `p2`（重要）| `p3`（錦上添花）
+- **description**：kebab-case，簡要
 
-**Example:** `002-ready-p1-fix-n-plus-1.md`
+**範例：** `002-ready-p1-fix-n-plus-1.md`
 
-## File Structure
+## 檔案結構
 
-Each todo has YAML frontmatter and structured sections. Use the todo template included below when creating new todos.
+每筆待辦含 YAML frontmatter 及結構化區段。建立新待辦時使用下方所附之待辦模板。
 
 ```yaml
 ---
@@ -46,64 +46,64 @@ dependencies: ["001"]     # Issue IDs this is blocked by
 ---
 ```
 
-**Required sections:** Problem Statement, Findings, Proposed Solutions, Recommended Action (filled during triage), Acceptance Criteria, Work Log.
+**必要區段：** 問題陳述、發現、建議解決方案、建議行動（分類時填入）、驗收標準、工作日誌。
 
-**Optional sections:** Technical Details, Resources, Notes.
+**選填區段：** 技術細節、資源、備註。
 
-## Workflows
+## 工作流
 
-> **Tool preference:** Use native file-search/glob and content-search tools instead of shell commands for finding and reading todo files. Shell only for operations with no native equivalent (`mv`, `mkdir -p`).
+> **工具偏好：** 尋找與讀取待辦檔案時，使用原生檔案搜尋/glob 及內容搜尋工具，而非 shell 指令。Shell 僅用於無原生對應之作業（`mv`、`mkdir -p`）。
 
-### Creating a New Todo
+### 建立新待辦
 
 1. `mkdir -p .context/compound-engineering/todos/`
-2. Search both paths for `[0-9]*-*.md`, find the highest numeric prefix, increment, zero-pad to 3 digits.
-3. Use the todo template included below, write to canonical path as `{NEXT_ID}-pending-{priority}-{description}.md`.
-4. Fill Problem Statement, Findings, Proposed Solutions, Acceptance Criteria, and initial Work Log entry.
-5. Set status: `pending` (needs triage) or `ready` (pre-approved).
+2. 搜尋兩路徑中 `[0-9]*-*.md`，找出最高數字前綴，遞增，補零至三位。
+3. 使用下方所附之待辦模板，寫入正規路徑為 `{NEXT_ID}-pending-{priority}-{description}.md`。
+4. 填入問題陳述、發現、建議解決方案、驗收標準及初始工作日誌條目。
+5. 設定狀態：`pending`（待分類）或 `ready`（預先批准）。
 
-**Create a todo when** the work needs more than ~15 minutes, has dependencies, requires planning, or needs prioritization. **Act immediately instead** when the fix is trivial, obvious, and self-contained.
+**建立待辦之時機**：工作需超過約 15 分鐘、有依賴關係、需規劃或需排定優先時。**立即處理之時機**：修復顯而易見、自足且瑣碎時。
 
-### Triaging Pending Items
+### 分類待決項目
 
-1. Glob `*-pending-*.md` in both paths.
-2. Review each todo's Problem Statement, Findings, and Proposed Solutions.
-3. Approve: rename `pending` -> `ready` in filename and frontmatter, fill Recommended Action.
-4. Defer: leave as `pending`.
+1. 於兩路徑 glob `*-pending-*.md`。
+2. 審查每筆待辦之問題陳述、發現及建議解決方案。
+3. 批准：於檔名與 frontmatter 中將 `pending` 更名為 `ready`，填入建議行動。
+4. 延後：保持 `pending`。
 
-Load the `ce-todo-triage` skill for an interactive approval workflow.
+載入 `ce-todo-triage` 技能以進行互動式批准工作流。
 
-### Managing Dependencies
+### 管理依賴關係
 
 ```yaml
 dependencies: ["002", "005"]  # Blocked by these issues
 dependencies: []               # No blockers
 ```
 
-To check blockers: search for `{dep_id}-complete-*.md` in both paths. Missing matches = incomplete blockers.
+檢查阻礙：於兩路徑搜尋 `{dep_id}-complete-*.md`。未找到匹配 = 阻礙未完成。
 
-### Completing a Todo
+### 完成待辦
 
-1. Verify all acceptance criteria.
-2. Update Work Log with final session.
-3. Rename `ready` -> `complete` in filename and frontmatter.
-4. Check for unblocked work: search for files containing `dependencies:.*"{issue_id}"`.
+1. 驗證所有驗收標準。
+2. 更新工作日誌記錄最終對話。
+3. 於檔名與 frontmatter 中將 `ready` 更名為 `complete`。
+4. 檢查已解除阻礙之工作：搜尋含 `dependencies:.*"{issue_id}"` 之檔案。
 
-## Integration with Workflows
+## 與工作流之整合
 
-| Trigger | Flow |
+| 觸發 | 流程 |
 |---------|------|
-| Code review | `/ce-code-review` -> Findings -> `/ce-todo-triage` -> Todos |
-| Autonomous review | `/ce-code-review mode:autofix` -> Residual todos -> `/ce-todo-resolve` |
-| Code TODOs | `/ce-todo-resolve` -> Fixes + Complex todos |
-| Planning | Brainstorm -> Create todo -> Work -> Complete |
+| 碼審 | `/ce-code-review` → 發現 → `/ce-todo-triage` → 待辦 |
+| 自主審查 | `/ce-code-review mode:autofix` → 殘餘待辦 → `/ce-todo-resolve` |
+| 程式碼 TODO | `/ce-todo-resolve` → 修復 + 複雜待辦 |
+| 規劃 | 腦力激盪 → 建立待辦 → 動工 → 完成 |
 
-## Key Distinction
+## 核心區別
 
-This skill manages **durable, cross-session work items** persisted as markdown files. For temporary in-session step tracking, use platform task tools (`TaskCreate`/`TaskUpdate` in Claude Code, `update_plan` in Codex) instead.
+此技能管理**持久、跨對話之工作項目**，以 markdown 檔案留存。對於臨時之對話內步驟追蹤，使用平台任務工具（Claude Code 之 `TaskCreate`/`TaskUpdate`、Codex 之 `update_plan`）。
 
 ---
 
-## Todo Template
+## 待辦模板
 
 @./assets/todo-template.md

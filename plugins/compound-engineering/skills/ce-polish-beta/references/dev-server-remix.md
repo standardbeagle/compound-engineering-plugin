@@ -1,21 +1,21 @@
-# Remix dev-server recipe (auto-detect fallback)
+# Remix 開發伺服器配方（自動偵測後備）
 
-Loaded when `detect-project-type.sh` returns `remix` and there is no `.claude/launch.json` to consult.
+當 `detect-project-type.sh` 回傳 `remix` 且無 `.claude/launch.json` 可查時載入。
 
-## Signature
+## 簽名
 
-- `remix.config.js` or `remix.config.ts` exists (classic Remix)
-- Remix 2.x+ on Vite has no `remix.config.*` -- it uses `vite.config.ts` with the Remix plugin, so it resolves as `vite` type, not `remix`
+- `remix.config.js` 或 `remix.config.ts` 存在（經典 Remix）
+- Vite 上之 Remix 2.x+ 無 `remix.config.*`——使用 `vite.config.ts` 附 Remix 插件，故解析為 `vite` 類型，非 `remix`
 
-## Start command
+## 啟動命令
 
-Standard:
+標準：
 
 ```bash
 npm run dev
 ```
 
-The `dev` script in `package.json` typically wraps `remix dev`. Also valid (read `package.json` scripts to confirm which the project uses):
+`package.json` 中之 `dev` 腳本通常包裹 `remix dev`。亦有效（讀 `package.json` scripts 確認專案使用何者）：
 
 ```bash
 pnpm dev
@@ -23,17 +23,17 @@ yarn dev
 bun run dev
 ```
 
-Prefer the package manager indicated by the lockfile:
+依 lockfile 指示之套件管理器偏好：
 - `pnpm-lock.yaml` -> `pnpm dev`
 - `yarn.lock` -> `yarn dev`
 - `bun.lock` / `bun.lockb` -> `bun run dev`
-- `package-lock.json` or none -> `npm run dev`
+- `package-lock.json` 或無 -> `npm run dev`
 
-## Port
+## 埠號
 
-Default: `3000`. Remix respects `--port <port>` flag. Classic Remix dev server also reads the `PORT` env var. Overrides follow the cascade in `references/dev-server-detection.md`.
+預設：`3000`。Remix 接受 `--port <port>` 旗標。經典 Remix 開發伺服器亦讀取 `PORT` 環境變數。覆寫遵循 `references/dev-server-detection.md` 中之層疊。
 
-## Stub generation
+## 存根生成
 
 ```json
 {
@@ -49,10 +49,10 @@ Default: `3000`. Remix respects `--port <port>` flag. Classic Remix dev server a
 }
 ```
 
-Substitute the resolved package manager (`npm` / `pnpm` / `yarn` / `bun`) and port.
+替換為已解析之套件管理器（`npm` / `pnpm` / `yarn` / `bun`）及埠號。
 
-## Common gotchas
+## 常見陷阱
 
-- **Classic vs Vite:** Classic Remix uses `remix.config.js`; new Remix (v2+) uses Vite -- detected as `vite` type, not `remix`. The `remix` type is specifically for classic Remix projects that still have a `remix.config.*` file.
-- **Remix v1 vs v2 dev server:** `remix dev` in v2 starts an Express-based dev server that binds a port; `remix dev` in v1 was a watcher only (no server). Polish needs v2+ for the dev server to bind a port and respond to reachability probes.
-- **Remix on Vite inherits Vite's port:** When Remix runs on Vite (no `remix.config.*`), the default port is 5173 (Vite's default), not 3000. That case is handled by the `vite` recipe, not this one.
+- **經典 vs Vite：** 經典 Remix 使用 `remix.config.js`；新版 Remix（v2+）使用 Vite——偵測為 `vite` 類型，非 `remix`。`remix` 類型專為仍含 `remix.config.*` 檔案之經典 Remix 專案。
+- **Remix v1 vs v2 開發伺服器：** v2 中 `remix dev` 啟動基於 Express 之開發伺服器並綁定埠號；v1 中 `remix dev` 僅為監視器（無伺服器）。Polish 需要 v2+ 使開發伺服器綁定埠號並回應可達性探測。
+- **Vite 上之 Remix 繼承 Vite 埠號：** 當 Remix 運行於 Vite 上（無 `remix.config.*`），預設埠為 5173（Vite 預設），非 3000。該情況由 `vite` 配方處理，非此文。

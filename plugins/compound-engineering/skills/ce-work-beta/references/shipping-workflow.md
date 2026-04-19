@@ -1,112 +1,112 @@
-# Shipping Workflow
+# 出貨工作流
 
-This file contains the shipping workflow (Phase 3-4). Load it only when all Phase 2 tasks are complete and execution transitions to quality check.
+此文包含出貨工作流（第三至四階段）。僅當所有第二階段任務完成且執行轉換至品質檢查時載入。
 
-## Phase 3: Quality Check
+## 第三階段：品質檢查
 
-1. **Run Core Quality Checks**
+1. **運行核心品質檢查**
 
-   Always run before submitting:
+    提交前恆先運行：
 
-   ```bash
-   # Run full test suite (use project's test command)
-   # Examples: bin/rails test, npm test, pytest, go test, etc.
+    ```bash
+    # 運行完整測試套件（使用專案之測試命令）
+    # 例：bin/rails test, npm test, pytest, go test 等
 
-   # Run linting (per AGENTS.md)
-   # Use linting-agent before pushing to origin
-   ```
+    # 運行 lint（依 AGENTS.md）
+    # 推送至 origin 前使用 linting-agent
+    ```
 
-2. **Code Review** (REQUIRED)
+2. **程式碼審閱**（必須）
 
-   Every change gets reviewed before shipping. The depth scales with the change's risk profile, but review itself is never skipped.
+    每次變更出貨前皆須審閱。深度依變更風險概況調整，但審閱本身絕不跳過。
 
-   **Tier 2: Full review (default)** -- REQUIRED unless Tier 1 criteria are explicitly met. Invoke the `ce-code-review` skill with `mode:autofix` to run specialized reviewer agents, auto-apply safe fixes, and surface residual work as todos. When the plan file path is known, pass it as `plan:<path>`. This is the mandatory default -- proceed to Tier 1 only after confirming every criterion below.
+    **第二級：完整審閱（預設）** -- 除非第一級標準明確符合，否則必須。以 `mode:autofix` 調用 `ce-code-review` 技能，運行專門審閱代理、自動套用安全修正並將殘留工作呈現為待辦。計劃檔案路徑已知時，以 `plan:<path>` 傳入。此為強制預設——確認以下各項標準後方可進入第一級。
 
-   **Tier 1: Inline self-review** -- A lighter alternative permitted only when **all four** criteria are true. Before choosing Tier 1, explicitly state which criteria apply and why. If any criterion is uncertain, use Tier 2.
-   - Purely additive (new files only, no existing behavior modified)
-   - Single concern (one skill, one component -- not cross-cutting)
-   - Pattern-following (implementation mirrors an existing example with no novel logic)
-   - Plan-faithful (no scope growth, no deferred questions resolved with surprising answers)
+    **第一級：行內自審** -- 輕量替代方案，僅當**全部四項**標準為真時允許。選擇第一級前，明確陳述適用哪些標準及原因。任何標準不確定時，使用第二級。
+    - 純增量（僅新檔案，無既有行為修改）
+    - 單一關注點（一個技能、一個元件——非跨切面）
+    - 模式跟隨（實施照搬既有範例，無新穎邏輯）
+    - 計劃忠實（無範圍膨脹，無推遲問題以意外答案解決）
 
-3. **Final Validation**
-   - All tasks marked completed
-   - Testing addressed -- tests pass and new/changed behavior has corresponding test coverage (or an explicit justification for why tests are not needed)
-   - Linting passes
-   - Code follows existing patterns
-   - Figma designs match (if applicable)
-   - No console errors or warnings
-   - If the plan has a `Requirements Trace`, verify each requirement is satisfied by the completed work
-   - If any `Deferred to Implementation` questions were noted, confirm they were resolved during execution
+3. **最終驗證**
+    - 所有任務標記完成
+    - 測試已處理——測試通過且新/變更行為有對應測試覆蓋（或明確說明為何不需要測試）
+    - Lint 通過
+    - 程式碼遵循既有模式
+    - Figma 設計匹配（如適用）
+    - 無控制台錯誤或警告
+    - 若計劃有 `Requirements Trace`，驗證各需求已被完成工作滿足
+    - 若有任何 `Deferred to Implementation` 問題，確認已於執行期間解決
 
-4. **Prepare Operational Validation Plan** (REQUIRED)
-   - Add a `## Post-Deploy Monitoring & Validation` section to the PR description for every change.
-   - Include concrete:
-     - Log queries/search terms
-     - Metrics or dashboards to watch
-     - Expected healthy signals
-     - Failure signals and rollback/mitigation trigger
-     - Validation window and owner
-   - If there is truly no production/runtime impact, still include the section with: `No additional operational monitoring required` and a one-line reason.
+4. **準備運營驗證計劃**（必須）
+    - 於每次變更之 PR 描述中添加 `## Post-Deploy Monitoring & Validation` 章節。
+    - 包含具體：
+      - 日誌查詢/搜尋詞
+      - 需關注之指標或儀表板
+      - 預期健康信號
+      - 失敗信號及回滾/緩解觸發
+      - 驗證窗口及負責人
+    - 若確實無生產/運行時影響，仍包含該章節：`No additional operational monitoring required` 及一行原因。
 
-## Phase 4: Ship It
+## 第四階段：出貨
 
-1. **Prepare Evidence Context**
+1. **準備證據上下文**
 
-   Do not invoke `ce-demo-reel` directly in this step. Evidence capture belongs to the PR creation or PR description update flow, where the final PR diff and description context are available.
+    此步驟勿直接調用 `ce-demo-reel`。證據捕捉屬於 PR 建立或 PR 描述更新流程，此時最終 PR 差異及描述上下文可用。
 
-   Note whether the completed work has observable behavior (UI rendering, CLI output, API/library behavior with a runnable example, generated artifacts, or workflow output). The `ce-commit-push-pr` skill will ask whether to capture evidence only when evidence is possible.
+    注意已完成工作是否有可觀察行為（UI 渲染、CLI 輸出、API/函式庫行為附可執行範例、生成產物或工作流輸出）。`ce-commit-push-pr` 技能僅在證據可能時詢問是否捕捉。
 
-2. **Update Plan Status**
+2. **更新計劃狀態**
 
-   If the input document has YAML frontmatter with a `status` field, update it to `completed`:
-   ```
-   status: active  ->  status: completed
-   ```
+    若輸入文檔有含 `status` 欄位之 YAML frontmatter，更新為 `completed`：
+    ```
+    status: active  ->  status: completed
+    ```
 
-3. **Commit and Create Pull Request**
+3. **提交並建立拉取請求**
 
-   Load the `ce-commit-push-pr` skill to handle committing, pushing, and PR creation. The skill handles convention detection, branch safety, logical commit splitting, adaptive PR descriptions, and attribution badges.
+    載入 `ce-commit-push-pr` 技能處理提交、推送及 PR 建立。技能處理慣例偵測、分支安全、邏輯提交拆分、自適應 PR 描述及歸因徽章。
 
-   When providing context for the PR description, include:
-   - The plan's summary and key decisions
-   - Testing notes (tests added/modified, manual testing performed)
-   - Evidence context from step 1, so `ce-commit-push-pr` can decide whether to ask about capturing evidence
-   - Figma design link (if applicable)
-   - The Post-Deploy Monitoring & Validation section (see Phase 3 Step 4)
+    提供 PR 描述上下文時包含：
+    - 計劃摘要及關鍵決策
+    - 測試備註（新增/修改之測試、執行之手動測試）
+    - 步驟 1 之證據上下文，使 `ce-commit-push-pr` 可決定是否詢問捕捉證據
+    - Figma 設計連結（如適用）
+    - Post-Deploy Monitoring & Validation 章節（見第三階段步驟 4）
 
-   If the user prefers to commit without creating a PR, load the `ce-commit` skill instead.
+    若用戶偏好提交而不建立 PR，改載入 `ce-commit` 技能。
 
-4. **Notify User**
-   - Summarize what was completed
-   - Link to PR (if one was created)
-   - Note any follow-up work needed
-   - Suggest next steps if applicable
+4. **通知用戶**
+    - 摘要完成內容
+    - 連結至 PR（如已建立）
+    - 注意任何後續工作
+    - 適當時建議下一步
 
-## Quality Checklist
+## 品質檢查清單
 
-Before creating PR, verify:
+建立 PR 前驗證：
 
-- [ ] All clarifying questions asked and answered
-- [ ] All tasks marked completed
-- [ ] Testing addressed -- tests pass AND new/changed behavior has corresponding test coverage (or an explicit justification for why tests are not needed)
-- [ ] Linting passes (use linting-agent)
-- [ ] Code follows existing patterns
-- [ ] Figma designs match implementation (if applicable)
-- [ ] Evidence decision handled by `ce-commit-push-pr` when the change has observable behavior
-- [ ] Commit messages follow conventional format
-- [ ] PR description includes Post-Deploy Monitoring & Validation section (or explicit no-impact rationale)
-- [ ] Code review completed (inline self-review or full `ce-code-review`)
-- [ ] PR description includes summary, testing notes, and evidence when captured
-- [ ] PR description includes Compound Engineered badge with accurate model and harness
+- [ ] 所有澄清問題已詢問並回答
+- [ ] 所有任務標記完成
+- [ ] 測試已處理——測試通過且新/變更行為有對應測試覆蓋（或明確說明為何不需要測試）
+- [ ] Lint 通過（使用 linting-agent）
+- [ ] 程式碼遵循既有模式
+- [ ] Figma 設計匹配實施（如適用）
+- [ ] 證據決策由 `ce-commit-push-pr` 於變更有可觀察行為時處理
+- [ ] 提交訊息遵循慣例格式
+- [ ] PR 描述包含 Post-Deploy Monitoring & Validation 章節（或明確之無影響理據）
+- [ ] 程式碼審閱已完成（行內自審或完整 `ce-code-review`）
+- [ ] PR 描述包含摘要、測試備註及捕捉之證據
+- [ ] PR 描述包含 Compound Engineered 徽章附準確模型及線束
 
-## Code Review Tiers
+## 程式碼審閱層級
 
-Every change gets reviewed. The tier determines depth, not whether review happens.
+每次變更皆須審閱。層級決定深度，非是否審閱。
 
-**Tier 2 (full review)** -- REQUIRED default. Invoke `ce-code-review mode:autofix` with `plan:<path>` when available. Safe fixes are applied automatically; residual work surfaces as todos. Always use this tier unless all four Tier 1 criteria are explicitly confirmed.
+**第二級（完整審閱）** -- 必須預設。可用時以 `plan:<path>` 調用 `ce-code-review mode:autofix`。安全修正自動套用；殘留工作呈現為待辦。除非明確確認全部四項第一級標準，恆用此層級。
 
-**Tier 1 (inline self-review)** -- permitted only when all four are true (state each explicitly before choosing):
-- Purely additive (new files only, no existing behavior modified)
-- Single concern (one skill, one component -- not cross-cutting)
-- Pattern-following (mirrors an existing example, no novel logic)
-- Plan-faithful (no scope growth, no surprising deferred-question resolutions)
+**第一級（行內自審）** -- 僅當全部四項為真時允許（選擇前逐項明確陳述）：
+- 純增量（僅新檔案，無既有行為修改）
+- 單一關注點（一個技能、一個元件——非跨切面）
+- 模式跟隨（照搬既有範例，無新穎邏輯）
+- 計劃忠實（無範圍膨脹，無意外之推遲問題解決方案）

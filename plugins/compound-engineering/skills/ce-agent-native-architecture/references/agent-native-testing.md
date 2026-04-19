@@ -1,13 +1,13 @@
 <overview>
-Testing agent-native apps requires different approaches than traditional unit testing. You're testing whether the agent achieves outcomes, not whether it calls specific functions. This guide provides concrete testing patterns for verifying your app is truly agent-native.
+測試agent-native應用需不同於傳統單元測試之方法。測試代理是否達成結果，非是否呼叫特定函式。此文提供具體測試模式以驗證應用真正agent-native。
 </overview>
 
 <testing_philosophy>
-## Testing Philosophy
+## 測試哲學
 
-### Test Outcomes, Not Procedures
+### 測結果，非測過程
 
-**Traditional (procedure-focused):**
+**傳統（過程導向）：**
 ```typescript
 // Testing that a specific function was called with specific args
 expect(mockProcessFeedback).toHaveBeenCalledWith({
@@ -17,7 +17,7 @@ expect(mockProcessFeedback).toHaveBeenCalledWith({
 });
 ```
 
-**Agent-native (outcome-focused):**
+**Agent-native（結果導向）：**
 ```typescript
 // Testing that the outcome was achieved
 const result = await agent.process("Great app!");
@@ -29,20 +29,20 @@ expect(storedFeedback.importance).toBeLessThanOrEqual(5);
 // We don't care exactly how it categorized—just that it's reasonable
 ```
 
-### Accept Variability
+### 接受變異性
 
-Agents may solve problems differently each time. Your tests should:
-- Verify the end state, not the path
-- Accept reasonable ranges, not exact values
-- Check for presence of required elements, not exact format
+代理每次可能以不同方式解決問題。測試應：
+- 驗證終態，非路徑
+- 接受合理範圍，非精確值
+- 檢查必要元素存在，非精確格式
 </testing_philosophy>
 
 <can_agent_do_it_test>
-## The "Can Agent Do It?" Test
+## "代理能做嗎？"測試
 
-For each UI feature, write a test prompt and verify the agent can accomplish it.
+對每個UI功能，撰寫測試提示並驗證代理能完成。
 
-### Template
+### 模板
 
 ```typescript
 describe('Agent Capability Tests', () => {
@@ -87,9 +87,9 @@ describe('Agent Capability Tests', () => {
 });
 ```
 
-### The "Write to Location" Test
+### "寫入位置"測試
 
-A key litmus test: can the agent create content in specific app locations?
+關鍵試金石：代理能否在特定應用位置建立內容？
 
 ```typescript
 describe('Location Awareness Tests', () => {
@@ -119,11 +119,11 @@ describe('Location Awareness Tests', () => {
 </can_agent_do_it_test>
 
 <surprise_test>
-## The "Surprise Test"
+## "驚喜測試"
 
-A well-designed agent-native app lets the agent figure out creative approaches. Test this by giving open-ended requests.
+設計良好的agent-native應用讓代理能找出創意方法。以開放式請求測試此能力。
 
-### The Test
+### 測試
 
 ```typescript
 describe('Agent Creativity Tests', () => {
@@ -167,7 +167,7 @@ describe('Agent Creativity Tests', () => {
 });
 ```
 
-### What Failure Looks Like
+### 失敗之貌
 
 ```typescript
 // FAILURE: Agent can only say it can't do that
@@ -184,11 +184,11 @@ expect(result.response).not.toContain("Could you clarify");
 </surprise_test>
 
 <parity_testing>
-## Automated Parity Testing
+## 自動化對等測試
 
-Ensure every UI action has an agent equivalent.
+確保每個UI動作皆有代理對應。
 
-### Capability Map Testing
+### 能力映射測試
 
 ```typescript
 // capability-map.ts
@@ -229,7 +229,7 @@ describe('Action Parity', () => {
 });
 ```
 
-### Context Parity Testing
+### 上下文對等測試
 
 ```typescript
 describe('Context Parity', () => {
@@ -261,11 +261,11 @@ describe('Context Parity', () => {
 </parity_testing>
 
 <integration_testing>
-## Integration Testing
+## 整合測試
 
-Test the full flow from user request to outcome.
+測試從使用者請求到結果之完整流程。
 
-### End-to-End Flow Tests
+### 端對端流程測試
 
 ```typescript
 describe('End-to-End Flows', () => {
@@ -317,7 +317,7 @@ describe('End-to-End Flows', () => {
 });
 ```
 
-### Failure Recovery Tests
+### 失敗恢復測試
 
 ```typescript
 describe('Failure Recovery', () => {
@@ -353,9 +353,9 @@ describe('Failure Recovery', () => {
 </integration_testing>
 
 <snapshot_testing>
-## Snapshot Testing for System Prompts
+## 系統提示快照測試
 
-Track changes to system prompts and context injection over time.
+追蹤系統提示與上下文注入隨時間之變化。
 
 ```typescript
 describe('System Prompt Stability', () => {
@@ -389,13 +389,13 @@ describe('System Prompt Stability', () => {
 </snapshot_testing>
 
 <manual_testing>
-## Manual Testing Checklist
+## 手動測試清單
 
-Some things are best tested manually during development:
+部分事項於開發時手動測試最佳：
 
-### Natural Language Variation Test
+### 自然語言變化測試
 
-Try multiple phrasings for the same request:
+對同一請求嘗試多種措辭：
 
 ```
 "Add this to my feed"
@@ -405,9 +405,9 @@ Try multiple phrasings for the same request:
 "I want this in my feed"
 ```
 
-All should work if context injection is correct.
+若上下文注入正確，皆應運作。
 
-### Edge Case Prompts
+### 邊界情況提示
 
 ```
 "What can you do?"
@@ -423,9 +423,9 @@ All should work if context injection is correct.
 → Agent should confirm before destructive actions
 ```
 
-### Confusion Test
+### 混淆測試
 
-Ask about things that should exist but might not be properly connected:
+詢問應存在但可能未正確連接之事：
 
 ```
 "What's in my research folder?"
@@ -440,9 +440,9 @@ Ask about things that should exist but might not be properly connected:
 </manual_testing>
 
 <ci_integration>
-## CI/CD Integration
+## CI/CD 整合
 
-Add agent-native tests to your CI pipeline:
+新增agent-native測試至CI管線：
 
 ```yaml
 # .github/workflows/test.yml
@@ -477,9 +477,9 @@ jobs:
           git diff --exit-code capability-map.ts
 ```
 
-### Cost-Aware Testing
+### 成本感知測試
 
-Agent tests cost API tokens. Strategies to manage:
+代理測試消耗API token。管理策略：
 
 ```typescript
 // Use smaller models for basic tests
@@ -502,9 +502,9 @@ if (process.env.GITHUB_REF === 'refs/heads/main') {
 </ci_integration>
 
 <test_utilities>
-## Test Utilities
+## 測試工具
 
-### Agent Test Harness
+### 代理測試線束
 
 ```typescript
 class AgentTestHarness {
@@ -558,25 +558,25 @@ test('full flow', async () => {
 </test_utilities>
 
 <checklist>
-## Testing Checklist
+## 測試清單
 
-Automated Tests:
-- [ ] "Can Agent Do It?" tests for each UI action
-- [ ] Location awareness tests ("write to my feed")
-- [ ] Parity tests (tool exists, documented in prompt)
-- [ ] Context parity tests (agent sees what UI shows)
-- [ ] End-to-end flow tests
-- [ ] Failure recovery tests
+自動化測試：
+- [ ] 每個UI動作之"代理能做嗎？"測試
+- [ ] 位置感知測試（"write to my feed"）
+- [ ] 對等測試（工具存在、載入於提示）
+- [ ] 上下文對等測試（代理可見UI所顯示）
+- [ ] 端對端流程測試
+- [ ] 失敗恢復測試
 
-Manual Tests:
-- [ ] Natural language variation (multiple phrasings work)
-- [ ] Edge case prompts (open-ended requests)
-- [ ] Confusion test (agent knows app vocabulary)
-- [ ] Surprise test (agent can be creative)
+手動測試：
+- [ ] 自然語言變化（多種措辭皆有效）
+- [ ] 邊界情況提示（開放式請求）
+- [ ] 混淆測試（代理知曉應用詞彙）
+- [ ] 驚喜測試（代理能發揮創意）
 
-CI Integration:
-- [ ] Parity tests run on every PR
-- [ ] Capability tests run with API key
-- [ ] System prompt completeness check
-- [ ] Capability map drift detection
+CI整合：
+- [ ] 對等測試於每個PR執行
+- [ ] 能力測試以API key執行
+- [ ] 系統提示完整性檢查
+- [ ] 能力映射漂移偵測
 </checklist>

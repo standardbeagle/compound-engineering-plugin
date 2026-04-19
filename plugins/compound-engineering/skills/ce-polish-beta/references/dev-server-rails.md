@@ -1,31 +1,31 @@
-# Rails dev-server recipe (auto-detect fallback)
+# Rails 開發伺服器配方（自動偵測後備）
 
-Loaded when `detect-project-type.sh` returns `rails` and there is no `.claude/launch.json` to consult.
+當 `detect-project-type.sh` 回傳 `rails` 且無 `.claude/launch.json` 可查時載入。
 
-## Signature
+## 簽名
 
-- `bin/dev` exists and is executable
-- `Gemfile` exists
+- `bin/dev` 存在且可執行
+- `Gemfile` 存在
 
-## Start command
+## 啟動命令
 
 ```bash
 bin/dev
 ```
 
-`bin/dev` is the Rails 7+ convention for "start everything" (web + assets watcher + optional workers). It is a one-liner script that invokes `foreman start -f Procfile.dev` under the hood, so `Procfile.dev` is the canonical place to read the *actual* command if `bin/dev` is missing or non-executable.
+`bin/dev` 為 Rails 7+ 之「啟動一切」慣例（web + assets watcher + 可選 workers）。其為一行腳本，底層調用 `foreman start -f Procfile.dev`，故 `Procfile.dev` 為 `bin/dev` 缺失或不可執行時讀取*實際命令*之規範位置。
 
-## Port
+## 埠號
 
-Default: `3000`. Overrides follow the cascade in `references/dev-server-detection.md`:
-1. `Procfile.dev` `web:` line may contain `-p <n>`
-2. `config/puma.rb` may bind to a non-default port
+預設：`3000`。覆寫遵循 `references/dev-server-detection.md` 中之層疊：
+1. `Procfile.dev` `web:` 行可能含 `-p <n>`
+2. `config/puma.rb` 可能綁定非預設埠
 3. `.env` / `.env.development` `PORT=<n>`
-4. `AGENTS.md` / `CLAUDE.md` project instructions
+4. `AGENTS.md` / `CLAUDE.md` 專案指示
 
-## Stub generation for `.claude/launch.json`
+## `.claude/launch.json` 存根生成
 
-When the user accepts "Save this as `.claude/launch.json`?", emit the Rails stub from `launch-json-schema.md`:
+用戶接受「儲存為 `.claude/launch.json`？」時，從 `launch-json-schema.md` 發出 Rails 存根：
 
 ```json
 {
@@ -41,10 +41,10 @@ When the user accepts "Save this as `.claude/launch.json`?", emit the Rails stub
 }
 ```
 
-If the cascade resolved a non-3000 port, substitute it in the stub's `port` field before writing.
+若層疊解析出非 3000 埠號，寫入前替換存根之 `port` 欄位。
 
-## Common gotchas
+## 常見陷阱
 
-- **Bundler path:** some machines require `bundle exec bin/dev`. If `bin/dev` fails with a load-path error, fall back to `bundle exec bin/dev`.
-- **Foreman vs overmind:** `Procfile` vs `Procfile.dev` often both exist. Rails' `bin/dev` resolves to `Procfile.dev`; if the project uses `overmind` explicitly, prefer `overmind start -f Procfile.dev` (see `dev-server-procfile.md`).
-- **SSL dev server:** `rails s` with `--ssl` changes the URL scheme. Polish's reachability probe uses `http://`; users with SSL dev servers should set `port` explicitly in `.claude/launch.json` and note the scheme in the checklist.
+- **Bundler 路徑：** 部分機器需要 `bundle exec bin/dev`。若 `bin/dev` 因載入路徑錯誤失敗，回退至 `bundle exec bin/dev`。
+- **Foreman vs overmind：** `Procfile` 與 `Procfile.dev` 通常同時存在。Rails 之 `bin/dev` 解析為 `Procfile.dev`；若專案顯式使用 `overmind`，偏好 `overmind start -f Procfile.dev`（見 `dev-server-procfile.md`）。
+- **SSL 開發伺服器：** `rails s` 附 `--ssl` 改變 URL scheme。Polish 之可達性探測使用 `http://`；SSL 開發伺服器之用戶應於 `.claude/launch.json` 中顯式設 `port` 並於檢查清單中注明 scheme。

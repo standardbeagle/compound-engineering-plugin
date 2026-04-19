@@ -1,60 +1,60 @@
-# Upload and Approval
+# 上傳與核准
 
-Upload a temporary preview for the user to review, then promote to permanent hosting on approval.
+上傳臨時預覽供使用者審閱，核准後提升至永久託管。
 
-## Step 1: Preview Upload (Temporary)
+## 步驟一：預覽上傳（臨時）
 
-Upload the evidence file (GIF or PNG) to litterbox for a temporary 1-hour preview:
+上傳證據檔（GIF 或 PNG）至 litterbox 取得1小時臨時預覽：
 
 ```bash
 python3 scripts/capture-demo.py preview [ARTIFACT_PATH]
 ```
 
-The last line of output is the preview URL (e.g., `https://litter.catbox.moe/abc123.gif`). This URL expires after 1 hour — no cleanup needed.
+輸出末行為預覽 URL（如 `https://litter.catbox.moe/abc123.gif`）。此 URL 一小時後失效——無需清理。
 
-For multiple files (static screenshots tier), upload each file separately.
+多檔時（靜態截圖層），逐檔分別上傳。
 
-**If upload fails** after retry, fall back to opening the local file with the platform file-opener (`open` on macOS, `xdg-open` on Linux) so the user can still review it. Include the local path in the approval question instead of a URL.
+**上傳失敗**經重試後，退至以平台檔案開啟器開啟本地檔案（macOS 用 `open`，Linux 用 `xdg-open`）供使用者審閱。以本地路徑替代 URL 置於核准問題中。
 
-## Step 2: Approval Gate
+## 步驟二：核准關卡
 
-Present the preview URL to the user for approval. Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini).
+呈預覽 URL 予使用者核准。用平台之阻塞式提問工具（Claude Code 之 `AskUserQuestion`，Codex 之 `request_user_input`，Gemini 之 `ask_user`）。
 
-**Question:** "Evidence preview (1h link): [PREVIEW_URL]"
+**問題：** "Evidence preview (1h link): [PREVIEW_URL]"
 
-**Options:**
-1. **Use this in the PR** -- promote to permanent hosting
-2. **Recapture** -- provide instructions on what to change
-3. **Proceed without evidence** -- set evidence to null and proceed
+**選項：**
+1. **用於 PR**——提升至永久託管
+2. **重新擷取**——提供更改指示
+3. **無證據繼續**——設證據為 null 並繼續
 
-If the question tool is unavailable (headless/background mode), present the numbered options and wait for the user's reply before proceeding.
+提問工具不可用時（無頭/背景模式），呈編號選項，等候使用者回覆後再繼續。
 
-### On "Recapture"
+### 選「重新擷取」
 
-Return to the tier execution step. The user's instructions guide what to change in the next capture attempt. After recapture, upload a new preview and repeat the approval gate.
+返回層執行步驟。使用者指示引導下次擷取之更改。重新擷取後上傳新預覽，重複核准關卡。
 
-### On "Proceed without evidence"
+### 選「無證據繼續」
 
-Set evidence to null and proceed. The preview link expires on its own.
+設證據為 null 並繼續。預覽連結自行失效。
 
-## Step 3: Promote to Permanent Hosting
+## 步驟三：提升至永久託管
 
-After the user approves, upload to permanent catbox hosting. The command accepts either the preview URL (preferred) or the local file path (fallback):
+使用者核准後，上傳至永久 catbox 託管。命令接受預覽 URL（優先）或本地檔案路徑（後備）：
 
 ```bash
 python3 scripts/capture-demo.py upload [PREVIEW_URL or ARTIFACT_PATH]
 ```
 
-If Step 1 produced a preview URL, pass it here -- catbox copies directly from litterbox without re-uploading. If Step 1 fell back to local review (no preview URL), pass the local artifact path instead.
+步驟一產出預覽 URL 時傳此處——catbox 直接從 litterbox 複製免重新上傳。步驟一退至本地審閱（無預覽 URL）時傳本地產物路徑。
 
-The last line of output is the permanent URL (e.g., `https://files.catbox.moe/abc123.gif`). Use this URL in the output, not the preview URL.
+輸出末行為永久 URL（如 `https://files.catbox.moe/abc123.gif`。輸出用此 URL，非預覽 URL。
 
-For multiple files, promote each separately.
+多檔時逐個提升。
 
-## Step 4: Return Output
+## 步驟四：回傳輸出
 
-Return the structured output defined in the SKILL.md Output section: `Tier`, `Description`, and `URL` (the permanent catbox URL). The caller formats the evidence into the PR description. ce-demo-reel does not generate markdown.
+回傳 SKILL.md 輸出段落所定之結構化輸出：`Tier`、`Description`、及 `URL`（永久 catbox URL）。呼叫者將證據格式化至 PR 說明中。ce-demo-reel 不生成 markdown。
 
-## Step 5: Cleanup
+## 步驟五：清理
 
-Remove the `[RUN_DIR]` scratch directory and all temporary files. Preserve nothing -- the evidence lives at the permanent URL now.
+移除 `[RUN_DIR]` 暫存目錄及所有臨時檔案。不保留任何物——證據已存於永久 URL。

@@ -1,67 +1,67 @@
-# Persona Catalog
+# 角色目錄
 
-17 reviewer personas organized into always-on, cross-cutting conditional, and stack-specific conditional layers, plus CE-specific agents. The orchestrator uses this catalog to select which reviewers to spawn for each review.
+17 位審閱者角色分為常駐、跨切條件式及技術棧條件式層，外加 CE 專用代理。編排者以此目錄選擇每次審閱分派哪些審閱者。
 
-## Always-on (4 personas + 2 CE agents)
+## 常駐（4 角色 + 2 CE 代理）
 
-Spawned on every review regardless of diff content.
+每次審閱皆分派，無論 diff 內容。
 
-**Persona agents (structured JSON output):**
+**角色代理（結構化 JSON 輸出）：**
 
-| Persona | Agent | Focus |
+| 角色 | 代理 | 焦點 |
 |---------|-------|-------|
-| `correctness` | `review:ce-correctness-reviewer` | Logic errors, edge cases, state bugs, error propagation, intent compliance |
-| `testing` | `review:ce-testing-reviewer` | Coverage gaps, weak assertions, brittle tests, missing edge case tests |
-| `maintainability` | `review:ce-maintainability-reviewer` | Coupling, complexity, naming, dead code, premature abstraction |
-| `project-standards` | `review:ce-project-standards-reviewer` | CLAUDE.md and AGENTS.md compliance -- frontmatter, references, naming, cross-platform portability, tool selection |
+| `correctness` | `review:ce-correctness-reviewer` | 邏輯錯誤、邊界案例、狀態缺陷、錯誤傳播、意圖合規 |
+| `testing` | `review:ce-testing-reviewer` | 覆蓋缺口、弱斷言、脆弱測試、缺失邊界測試 |
+| `maintainability` | `review:ce-maintainability-reviewer` | 耦合、複雜度、命名、死碼、過早抽象 |
+| `project-standards` | `review:ce-project-standards-reviewer` | CLAUDE.md 及 AGENTS.md 合規 — frontmatter、引用、命名、跨平台可攜性、工具選擇 |
 
-**CE agents (unstructured output, synthesized separately):**
+**CE 代理（非結構化輸出，分開綜合）：**
 
-| Agent | Focus |
+| 代理 | 焦點 |
 |-------|-------|
-| `review:ce-agent-native-reviewer` | Verify new features are agent-accessible |
-| `research:ce-learnings-researcher` | Search docs/solutions/ for past issues related to this PR's modules and patterns |
+| `review:ce-agent-native-reviewer` | 驗證新功能可為代理所用 |
+| `research:ce-learnings-researcher` | 搜 docs/solutions/ 找與此 PR 模組及範式相關之既往議題 |
 
-## Conditional (8 personas)
+## 條件式（8 角色）
 
-Spawned when the orchestrator identifies relevant patterns in the diff. The orchestrator reads the full diff and reasons about selection -- this is agent judgment, not keyword matching.
+當編排者於 diff 中識別相關範式時分派。編排者讀完整 diff 並推理選擇 — 此為代理判斷，非關鍵詞匹配。
 
-| Persona | Agent | Select when diff touches... |
+| 角色 | 代理 | 選擇時機（diff 觸及…） |
 |---------|-------|---------------------------|
-| `security` | `review:ce-security-reviewer` | Auth middleware, public endpoints, user input handling, permission checks, secrets management |
-| `performance` | `review:ce-performance-reviewer` | Database queries, ORM calls, loop-heavy data transforms, caching layers, async/concurrent code |
-| `api-contract` | `review:ce-api-contract-reviewer` | Route definitions, serializer/interface changes, event schemas, exported type signatures, API versioning |
-| `data-migrations` | `review:ce-data-migrations-reviewer` | Migration files, schema changes, backfill scripts, data transformations |
-| `reliability` | `review:ce-reliability-reviewer` | Error handling, retry logic, circuit breakers, timeouts, background jobs, async handlers, health checks |
-| `adversarial` | `review:ce-adversarial-reviewer` | Diff has >=50 changed non-test, non-generated, non-lockfile lines, OR touches auth, payments, data mutations, external API integrations, or other high-risk domains |
-| `cli-readiness` | `review:ce-cli-readiness-reviewer` | CLI command definitions, argument parsing, CLI framework usage, command handler implementations |
-| `previous-comments` | `review:ce-previous-comments-reviewer` | **PR-only.** Reviewing a PR that has existing review comments or review threads from prior review rounds. Skip entirely when no PR metadata was gathered in Stage 1. |
+| `security` | `review:ce-security-reviewer` | 認證中介、公開端點、用戶輸入處理、權限檢查、密鑰管理 |
+| `performance` | `review:ce-performance-reviewer` | 資料庫查詢、ORM 呼叫、迴圈密集資料轉換、快取層、非同步/並行碼 |
+| `api-contract` | `review:ce-api-contract-reviewer` | 路由定義、序列化器/介面變更、事件 schema、匯出型別簽名、API 版本化 |
+| `data-migrations` | `review:ce-data-migrations-reviewer` | 遷移檔、schema 變更、回填腳本、資料轉換 |
+| `reliability` | `review:ce-reliability-reviewer` | 錯誤處理、重試邏輯、熔斷器、超時、背景任務、非同步處理器、健康檢查 |
+| `adversarial` | `review:ce-adversarial-reviewer` | Diff 有 >=50 行非測試、非生成、非鎖檔之變更行，或觸及認證、支付、資料變更、外部 API 整合或其他高風險領域 |
+| `cli-readiness` | `review:ce-cli-readiness-reviewer` | CLI 命令定義、參數解析、CLI 框架使用、命令處理器實作 |
+| `previous-comments` | `review:ce-previous-comments-reviewer` | **僅 PR。** 審閱具前輪審閱留言或討論串之 PR。Stage 1 未收集 PR 元資料時完全跳過。 |
 
-## Stack-Specific Conditional (5 personas)
+## 技術棧條件式（5 角色）
 
-These reviewers keep their original opinionated lens. They are additive with the cross-cutting personas above, not replacements for them.
+此等審閱者保持其原有獨到視角。與跨切角色相加，非取代。
 
-| Persona | Agent | Select when diff touches... |
+| 角色 | 代理 | 選擇時機（diff 觸及…） |
 |---------|-------|---------------------------|
-| `dhh-rails` | `review:ce-dhh-rails-reviewer` | Rails architecture, service objects, authentication/session choices, Hotwire-vs-SPA boundaries, or abstractions that may fight Rails conventions |
-| `kieran-rails` | `review:ce-kieran-rails-reviewer` | Rails controllers, models, views, jobs, components, routes, or other application-layer Ruby code where clarity and conventions matter |
-| `kieran-python` | `review:ce-kieran-python-reviewer` | Python modules, endpoints, services, scripts, or typed domain code |
-| `kieran-typescript` | `review:ce-kieran-typescript-reviewer` | TypeScript components, services, hooks, utilities, or shared types |
-| `julik-frontend-races` | `review:ce-julik-frontend-races-reviewer` | Stimulus/Turbo controllers, DOM event wiring, timers, async UI flows, animations, or frontend state transitions with race potential |
+| `dhh-rails` | `review:ce-dhh-rails-reviewer` | Rails 架構、服務物件、認證/會話選擇、Hotwire-vs-SPA 邊界、或可能違 Rails 慣例之抽象 |
+| `kieran-rails` | `review:ce-kieran-rails-reviewer` | Rails 控制器、模型、視圖、任務、組件、路由、或其他清晰與慣例重要之應用層 Ruby 碼 |
+| `kieran-python` | `review:ce-kieran-python-reviewer` | Python 模組、端點、服務、腳本、或帶型別之領域碼 |
+| `kieran-typescript` | `review:ce-kieran-typescript-reviewer` | TypeScript 組件、服務、鉤子、工具、或共享型別 |
+| `julik-frontend-races` | `review:ce-julik-frontend-races-reviewer` | Stimulus/Turbo 控制器、DOM 事件接線、計時器、非同步 UI 流程、動畫、或有競態潛力之前端狀態轉換 |
 
-## CE Conditional Agents (migration-specific)
+## CE 條件代理（遷移專用）
 
-These CE-native agents provide specialized analysis beyond what the persona agents cover. Spawn them when the diff includes database migrations, schema.rb, or data backfills.
+此等 CE 原生代理提供角色代理未涵蓋之專門分析。diff 含資料庫遷移、schema.rb、或資料回填時分派。
 
-| Agent | Focus |
+| 代理 | 焦點 |
 |-------|-------|
-| `review:ce-schema-drift-detector` | Cross-references schema.rb changes against included migrations to catch unrelated drift |
-| `review:ce-deployment-verification-agent` | Produces Go/No-Go deployment checklist with SQL verification queries and rollback procedures |
+| `review:ce-schema-drift-detector` | 交叉比對 schema.rb 變更與所含遷移以捕獲無關漂移 |
+| `review:ce-deployment-verification-agent` | 產出附 SQL 驗證查詢及回滾程序之 Go/No-Go 部署清單 |
 
-## Selection rules
+## 選擇規則
 
-1. **Always spawn all 4 always-on personas** plus the 2 CE always-on agents.
-2. **For each cross-cutting conditional persona**, the orchestrator reads the diff and decides whether the persona's domain is relevant. This is a judgment call, not a keyword match.
-3. **For each stack-specific conditional persona**, use file types and changed patterns as a starting point, then decide whether the diff actually introduces meaningful work for that reviewer. Do not spawn language-specific reviewers just because one config or generated file happens to match the extension.
-4. **For CE conditional agents**, spawn when the diff includes migration files (`db/migrate/*.rb`, `db/schema.rb`) or data backfill scripts.
-5. **Announce the team** before spawning with a one-line justification per conditional reviewer selected.
+1. **恆分派全部 4 常駐角色** 加 2 CE 常駐代理。
+2. **每個跨切條件角色**，編排者讀 diff 判斷角色領域是否相關。此為判斷，非關鍵詞匹配。
+3. **每個技術棧條件角色**，以檔案型別及變更範式為起點，再判斷 diff 是否引入該審閱者之意義工作。勿僅因一個配置或生成檔案碰巧符合副檔名即分派語言特定審閱者。
+4. **CE 條件代理**，diff 含遷移檔（`db/migrate/*.rb`、`db/schema.rb`）或資料回填腳本時分派。
+5. **分派前公告團隊**，每個被選條件審閱者附一行理據。

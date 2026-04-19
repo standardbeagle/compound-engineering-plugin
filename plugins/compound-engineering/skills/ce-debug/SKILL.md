@@ -1,177 +1,177 @@
 ---
 name: ce-debug
-description: 'Systematically find root causes and fix bugs. Use when debugging errors, investigating test failures, reproducing bugs from issue trackers (GitHub, Linear, Jira), or when stuck on a problem after failed fix attempts. Also use when the user says ''debug this'', ''why is this failing'', ''fix this bug'', ''trace this error'', or pastes stack traces, error messages, or issue references.'
+description: '系統化尋找根因並修復錯誤。適用於除錯錯誤、調查測試失敗、重現議題追蹤器（GitHub、Linear、Jira）中之錯誤，或多次修復嘗試失敗後卡住時。亦適用於用戶說「debug this」、「why is this failing」、「fix this bug」、「trace this error」或貼上堆疊追蹤、錯誤訊息或議題參照。'
 argument-hint: "[issue reference, error message, test path, or description of broken behavior]"
 ---
 
-# Debug and Fix
+# 除錯與修復
 
-Find root causes, then fix them. This skill investigates bugs systematically — tracing the full causal chain before proposing a fix — and optionally implements the fix with test-first discipline.
+尋找根因，再修復之。此技能系統化調查錯誤——先追蹤完整因果鏈再提出修復——並可選擇以測試先行紀律實作修復。
 
 <bug_description> #$ARGUMENTS </bug_description>
 
-## Core Principles
+## 核心原則
 
-These principles govern every phase. They are repeated at decision points because they matter most when the pressure to skip them is highest.
+以下原則管轄每個階段。其重複出現於決策點，因在跳過壓力最大時最為重要。
 
-1. **Investigate before fixing.** Do not propose a fix until you can explain the full causal chain from trigger to symptom with no gaps. "Somehow X leads to Y" is a gap.
-2. **Predictions for uncertain links.** When the causal chain has uncertain or non-obvious links, form a prediction — something in a different code path or scenario that must also be true. If the prediction is wrong but a fix "works," you found a symptom, not the cause. When the chain is obvious (missing import, clear null reference), the chain explanation itself is sufficient.
-3. **One change at a time.** Test one hypothesis, change one thing. If you're changing multiple things to "see if it helps," stop — that is shotgun debugging.
-4. **When stuck, diagnose why — don't just try harder.**
+1. **先調查再修復。** 能以無間隙之完整因果鏈解釋從觸發到症狀前，勿提出修復。「某種方式 X 導致 Y」即為間隙。
+2. **對不確定環節提出預測。** 當因果鏈有不確定或不明顯之環節時，形成一項預測——在不同程式碼路徑或情境中必須為真之事。若預測錯誤但修復「有效」，所找到者為症狀而非根因。當因果鏈顯而易見（缺失 import、明確空值引用）時，鏈解釋本身即已足夠。
+3. **一次一項變更。** 測試一個假說，改一處。若同時改多處以「試試看」，停止——此為霰彈式除錯。
+4. **卡住時，診斷為何卡住——勿只是更用力嘗試。**
 
-## Execution Flow
+## 執行流程
 
-| Phase | Name | Purpose |
-|-------|------|---------|
-| 0 | Triage | Parse input, fetch issue if referenced, proceed to investigation |
-| 1 | Investigate | Reproduce the bug, trace the code path |
-| 2 | Root Cause | Form hypotheses with predictions for uncertain links, test them, **causal chain gate**, smart escalation |
-| 3 | Fix | Only if user chose to fix. Test-first fix with workspace safety checks |
-| 4 | Close | Structured summary, handoff options |
+| 階段 | 名稱 | 目的 |
+|-------|------|------|
+| 0 | 分類 | 解析輸入、若參照議題則取得、進入調查 |
+| 1 | 調查 | 重現錯誤、追蹤程式碼路徑 |
+| 2 | 根因 | 形成假說附不確定環節之預測、測試之、**因果鏈關卡**、智能升級 |
+| 3 | 修復 | 僅當用戶選擇修復時。測試先行修復附工作區安全檢查 |
+| 4 | 結案 | 結構化摘要、交接選項 |
 
-All phases self-size — a simple bug flows through them in seconds, a complex bug spends more time in each naturally. No complexity classification, no phase skipping.
-
----
-
-### Phase 0: Triage
-
-Parse the input and reach a clear problem statement.
-
-**If the input references an issue tracker**, fetch it:
-- GitHub (`#123`, `org/repo#123`, github.com URL): Parse the issue reference from `<bug_description>` and fetch with `gh issue view <number> --json title,body,comments,labels`. For URLs, pass the URL directly to `gh`.
-- Other trackers (Linear URL/ID, Jira URL/key, any tracker URL): Attempt to fetch using available MCP tools or by fetching the URL content. If the fetch fails — auth, missing tool, non-public page — ask the user to paste the relevant issue content.
-
-Extract reported symptoms, expected behavior, reproduction steps, and environment details. Then proceed to Phase 1.
-
-**Everything else** (stack traces, test paths, error messages, descriptions of broken behavior): Proceed directly to Phase 1.
-
-**Questions:**
-- Do not ask questions by default — investigate first (read code, run tests, trace errors)
-- Only ask when a genuine ambiguity blocks investigation and cannot be resolved by reading code or running tests
-- When asking, ask one specific question
-
-**Prior-attempt awareness:** If the user indicates prior failed attempts ("I've been trying", "keeps failing", "stuck"), ask what they have already tried before investigating. This avoids repeating failed approaches and is one of the few cases where asking first is the right call.
+所有階段自適大小——簡單錯誤秒級通過，複雜錯誤自然在各階段耗時更多。無複雜度分類，無階段跳過。
 
 ---
 
-### Phase 1: Investigate
+### 階段零：分類
 
-#### 1.1 Reproduce the bug
+解析輸入並得出明確問題陳述。
 
-Confirm the bug exists and understand its behavior. Run the test, trigger the error, follow reported reproduction steps — whatever matches the input.
+**若輸入參照議題追蹤器**，取得之：
+- GitHub（`#123`、`org/repo#123`、github.com URL）：自 `<bug_description>` 解析議題參照，以 `gh issue view <number> --json title,body,comments,labels` 取得。URL 直接傳予 `gh`。
+- 其他追蹤器（Linear URL/ID、Jira URL/key、任何追蹤器 URL）：嘗試以可用 MCP 工具或取得 URL 內容。若取得失敗——認證、工具缺失、非公開頁面——請用戶貼上相關議題內容。
 
-- **Browser bugs:** Prefer `agent-browser` if installed. Otherwise use whatever works — MCP browser tools, direct URL testing, screenshot capture, etc.
-- **Manual setup required:** If reproduction needs specific conditions the agent cannot create alone (data states, user roles, external services, environment config), document the exact setup steps and guide the user through them. Clear step-by-step instructions save significant time even when the process is fully manual.
-- **Does not reproduce after 2-3 attempts:** Read `references/investigation-techniques.md` for intermittent-bug techniques.
-- **Cannot reproduce at all in this environment:** Document what was tried and what conditions appear to be missing.
+擷取回報之症狀、預期行為、重現步驟及環境細節。然後進入階段一。
 
-#### 1.2 Trace the code path
+**其他一切**（堆疊追蹤、測試路徑、錯誤訊息、異常行為描述）：直接進入階段一。
 
-Read the relevant source files. Follow the execution path from entry point to where the error manifests. Trace backward through the call chain:
+**提問：**
+- 預設不提問——先調查（讀程式碼、跑測試、追蹤錯誤）
+- 僅當真正之歧義阻塞調查且無法藉讀程式碼或跑測試解決時方提問
+- 提問時，問一個具體問題
 
-- Start at the error
-- Ask "where did this value come from?" and "who called this?"
-- Keep going upstream until finding the point where valid state first became invalid
-- Do not stop at the first function that looks wrong — the root cause is where bad state originates, not where it is first observed
-
-As you trace:
-- Check recent changes in files you are reading: `git log --oneline -10 -- [file]`
-- If the bug looks like a regression ("it worked before"), use `git bisect` (see `references/investigation-techniques.md`)
-- Check the project's observability tools for additional evidence:
-  - Error trackers (Sentry, AppSignal, Datadog, BetterStack, Bugsnag)
-  - Application logs
-  - Browser console output
-  - Database state
-- Each project has different systems available; use whatever gives a more complete picture
+**先前嘗試之感知：** 若用戶表示先前嘗試失敗（「I've been trying」、「keeps failing」、「stuck」），先問已嘗試過什麼再展開調查。此避免重複失敗之方法，為少數先問再查為正確做法之情況。
 
 ---
 
-### Phase 2: Root Cause
+### 階段一：調查
 
-*Reminder: investigate before fixing. Do not propose a fix until you can explain the full causal chain from trigger to symptom with no gaps.*
+#### 1.1 重現錯誤
 
-Read `references/anti-patterns.md` before forming hypotheses.
+確認錯誤存在並理解其行為。跑測試、觸發錯誤、依回報之重現步驟——匹配輸入之任何方式。
 
-**Form hypotheses** ranked by likelihood. For each, state:
-- What is wrong and where (file:line)
-- The causal chain: how the trigger leads to the observed symptom, step by step
-- **For uncertain links in the chain**: a prediction — something in a different code path or scenario that must also be true if this link is correct
+- **瀏覽器錯誤：** 若已安裝 `agent-browser` 則偏好之。否則使用任何可行方式——MCP 瀏覽器工具、直接 URL 測試、截圖等。
+- **需手動設定：** 若重現需代理無法獨立建立之特定條件（資料狀態、用戶角色、外部服務、環境配置），記錄確切設定步驟並引導用戶完成。清晰之逐步指示即使過程全手動亦能節省大量時間。
+- **2-3 次嘗試後仍無法重現：** 讀取 `references/investigation-techniques.md` 了解間歇性錯誤技巧。
+- **在此環境中完全無法重現：** 記錄已嘗試之事及似乎缺失之條件。
 
-When the causal chain is obvious and has no uncertain links (missing import, clear type error, explicit null dereference), the chain explanation itself is the gate — no prediction required. Predictions are a tool for testing uncertain links, not a ritual for every hypothesis.
+#### 1.2 追蹤程式碼路徑
 
-Before forming a new hypothesis, review what has already been ruled out and why.
+讀取相關源碼檔案。自入口點追蹤執行路徑至錯誤顯現處。沿呼叫鏈反向追蹤：
 
-**Causal chain gate:** Do not proceed to Phase 3 until you can explain the full causal chain — from the original trigger through every step to the observed symptom — with no gaps. The user can explicitly authorize proceeding with the best-available hypothesis if investigation is stuck.
+- 從錯誤處起始
+- 問「此值從何而來？」與「誰呼叫了此處？」
+- 持續上游直至找到有效狀態首次變為無效狀態之處
+- 勿止於第一個看起來有問題之函式——根因為壞狀態起始之處，非首次被觀察之處
 
-*Reminder: if a prediction was wrong but the fix appears to work, you found a symptom. The real cause is still active.*
+追蹤時：
+- 檢查所讀檔案之近期變更：`git log --oneline -10 -- [file]`
+- 若錯誤看似回歸（「以前能用的」），使用 `git bisect`（見 `references/investigation-techniques.md`）
+- 檢查專案之可觀測工具以獲取額外證據：
+  - 錯誤追蹤器（Sentry、AppSignal、Datadog、BetterStack、Bugsnag）
+  - 應用日誌
+  - 瀏覽器主控台輸出
+  - 資料庫狀態
+- 各專案有不同之可用系統；使用能提供更完整畫面之任何工具
 
-#### Present findings
+---
 
-Once the root cause is confirmed, present:
-- The root cause (causal chain summary with file:line references)
-- The proposed fix and which files would change
-- Which tests to add or modify to prevent recurrence (specific test file, test case description, what the assertion should verify)
-- Whether existing tests should have caught this and why they did not
+### 階段二：根因
 
-Then offer next steps (use the platform's question tool — `AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini — or present numbered options and wait):
+*提醒：先調查再修復。能以無間隙之完整因果鏈解釋從觸發到症狀前，勿提出修復。*
 
-1. **Fix it now** — proceed to Phase 3
-2. **View in Proof** (`/ce-proof`) — for easy review and sharing with others
-3. **Rethink the design** (`/ce-brainstorm`) — only when the root cause reveals a design problem (see below)
+形成假說前先讀取 `references/anti-patterns.md`。
 
-Do not assume the user wants action right now. The test recommendations are part of the diagnosis regardless of which path is chosen.
+**形成假說** 依可能性排序。每項假說陳述：
+- 哪裡出了什麼問題（file:line）
+- 因果鏈：觸發如何逐步導致觀察到之症狀
+- **鏈中不確定之環節**：一項預測——若此環節正確，在不同程式碼路徑或情境中必須為真之事
 
-**When to suggest brainstorm:** Only when investigation reveals the bug cannot be properly fixed within the current design — the design itself needs to change. Concrete signals observable during debugging:
+當因果鏈顯而易見且無不確定環節（缺失 import、明確型別錯誤、顯式空值解引用）時，鏈解釋本身即為關卡——無需預測。預測為測試不確定環節之工具，非每個假說必經之儀式。
 
-- **The root cause is a wrong responsibility or interface**, not wrong logic. The module should not be doing this at all, or the boundary between components is in the wrong place. (Observable: the fix requires moving responsibility between modules, not correcting code within one.)
-- **The requirements are wrong or incomplete.** The system behaves as designed, but the design does not match what users actually need. The "bug" is really a product gap. (Observable: the code is doing exactly what it was written to do — the spec is the problem.)
-- **Every fix is a workaround.** You can patch the symptom, but cannot articulate a clean fix because the surrounding code was built on an assumption that no longer holds. (Observable: you keep wanting to add special cases or flags rather than a direct correction.)
+形成新假說前，回顧已排除者及排除理由。
 
-Do not suggest brainstorm for bugs that are large but have a clear fix — size alone does not make something a design problem.
+**因果鏈關卡：** 能以無間隙之完整因果鏈——從原始觸發經每一步至觀察到之症狀——解釋之前，勿進入階段三。調查卡住時，用戶可明確授權以最佳可用假說繼續。
 
-#### Smart escalation
+*提醒：若預測錯誤但修復看似有效，所找到者為症狀。真正之根因仍活躍。*
 
-If 2-3 hypotheses are exhausted without confirmation, diagnose why:
+#### 呈現發現
 
-| Pattern | Diagnosis | Next move |
+根因確認後，呈現：
+- 根因（附 file:line 參照之因果鏈摘要）
+- 建議修復及哪些檔案將變更
+- 應新增或修改哪些測試以防止再發（具體測試檔案、測試案例描述、斷言應驗證什麼）
+- 既有測試是否應已捕捉到此及為何沒有
+
+然後提供後續步驟（使用平台之提問工具——Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`——或呈現編號選項並等候）：
+
+1. **立即修復** ——進入階段三
+2. **於 Proof 中檢視**（`/ce-proof`）——便於審查與分享
+3. **重新思考設計**（`/ce-brainstorm`）——僅當根因揭露設計問題時（見下）
+
+勿假設用戶欲立即行動。測試建議為診斷之一部分，無論選擇哪條路徑。
+
+**何時建議腦力激盪：** 僅當調查揭示錯誤無法在當前設計內妥善修復——設計本身需要改變。除錯時可觀察之具體信號：
+
+- **根因為錯誤的責任或介面**，而非錯誤的邏輯。模組根本不該做此事，或組件間之邊界位置不對。（可觀察：修復需在模組間移動責任，非修正一個模組內之程式碼。）
+- **需求錯誤或不完整。** 系統如設計般運作，但設計不符合用戶實際需求。「錯誤」實為產品缺口。（可觀察：程式碼確實按所寫之目的運作——規格才是問題。）
+- **每個修復都是權宜之計。** 能補丁症狀，但無法清楚表述一個乾淨的修復，因周圍程式碼建立於不再成立的假設上。（可觀察：不斷想加特殊案例或旗標，而非直接修正。）
+
+勿對大但有明確修復之錯誤建議腦力激盪——規模本身不構成設計問題。
+
+#### 智能升級
+
+若 2-3 個假說窮盡仍未確認，診斷原因：
+
+| 模式 | 診斷 | 下一步 |
 |---------|-----------|-----------|
-| Hypotheses point to different subsystems | Architecture/design problem, not a localized bug | Present findings, suggest `/ce-brainstorm` |
-| Evidence contradicts itself | Wrong mental model of the code | Step back, re-read the code path without assumptions |
-| Works locally, fails in CI/prod | Environment problem | Focus on env differences, config, dependencies, timing |
-| Fix works but prediction was wrong | Symptom fix, not root cause | The real cause is still active — keep investigating |
+| 假說指向不同子系統 | 架構/設計問題，非局部錯誤 | 呈現發現，建議 `/ce-brainstorm` |
+| 證據自相矛盾 | 對程式碼之心理模型有誤 | 退後，不帶假設重新閱讀程式碼路徑 |
+| 本地可運作，CI/正式環境失敗 | 環境問題 | 聚焦環境差異、配置、依賴、時序 |
+| 修復有效但預測錯誤 | 症狀修復，非根因 | 真正之根因仍活躍——繼續調查 |
 
-Present the diagnosis to the user before proceeding.
-
----
-
-### Phase 3: Fix
-
-*Reminder: one change at a time. If you are changing multiple things, stop.*
-
-If the user chose Proof or brainstorm at the end of Phase 2, skip this phase — the skill's job was the diagnosis.
-
-**Workspace check:** Before editing files, check for uncommitted changes (`git status`). If the user has unstaged work in files that need modification, confirm before editing — do not overwrite in-progress changes.
-
-**Test-first:**
-1. Write a failing test that captures the bug (or use the existing failing test)
-2. Verify it fails for the right reason — the root cause, not unrelated setup
-3. Implement the minimal fix — address the root cause and nothing else
-4. Verify the test passes
-5. Run the broader test suite for regressions
-
-**3 failed fix attempts = smart escalation.** Diagnose using the same table from Phase 2. If fixes keep failing, the root cause identification was likely wrong. Return to Phase 2.
-
-**Conditional defense-in-depth** (trigger: grep for the root-cause pattern found it in other files):
-Check whether the same gap exists at those locations. Skip when the root cause is a one-off error.
-
-**Conditional post-mortem** (trigger: the bug was in production, OR the pattern appears in 3+ locations):
-How was this introduced? What allowed it to survive? If a systemic gap was found: "This pattern appears in N other files. Want to capture it with `/ce-compound`?"
+繼續前先將診斷呈現予用戶。
 
 ---
 
-### Phase 4: Close
+### 階段三：修復
 
-**Structured summary:**
+*提醒：一次一項變更。若同時改多處，停止。*
+
+若用戶於階段二結束時選擇 Proof 或腦力激盪，跳過此階段——技能之任務僅為診斷。
+
+**工作區檢查：** 編輯檔案前，檢查未提交變更（`git status`）。若用戶於需修改之檔案中有未暫存工作，編輯前先確認——勿覆蓋進行中之變更。
+
+**測試先行：**
+1. 撰寫捕捉錯誤之失敗測試（或使用既有之失敗測試）
+2. 驗證其因正確理由失敗——根因，非無關設定
+3. 實作最小修復——解決根因，不觸及其他
+4. 驗證測試通過
+5. 執行更廣泛之測試套件檢查回歸
+
+**3 次修復嘗試失敗 = 智能升級。** 以階段二相同之表格診斷。若修復持續失敗，根因識別可能錯誤。回到階段二。
+
+**條件式縱深防禦**（觸發：grep 根因模式發現其亦出現於其他檔案）：
+檢查這些位置是否存在相同缺口。根因為一次性錯誤時跳過。
+
+**條件式事後檢討**（觸發：錯誤曾在正式環境中，或模式出現於 3+ 位置）：
+如何引入的？什麼使其存活？若發現系統性缺口：「此模式出現於 N 個其他檔案。欲以 `/ce-compound` 記錄之？」
+
+---
+
+### 階段四：結案
+
+**結構化摘要：**
 
 ```
 ## Debug Summary
@@ -183,9 +183,9 @@ How was this introduced? What allowed it to survive? If a systemic gap was found
 **Confidence**: [High/Medium/Low]
 ```
 
-**Handoff options** (use platform question tool, or present numbered options and wait):
-1. Commit the fix (if Phase 3 ran)
-2. Document as a learning (`/ce-compound`)
-3. Post findings to the issue (if entry came from an issue tracker) — convey: confirmed root cause, verified reproduction steps, relevant code references, and suggested fix direction; keep it concise and useful for whoever picks up the issue next
-4. View in Proof (`/ce-proof`) — for easy review and sharing with others
-5. Done
+**交接選項**（使用平台提問工具，或呈現編號選項並等候）：
+1. 提交修復（若階段三已執行）
+2. 記錄為經驗學習（`/ce-compound`）
+3. 將發現發布至議題（若輸入來自議題追蹤器）——傳達：已確認之根因、已驗證之重現步驟、相關程式碼參照及建議修復方向；保持簡潔實用予後續接手者
+4. 於 Proof 中檢視（`/ce-proof`）——便於審查與分享
+5. 完成

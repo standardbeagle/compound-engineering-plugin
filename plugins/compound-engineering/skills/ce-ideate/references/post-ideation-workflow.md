@@ -1,76 +1,76 @@
-# Post-Ideation Workflow
+# 構思後工作流
 
-Read this file after Phase 2 ideation agents return and the orchestrator has merged and deduped their outputs into a master candidate list. Do not load before Phase 2 completes.
+第二階段構思代理回傳且編排器合併去重其輸出為主候選列表後，方載此文。第二階段完成前勿載。
 
-## Phase 3: Adversarial Filtering
+## 第三階段：對抗篩選
 
-Review every candidate idea critically. The orchestrator performs this filtering directly -- do not dispatch sub-agents for critique.
+批判審閱每則候選構想。編排器直接執行此篩選——勿分派子代理進行批判。
 
-Do not generate replacement ideas in this phase unless explicitly refining.
+除非明確精煉，此階段不生成替代構想。
 
-For each rejected idea, write a one-line reason.
+每則被拒構想寫一行原因。
 
-Rejection criteria:
-- too vague
-- not actionable
-- duplicates a stronger idea
-- not grounded in the stated context
-- too expensive relative to likely value
-- already covered by existing workflows or docs
-- interesting but better handled as a brainstorm variant, not a product improvement
+拒絕標準：
+- 過於模糊
+- 不可操作
+- 與更強構想重複
+- 未立基於所陳述之上下文
+- 相對可能價值成本過高
+- 已由既有工作流或文檔涵蓋
+- 有趣但更適合作為腦力激盪變體，非產品改進
 
-Score survivors using a consistent rubric weighing: groundedness in stated context, expected value, novelty, pragmatism, leverage on future work, implementation burden, and overlap with stronger ideas.
+以一致評分標準為存活者評分，權衡：立基於所陳述上下文之程度、預期價值、新穎性、實用性、對未來工作之槓桿效應、實施負擔、與更強構想之重疊。
 
-Target output:
-- keep 5-7 survivors by default
-- if too many survive, run a second stricter pass
-- if fewer than 5 survive, report that honestly rather than lowering the bar
+目標產出：
+- 預設保留 5-7 則存活者
+- 存活過多時，進行第二輪更嚴格篩選
+- 少於 5 則存活時，誠實回報，而非降低標準
 
-## Phase 4: Present the Survivors
+## 第四階段：呈現存活者
 
-**Checkpoint B (V17).** Before presenting, write `<scratch-dir>/survivors.md` (using the absolute path captured in Phase 1) containing the survivor list plus key context (focus hint, grounding summary, rejection summary). This protects the post-critique state before the user reaches the persistence menu. Best-effort: if the write fails (disk full, permissions), log a warning and proceed; the checkpoint is not load-bearing. Reuses the same `<run-id>` and `<scratch-dir>` generated in Phase 1; not cleaned up at the end of the run (the run directory is preserved so the V15 cache remains reusable across run-ids in the same session — see Phase 6).
+**檢查點 B（V17）。** 呈現前，寫入 `<scratch-dir>/survivors.md`（使用第一階段捕獲之絕對路徑），內含存活者列表及關鍵上下文（焦點提示、立基摘要、拒絕摘要）。此保護批評後狀態，於用戶到達持久化選單前。盡力而為：若寫入失敗（磁碟滿、權限），記錄警告並繼續；檢查點非承載關鍵。複用第一階段生成之相同 `<run-id>` 及 `<scratch-dir>`；運行結束時不清理（運行目錄保留，使 V15 快取在同一會話之跨 run-id 間可複用——見第六階段）。
 
-Present the surviving ideas to the user. The terminal review loop is a complete ideation cycle in itself — persistence is opt-in (Phase 5), and refinement happens in conversation with no file or network cost (Phase 6).
+向用戶呈現存活構想。終端審閱循環本身即完整構思週期——持久化為選擇性（第五階段），精煉於對話中進行，無檔案或網路成本（第六階段）。
 
-Present only the surviving ideas in structured form:
+僅以結構化形式呈現存活構想：
 
-- title
-- description
-- rationale
-- downsides
-- confidence score
-- estimated complexity
+- 標題
+- 描述
+- 理據
+- 缺點
+- 信心分數
+- 預估複雜度
 
-Then include a brief rejection summary so the user can see what was considered and cut.
+隨後附簡短拒絕摘要，使用戶可知曉何者被考慮且被剔除。
 
-Keep the presentation concise. Allow brief follow-up questions and lightweight clarification.
+保持呈現簡潔。允許簡短後續問題及輕量澄清。
 
-## Phase 5: Persistence (Opt-In, Mode-Aware)
+## 第五階段：持久化（選擇性、模式感知）
 
-Persistence is opt-in. The terminal review loop is a complete ideation cycle. Refinement loops happen in conversation with no file or network cost. Persistence triggers only when the user explicitly chooses to save, share, or hand off (selected in Phase 6).
+持久化為選擇性。終端審閱循環即完整構思週期。精煉循環於對話中進行，無檔案或網路成本。持久化僅於用戶明確選擇儲存、分享或交接時觸發（於第六階段選擇）。
 
-When the user picks an option in Phase 6 that requires a durable record (Open and iterate in Proof, Brainstorm, Save and end), ensure a record exists first. When the user chooses to keep refining, no record is needed unless the user asks.
+當用戶於第六階段選擇需要持久記錄之選項（在 Proof 中開啟並迭代、腦力激盪、儲存並結束）時，先確保記錄存在。當用戶選擇繼續精煉，不需記錄，除非用戶要求。
 
-**Mode-determined defaults:**
+**模式決定之預設：**
 
-| Action | Repo mode default | Elsewhere mode default |
+| 動作 | 倉庫模式預設 | 其他模式預設 |
 |---|---|---|
-| Save | `docs/ideation/YYYY-MM-DD-<topic>-ideation.md` | Proof |
-| Share | Proof (additional) | Proof (primary) |
-| Brainstorm handoff | `ce-brainstorm` | `ce-brainstorm` (universal-brainstorming) |
-| End | Conversation only is fine | Conversation only is fine |
+| 儲存 | `docs/ideation/YYYY-MM-DD-<topic>-ideation.md` | Proof |
+| 分享 | Proof（額外） | Proof（主要） |
+| 腦力激盪交接 | `ce-brainstorm` | `ce-brainstorm`（universal-brainstorming） |
+| 結束 | 僅對話即可 | 僅對話即可 |
 
-Either mode can also use the other destination on explicit request ("save to Proof even though this is repo mode", "save to a local file even though this is elsewhere"). Honor such overrides directly.
+任一模式亦可依明確要求使用另一目的地（「雖為倉庫模式但儲存至 Proof」，「雖為其他模式但儲存至本地檔案」）。直接遵從此類覆寫。
 
-### 5.1 File Save (default for repo mode; on request for elsewhere mode)
+### 5.1 檔案儲存（倉庫模式預設；其他模式依要求）
 
-1. Ensure `docs/ideation/` exists
-2. Choose the file path:
-   - `docs/ideation/YYYY-MM-DD-<topic>-ideation.md`
-   - `docs/ideation/YYYY-MM-DD-open-ideation.md` when no focus exists
-3. Write or update the ideation document
+1. 確保 `docs/ideation/` 存在
+2. 選擇檔案路徑：
+    - `docs/ideation/YYYY-MM-DD-<topic>-ideation.md`
+    - 無焦點時用 `docs/ideation/YYYY-MM-DD-open-ideation.md`
+3. 寫入或更新構思文檔
 
-Use this structure and omit clearly irrelevant fields only when necessary:
+使用此結構，僅在必要時省略明確不相關之欄位：
 
 ```markdown
 ---
@@ -83,14 +83,14 @@ mode: <repo-grounded | elsewhere-software | elsewhere-non-software>
 # Ideation: <Title>
 
 ## Grounding Context
-[Grounding summary from Phase 1 — labeled "Codebase Context" in repo mode, "Topic Context" in elsewhere mode]
+[Phase 1 之立基摘要——倉庫模式標示 "Codebase Context"，其他模式標示 "Topic Context"]
 
 ## Ranked Ideas
 
 ### 1. <Idea Title>
-**Description:** [Concrete explanation]
-**Rationale:** [Why this idea is strong in the stated context]
-**Downsides:** [Tradeoffs or costs]
+**Description:** [具體解釋]
+**Rationale:** [何以此構想在所陳述上下文中為強]
+**Downsides:** [取捨或成本]
 **Confidence:** [0-100%]
 **Complexity:** [Low / Medium / High]
 **Status:** [Unexplored / Explored]
@@ -102,131 +102,131 @@ mode: <repo-grounded | elsewhere-software | elsewhere-non-software>
 | 1 | <Idea> | <Reason rejected> |
 ```
 
-If resuming:
-- update the existing file in place
-- preserve explored markers
+若恢復：
+- 原地更新既有檔案
+- 保留已探索標記
 
-### 5.2 Proof Save (default for elsewhere mode; on request for repo mode)
+### 5.2 Proof 儲存（其他模式預設；倉庫模式依要求）
 
-Hand off the ideation content to the `ce-proof` skill in HITL review mode. This uploads the doc, runs an iterative review loop (user annotates in Proof, agent ingests feedback and applies tracked edits), and (in repo mode) syncs the reviewed markdown back to `docs/ideation/`.
+將構思內容交接至 `ce-proof` 技能之 HITL 審閱模式。此上傳文檔，運行迭代審閱循環（用戶於 Proof 中標註，代理吸收反饋並套用追蹤編輯），且（倉庫模式中）將審閱後之 markdown 同步回 `docs/ideation/`。
 
-Load the `ce-proof` skill in HITL-review mode with:
+以下列參數載入 `ce-proof` 技能之 HITL 審閱模式：
 
-- **source content:** the survivors and rejection summary from Phase 4 (in repo mode, this is the file written in 5.1; in elsewhere mode, render to a temp file as the source for upload)
-- **doc title:** `Ideation: <topic>` or the H1 of the ideation doc
-- **identity:** `ai:compound-engineering` / `Compound Engineering`
-- **recommended next step:** `/ce-brainstorm` (shown in the proof skill's final terminal output)
+- **來源內容：** 第四階段之存活者及拒絕摘要（倉庫模式為 5.1 所寫之檔案；其他模式渲染至臨時檔案作為上傳來源）
+- **文檔標題：** `Ideation: <topic>` 或構思文檔之 H1
+- **身份：** `ai:compound-engineering` / `Compound Engineering`
+- **建議下一步：** `/ce-brainstorm`（顯示於 proof 技能之最終終端輸出）
 
-The Proof failure ladder in Phase 6.5 governs what happens when this hand-off fails.
+Proof 失敗階梯（第六階段 6.5）規範此交接失敗時之處置。
 
-**Caller-aware return.** The return-rule bullets below describe the default control flow, but the next step depends on which Phase 6 option invoked the Proof save. Apply the right branch for the caller:
+**呼叫者感知返回。** 下列返回規則描述預設控制流，但下一步取決於哪個第六階段選項觸發了 Proof 儲存。為呼叫者套用正確分支：
 
-- **§6.2 Open and iterate in Proof.** Behavior is mode-aware:
-    - *Repo mode:* return to the Phase 6 menu on every status. The Proof-reviewed content is now synced locally, and the user typically has a follow-up action in the repo (brainstorm toward a plan, save and end, or keep refining).
-    - *Elsewhere mode:* on a successful Proof return (`proceeded` or `done_for_now`), exit cleanly — narrate that the artifact lives at `docUrl` (including any stale-local note if applicable) and stop. Proof iteration is often the terminal act in elsewhere mode; forcing another menu choice after the user already got what they came for produces decision fatigue. Only the `aborted` branch returns to the Phase 6 menu so the user can retry or pick another path.
-- **§6.3 Brainstorm a selected idea.** On a successful Proof return (`proceeded` or `done_for_now`), do **not** stop at the Phase 6 menu — after applying the per-status handling below (including any stale-local pull offer), continue into §6.3's remaining bullets (mark the chosen idea as `Explored`, then load `ce-brainstorm`). Only the `aborted` branch returns to the Phase 6 menu, since no durable record was written.
-- **§6.4 Save and end.** On a successful Proof return (`proceeded` or `done_for_now`), exit cleanly: narrate that the ideation was saved, surface the `docUrl` (and the local-path note if applicable), and stop. Do **not** re-ask the Phase 6 question — the user already chose to end. Only the `aborted` branch returns to the Phase 6 menu so the user can retry or pick a different path.
+- **§6.2 在 Proof 中開啟並迭代。** 行為依模式感知：
+    - *倉庫模式：* 每種狀態皆返回第六階段選單。Proof 審閱後之內容現已本地同步，用戶通常有後續倉庫操作（朝計劃腦力激盪、儲存並結束、或繼續精煉）。
+    - *其他模式：* Proof 成功返回時（`proceeded` 或 `done_for_now`），乾淨退出——敘述產物位於 `docUrl`（含適用之過時本地備註）並停止。Proof 迭代在其他模式中常為終端行為；用戶已獲所需後強加另一選單選項產生決策疲勞。僅 `aborted` 分支返回第六階段選單，讓用戶重試或另選路徑。
+- **§6.3 腦力激盪所選構想。** Proof 成功返回時（`proceeded` 或 `done_for_now`），**勿**停留於第六階段選單——套用下方各狀態處理（含任何過時本地拉取提議）後，繼續進入 §6.3 之剩餘要點（標記所選構想為 `Explored`，再載入 `ce-brainstorm`）。僅 `aborted` 分支返回第六階段選單，因無持久記錄寫入。
+- **§6.4 儲存並結束。** Proof 成功返回時（`proceeded` 或 `done_for_now`），乾淨退出：敘述構思已儲存，呈現 `docUrl`（及適用之本地路徑備註）並停止。**勿**重新詢問第六階段問題——用戶已選擇結束。僅 `aborted` 分支返回第六階段選單，讓用戶重試或另選路徑。
 
-When the proof skill returns control:
+當 proof 技能返回控制：
 
-- `status: proceeded` with `localSynced: true` → the ideation doc on disk now reflects the review. Apply the caller-aware return rule above for the invoking branch.
-- `status: proceeded` with `localSynced: false` → the reviewed version lives in Proof at `docUrl` but the local copy is stale. Offer to pull the Proof doc to `localPath` using the proof skill's Pull workflow. Apply the caller-aware return rule above; if the pull was declined, include a one-line note that `<localPath>` is stale vs. Proof so the next handoff (or final exit narration) doesn't read the old content silently. Placement: above the Phase 6 menu when the caller-aware rule returns to it, in the handoff preamble to `ce-brainstorm` for §6.3, or alongside the final save/exit narration for §6.2 elsewhere / §6.4.
-- `status: done_for_now` → the doc on disk may be stale if the user edited in Proof before leaving. Offer to pull the Proof doc to `localPath` so the local ideation artifact stays in sync, then apply the caller-aware return rule above. `done_for_now` means the user stopped the HITL loop — it does not mean they ended the whole ideation session unless the caller-aware rule exits (§6.2 elsewhere mode or §6.4). If the pull was declined, include the stale-local note at the placement described in the previous bullet.
-- `status: aborted` → fall back to the Phase 6 menu without changes, regardless of caller. No durable record was written, so §6.3 must not proceed with the brainstorm handoff and §6.4 must not end — the menu lets the user retry or pick another path.
+- `status: proceeded` 搭配 `localSynced: true` → 磁碟上之構思文檔現反映審閱。為觸發分支套用上述呼叫者感知返回規則。
+- `status: proceeded` 搭配 `localSynced: false` → 審閱後版本存於 Proof 之 `docUrl`，但本地副本過時。提議使用 proof 技能之 Pull 工作流將 Proof 文檔拉取至 `localPath`。套用上述呼叫者感知返回規則；若拉取被拒，附一行備註說明 `<localPath>` 相對 Proof 為過時，使下次交接（或最終退出敘述）不會默默讀取舊內容。位置：呼叫者感知規則返回選單時置於第六階段選單上方，§6.3 交接至 `ce-brainstorm` 之前言中，或 §6.2 其他模式/§6.4 之最終儲存/退出敘述旁。
+- `status: done_for_now` → 若用戶離開前在 Proof 中編輯，磁碟文檔可能過時。提議將 Proof 文檔拉取至 `localPath` 使本地構思產物保持同步，再套用上述呼叫者感知返回規則。`done_for_now` 表示用戶停止 HITL 循環——不代表用戶結束整個構思會話，除非呼叫者感知規則退出（§6.2 其他模式或 §6.4）。若拉取被拒，於前述要點描述之位置附上過時本地備註。
+- `status: aborted` → 不論呼叫者，無更改回退至第六階段選單。無持久記錄寫入，故 §6.3 不得繼續腦力激盪交接，§6.4 不得結束——選單讓用戶重試或另選路徑。
 
-## Phase 6: Refine or Hand Off
+## 第六階段：精煉或交接
 
-Ask what should happen next using the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present numbered options in chat and wait for the user's reply.
+使用平台之阻斷式提問工具詢問下一步（Claude Code 之 `AskUserQuestion`，Codex 之 `request_user_input`，Gemini 之 `ask_user`）。若無提問工具，於聊天中呈現編號選項並等候用戶回覆。
 
-**Question:** "What should the agent do next?"
+**問題：** "代理下一步應做什麼？"
 
-Offer these four options (each label is self-contained per the Interactive Question Tool Design rules in the plugin AGENTS.md — the distinguishing word is front-loaded so options stay distinct when truncated):
+提供此四個選項（各標籤自足，依插件 AGENTS.md 中互動式提問工具設計規則——區分詞前置，使選項截斷時仍可區分）：
 
-1. **Refine the ideation in conversation (or stop here — no save)** — add ideas, re-evaluate, or deepen analysis. No file or network side effects; ending the conversation at any point after this pick is a valid no-save exit.
-2. **Open and iterate in Proof** — save the ideation to Proof and enter the proof skill's HITL review loop: iterate via comments in the Proof editor; reviewed edits sync back to `docs/ideation/` in repo mode.
-3. **Brainstorm a selected idea** — load `ce-brainstorm` with the chosen idea as the seed. The orchestrator first writes a durable record using the mode default in Phase 5.
-4. **Save and end** — persist the ideation using the mode default (file in repo mode, Proof in elsewhere mode), then end.
+1. **在對話中精煉構思（或就此停止——不儲存）** —— 新增構想、重新評估或深化分析。無檔案或網路副作用；隨時結束對話即為有效之不儲存退出。
+2. **在 Proof 中開啟並迭代** —— 將構思儲存至 Proof 並進入 proof 技能之 HITL 審閱循環：透過 Proof 編輯器中之留言迭代；審閱後之編輯同步回 `docs/ideation/`（倉庫模式）。
+3. **腦力激盪所選構想** —— 以所選構想為種子載入 `ce-brainstorm`。編排器先依第五階段模式預設寫入持久記錄。
+4. **儲存並結束** —— 依模式預設持久化構思（倉庫模式為檔案，其他模式為 Proof），然後結束。
 
-No-save exit is supported without a dedicated menu option. Pick option 1 and stop the conversation, or use the question tool's free-text escape to say so directly — persistence is opt-in and the terminal review loop is already a complete ideation cycle.
+不儲存退出無需專用選單選項。選擇選項 1 並停止對話，或使用提問工具之自由文字逃逸直接說明——持久化為選擇性，終端審閱循環已為完整構思週期。
 
-Do not delete the run's scratch directory (`<scratch-dir>` resolved in Phase 1) on completion. The V15 web-research cache is session-scoped and reused across run-ids by later ideation invocations in the same session (see `references/web-research-cache.md`); per-run cleanup would defeat that reuse. Checkpoint A (`raw-candidates.md`) and Checkpoint B (`survivors.md`) are cheap to leave behind and follow the repo's Scratch Space cross-invocation-reusable convention — OS handles eventual cleanup.
+完成時勿刪除運行之臨時目錄（`<scratch-dir>`，於第一階段解析）。V15 網路研究快取為會話作用域，同一會話之後續構思調用跨 run-id 複用（見 `references/web-research-cache.md`）；每次運行清理將破壞該複用。檢查點 A（`raw-candidates.md`）及檢查點 B（`survivors.md`）留置成本低，遵循倉庫之臨時空間跨調用可複用慣例——OS 負責最終清理。
 
-### 6.1 Refine the Ideation in Conversation
+### 6.1 在對話中精煉構思
 
-Route refinement by intent:
+依意圖路由精煉：
 
-- `add more ideas` or `explore new angles` -> return to Phase 2
-- `re-evaluate` or `raise the bar` -> return to Phase 3
-- `dig deeper on idea #N` -> expand only that idea's analysis
+- `add more ideas` 或 `explore new angles` → 返回第二階段
+- `re-evaluate` 或 `raise the bar` → 返回第三階段
+- `dig deeper on idea #N` → 僅擴展該構想之分析
 
-No persistence triggers during refinement. The user can choose Save and end (or Brainstorm, or Open and iterate in Proof) when they are ready to persist.
+精煉期間不觸發持久化。用戶可於準備好持久化時選擇儲存並結束（或腦力激盪，或在 Proof 中開啟並迭代）。
 
-Ending after refinement — or without any refinement at all — is a valid no-save exit. There is no required next step; stopping the conversation here leaves no durable artifact, which matches the opt-in persistence contract.
+精煉後結束——或根本未精煉——為有效之不儲存退出。無必須之下一步；此處停止對話不留持久產物，符合選擇性持久化約定。
 
-### 6.2 Open and Iterate in Proof
+### 6.2 在 Proof 中開啟並迭代
 
-Invoke the Proof HITL review path via §5.2 with §6.2 as the caller. In repo mode, ensure the local file exists first (run §5.1) so the HITL sync-back has a target; in elsewhere mode, §5.2 renders to a temp file as usual. Honor Phase 5's "ensure a record exists first" contract either way.
+以 §6.2 為呼叫者透過 §5.2 調用 Proof HITL 審閱路徑。倉庫模式中，先確保本地檔案存在（執行 §5.1）使 HITL 同步回寫有目標；其他模式中，§5.2 如常渲染至臨時檔案。兩者皆遵從第五階段之「先確保記錄存在」約定。
 
-Apply §5.2's caller-aware return rule for the §6.2 branch — behavior is mode-aware. In repo mode, return to the Phase 6 menu on every status so the user can pick a follow-up (brainstorm toward a plan, save-and-end, or keep refining) now that the Proof review is reflected in the local file. In elsewhere mode, exit cleanly on a successful Proof return since Proof iteration is often the terminal act — the artifact lives at `docUrl` and is the canonical record; only the `aborted` status returns to the menu.
+為 §6.2 分支套用 §5.2 之呼叫者感知返回規則——行為依模式感知。倉庫模式中，每種狀態皆返回第六階段選單，讓用戶選擇後續（朝計劃腦力激盪、儲存並結束、或繼續精煉），因 Proof 審閱已反映於本地檔案。其他模式中，Proof 成功返回時乾淨退出，因 Proof 迭代常為終端行為——產物位於 `docUrl` 為唯一記錄；僅 `aborted` 狀態返回選單。
 
-If the Proof handoff fails, the §6.5 Proof Failure Ladder governs recovery.
+若 Proof 交接失敗，§6.5 Proof 失敗階梯規範恢復。
 
-### 6.3 Brainstorm a Selected Idea
+### 6.3 腦力激盪所選構想
 
-- Write or update the durable record per the mode default in Phase 5 (file in repo mode, Proof in elsewhere mode). When this routes through §5.2 Proof Save, apply §5.2's caller-aware return rule: continue into the next bullet on a successful Proof return instead of bouncing back to the Phase 6 menu. If Proof returned `aborted` (no durable record written), go back to the Phase 6 menu and do **not** proceed with the brainstorm handoff.
-- Mark the chosen idea as `Explored` in the saved record
-- Load the `ce-brainstorm` skill with the chosen idea as the seed
+- 依第五階段模式預設寫入或更新持久記錄（倉庫模式為檔案，其他模式為 Proof）。當路由經過 §5.2 Proof 儲存時，套用 §5.2 之呼叫者感知返回規則：Proof 成功返回後繼續進入下一要點而非彈回第六階段選單。若 Proof 返回 `aborted`（無持久記錄寫入），返回第六階段選單，**勿**繼續腦力激盪交接。
+- 於已儲存記錄中標記所選構想為 `Explored`
+- 以所選構想為種子載入 `ce-brainstorm` 技能
 
-**Repo mode only:** do **not** skip brainstorming and go straight to `ce-plan` from ideation output — `ce-plan` wants brainstorm-grounded requirements. In elsewhere modes, ideation (or ideation + Proof iteration) is a legitimate terminal state; brainstorming is optional deeper development of one idea, not a required next rung on an implementation ladder that does not exist in these modes.
+**僅限倉庫模式：** **勿**跳過腦力激盪而直接從構思輸出進入 `ce-plan`——`ce-plan` 需要基於腦力激盪之需求。在其他模式中，構思（或構思 + Proof 迭代）為合理之終端狀態；腦力激盪為一個構想之可選深化發展，非不存在之實施階梯上的必要階級。
 
-### 6.4 Save and End
+### 6.4 儲存並結束
 
-Persist via the mode default (5.1 in repo mode, 5.2 in elsewhere mode), then end. If the user instead asked to use the non-default destination, honor that explicit request.
+依模式預設持久化（倉庫模式用 5.1，其他模式用 5.2），然後結束。若用戶改要求非預設目的地，遵從該明確要求。
 
-When the path lands in a Proof save (5.2), apply §5.2's caller-aware return rule for the §6.4 branch: on a successful Proof return, exit cleanly — narrate the save, surface the `docUrl` (and any stale-local note if the pull was declined), and stop. Do **not** loop back to the Phase 6 menu; the user already chose to end. Only a `status: aborted` from Proof returns to the menu so the user can retry or pick another path (file save, custom path, or keep refining). The §6.5 Proof Failure Ladder still governs persistent Proof failures and ends at the Phase 6 menu — that failure-recovery path is distinct from the successful-save exit described here.
+當路徑進入 Proof 儲存（5.2）時，為 §6.4 分支套用 §5.2 之呼叫者感知返回規則：Proof 成功返回時，乾淨退出——敘述儲存，呈現 `docUrl`（及拉取被拒時之過時本地備註）並停止。**勿**迴回第六階段選單；用戶已選擇結束。僅 Proof 之 `status: aborted` 返回選單，讓用戶重試或另選路徑（檔案儲存、自訂路徑或繼續精煉）。§6.5 Proof 失敗階梯仍規範持續性 Proof 失敗，終點為第六階段選單——該失敗恢復路徑與此處所述之成功儲存退出不同。
 
-When the path lands in a file save (5.1):
+當路徑進入檔案儲存（5.1）：
 
-- offer to commit only the ideation doc
-- do not create a branch
-- do not push
-- if the user declines, leave the file uncommitted
+- 提議僅提交構思文檔
+- 不建立分支
+- 不推送
+- 用戶拒絕時，保留檔案未提交
 
-After the file save (and optional commit), end the session — do not return to the Phase 6 menu.
+檔案儲存（及可選提交）後，結束會話——不返回第六階段選單。
 
-### 6.5 Proof Failure Ladder
+### 6.5 Proof 失敗階梯
 
-The `ce-proof` skill performs single-retry-once internally on transient failures (`STALE_BASE`, `BASE_TOKEN_REQUIRED`) before surfacing failure. The proof skill's return contract does not expose typed error classes to callers — the orchestrator cannot distinguish retryable vs terminal failures from outside.
+`ce-proof` 技能對暫時性失敗（`STALE_BASE`、`BASE_TOKEN_REQUIRED`）內部執行單次重試後才呈現失敗。Proof 技能之返回約定不向呼叫者暴露帶類型之錯誤類別——編排器無法從外部區分可重試與終端失敗。
 
-**Orchestrator-side retry harness (intentionally minimal):** wrap the proof skill invocation in **one** additional best-effort retry with a short pause (~2 seconds). The proof skill already retried internally, so this catches transient races at the orchestrator boundary without compounding latency. Do not classify error types from outside the skill — no detection mechanism exists.
+**編排器端重試線束（刻意最小化）：** 以短暫暫停（約 2 秒）將 proof 技能調用包裹於**一次**額外盡力重試中。Proof 技能已內部重試，故此舉捕捉編排器邊界之暫時競態，而不累加延遲。勿從外部分類錯誤類型——無偵測機制。
 
-Distinguish create-failure from ops-failure by inspecting whether the proof skill returned a `docUrl` before failing:
+透過檢查 proof 技能在失敗前是否返回 `docUrl` 以區分建立失敗與操作失敗：
 
-- **Create-failure** (no `docUrl` returned): retry the create.
-- **Ops-failure** (a `docUrl` was returned, but a later operation failed): retry only the failing operation. **Do not recreate** the document.
+- **建立失敗**（無 `docUrl` 返回）：重試建立。
+- **操作失敗**（已返回 `docUrl`，但後續操作失敗）：僅重試失敗操作。**勿重建**文檔。
 
-**Failure narration.** Narrate the single retry to the terminal so the pause does not look like a hang ("Retrying Proof... attempt 2/2"). On persistent failure, narrate that retry exhausted before showing the fallback menu.
+**失敗敘述。** 於終端敘述單次重試，使暫停不致看似掛起（"Retrying Proof... attempt 2/2"）。持續失敗時，顯示後備選單前敘述重試已耗盡。
 
-**Fallback menu after persistent failure.** Use the platform's blocking question tool. Present these options (omit option (a) if no repo exists at CWD):
+**持續失敗後之後備選單。** 使用平台之阻斷式提問工具。呈現以下選項（CWD 無倉庫時省略選項 (a)）：
 
-- "Save to `docs/ideation/` instead" (repo-mode default destination, available when CWD is inside a git repo)
-- "Save to a custom path the user provides" (validate writable; create parent dirs)
-- "Skip save and keep the ideation in conversation" (no persistence)
+- "改存至 `docs/ideation/`"（倉庫模式預設目的地，CWD 位於 git 倉庫內時可用）
+- "存至用戶提供之自訂路徑"（驗證可寫；建立父目錄）
+- "跳過儲存，保留構思於對話中"（無持久化）
 
-If proof returned a partial `docUrl` before failing, surface that URL alongside the fallback options so the user can recover or share the partial record.
+若 proof 失敗前返回部分 `docUrl`，將該 URL 與後備選項一併呈現，使用戶可恢復或分享部分記錄。
 
-After the fallback completes (any path), continue back to the Phase 6 menu so the user can still refine, iterate in Proof, brainstorm, or save and end.
+後備完成（任一路徑）後，繼續返回第六階段選單，使用戶仍可精煉、在 Proof 中迭代、腦力激盪或儲存並結束。
 
-## Quality Bar
+## 品質門檻
 
-Before finishing, check:
+完成前檢查：
 
-- the idea set is grounded in the stated context (codebase in repo mode; user-supplied topic in elsewhere mode)
-- the candidate list was generated before filtering
-- the original many-ideas -> critique -> survivors mechanism was preserved
-- if sub-agents were used, they improved diversity without replacing the core workflow
-- every rejected idea has a reason
-- survivors are materially better than a naive "give me ideas" list
-- persistence followed user choice — terminal-only sessions did not write a file or call Proof
-- when persistence did trigger, the mode default was respected unless the user explicitly overrode it
-- acting on an idea routes to `ce-brainstorm`, not directly to implementation
+- 構想集立基於所陳述之上下文（倉庫模式為程式碼庫；其他模式為用戶提供之主題）
+- 候選列表於篩選前已生成
+- 原始多構想 → 批評 → 存活者機制已保留
+- 若使用子代理，其增進多樣性而未取代核心工作流
+- 每則被拒構想皆有原因
+- 存活者實質優於天真之「給我構想」列表
+- 持久化遵循用戶選擇——僅終端會話未寫檔案或呼叫 Proof
+- 持久化觸發時，模式預設受遵從，除非用戶明確覆寫
+- 對構想之行動路由至 `ce-brainstorm`，非直接至實施

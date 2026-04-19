@@ -1,245 +1,245 @@
-# Deepening Workflow
+# 深化工作流
 
-This file contains the confidence-check execution path (5.3.3-5.3.7). Load it only when the deepening gate at 5.3.2 determines that deepening is warranted.
+此文包含信心檢查執行路徑（5.3.3-5.3.7）。僅當 5.3.2 之深化閘門判定需要深化時載入。
 
-## 5.3.3 Score Confidence Gaps
+## 5.3.3 評分信心缺口
 
-Use a checklist-first, risk-weighted scoring pass.
+使用檢查清單優先、風險加權之評分通過。
 
-For each section, compute:
-- **Trigger count** - number of checklist problems that apply
-- **Risk bonus** - add 1 if the topic is high-risk and this section is materially relevant to that risk
-- **Critical-section bonus** - add 1 for `Key Technical Decisions`, `Implementation Units`, `System-Wide Impact`, `Risks & Dependencies`, or `Open Questions` in `Standard` or `Deep` plans
+各章節計算：
+- **觸發計數** - 適用之檢查清單問題數量
+- **風險加成** - 主題為高風險且此章節與該風險實質相關時加 1
+- **關鍵章節加成** - `Standard` 或 `Deep` 計劃中之 `Key Technical Decisions`、`Implementation Units`、`System-Wide Impact`、`Risks & Dependencies`、`Open Questions` 加 1
 
-Treat a section as a candidate if:
-- it hits **2+ total points**, or
-- it hits **1+ point** in a high-risk domain and the section is materially important
+章節滿足以下條件時列為候選：
+- 達 **2+ 總分**，或
+- 高風險領域中達 **1+ 分** 且該章節實質重要
 
-Choose only the top **2-5** sections by score. If deepening a lightweight plan (high-risk exception), cap at **1-2** sections.
+僅選取分數最高之 **2-5** 個章節。若深化輕量級計劃（高風險例外），上限 **1-2** 個章節。
 
-If the plan already has a `deepened:` date:
-- Prefer sections that have not yet been substantially strengthened, if their scores are comparable
-- Revisit an already-deepened section only when it still scores clearly higher than alternatives
+若計劃已有 `deepened:` 日期：
+- 偏好尚未被實質強化之章節，若分數相當
+- 僅當已深化章節仍明顯高於替代方案時重新審視
 
-**Section Checklists:**
+**章節檢查清單：**
 
-**Requirements Trace**
-- Requirements are vague or disconnected from implementation units
-- Success criteria are missing or not reflected downstream
-- Units do not clearly advance the traced requirements
-- Origin requirements are not clearly carried forward
+**需求追溯**
+- 需求模糊或與實施單元脫節
+- 成功標準缺失或未向下反映
+- 單元未明確推進已追溯之需求
+- 來源需求未明確傳承
 
-**Context & Research / Sources & References**
-- Relevant repo patterns are named but never used in decisions or implementation units
-- Cited learnings or references do not materially shape the plan
-- High-risk work lacks appropriate external or internal grounding
-- Research is generic instead of tied to this repo or this plan
+**上下文與研究 / 來源與參考**
+- 相關倉庫模式已命名但從未用於決策或實施單元
+- 引用之學習或參考未實質影響計劃
+- 高風險工作缺乏適當之外部或內部立基
+- 研究過於泛化，未針對此倉庫或此計劃
 
-**Key Technical Decisions**
-- A decision is stated without rationale
-- Rationale does not explain tradeoffs or rejected alternatives
-- The decision does not connect back to scope, requirements, or origin context
-- An obvious design fork exists but the plan never addresses why one path won
+**關鍵技術決策**
+- 決策已陳述但無理據
+- 理據未解釋取捨或被拒之替代方案
+- 決策未回連至範圍、需求或來源上下文
+- 存在顯而易見之設計分歧但計劃從未說明為何選擇其一
 
-**Open Questions**
-- Product blockers are hidden as assumptions
-- Planning-owned questions are incorrectly deferred to implementation
-- Resolved questions have no clear basis in repo context, research, or origin decisions
-- Deferred items are too vague to be useful later
+**待解問題**
+- 產品阻礙隱藏為假設
+- 規劃應解決之問題被錯誤推遲至實施
+- 已解決問題無明確基於倉庫上下文、研究或來源決策
+- 推遲項目過於模糊，後續無用
 
-**High-Level Technical Design (when present)**
-- The sketch uses the wrong medium for the work
-- The sketch contains implementation code rather than pseudo-code
-- The non-prescriptive framing is missing or weak
-- The sketch does not connect to the key technical decisions or implementation units
+**高層技術設計（存在時）**
+- 草圖使用錯誤媒介
+- 草圖含實施程式碼而非偽程式碼
+- 非規範性框架缺失或薄弱
+- 草圖未連接至關鍵技術決策或實施單元
 
-**High-Level Technical Design (when absent)** *(Standard or Deep plans only)*
-- The work involves DSL design, API surface design, multi-component integration, complex data flow, or state-heavy lifecycle
-- Key technical decisions would be easier to validate with a visual or pseudo-code representation
-- The approach section of implementation units is thin and a higher-level technical design would provide context
+**高層技術設計（缺失時）** *（僅 Standard 或 Deep 計劃）*
+- 工作涉及 DSL 設計、API 介面設計、多元件整合、複雜資料流或狀態密集之生命週期
+- 關鍵技術決策以視覺或偽程式碼表示更易驗證
+- 實施單元之方法段薄弱，更高層之技術設計可提供上下文
 
-**Implementation Units**
-- Dependency order is unclear or likely wrong
-- File paths or test file paths are missing where they should be explicit
-- Units are too large, too vague, or broken into micro-steps
-- Approach notes are thin or do not name the pattern to follow
-- Test scenarios are vague (don't name inputs and expected outcomes), skip applicable categories (e.g., no error paths for a unit with failure modes, no integration scenarios for a unit crossing layers), or are disproportionate to the unit's complexity
-- Feature-bearing units have blank or missing test scenarios (feature-bearing units require actual test scenarios; the `Test expectation: none` annotation is only valid for non-feature-bearing units)
-- Verification outcomes are vague or not expressed as observable results
+**實施單元**
+- 依賴順序不明或可能錯誤
+- 應明確之處缺少檔案路徑或測試檔案路徑
+- 單元過大、過於模糊或拆分為微步驟
+- 方法說明薄弱或未命名應遵循之模式
+- 測試場景模糊（未命名輸入及預期結果）、跳過適用類別（如：含失敗模式之單元無錯誤路徑、跨層單元無整合場景）或與單元複雜度不成比例
+- 承載功能之單元有空白或缺失之測試場景（承載功能之單元須有實際測試場景；`Test expectation: none` 標註僅適用於非功能承載之單元）
+- 驗證結果模糊或未以可觀察結果表達
 
-**System-Wide Impact**
-- Affected interfaces, callbacks, middleware, entry points, or parity surfaces are missing
-- Failure propagation is underexplored
-- State lifecycle, caching, or data integrity risks are absent where relevant
-- Integration coverage is weak for cross-layer work
+**系統範圍影響**
+- 受影響之介面、回呼、中介軟體、入口點或同位介面缺失
+- 失敗傳播探索不足
+- 狀態生命週期、快取或資料完整性風險於相關處缺失
+- 跨層工作之整合覆蓋薄弱
 
-**Risks & Dependencies / Documentation / Operational Notes**
-- Risks are listed without mitigation
-- Rollout, monitoring, migration, or support implications are missing when warranted
-- External dependency assumptions are weak or unstated
-- Security, privacy, performance, or data risks are absent where they obviously apply
+**風險與依賴 / 文檔 / 運營備註**
+- 風險已列出但無緩解措施
+- 顯然適用時缺少推出、監控、遷移或支援影響
+- 外部依賴假設薄弱或未陳述
+- 顯然適用處缺乏安全、隱私、效能或資料風險
 
-Use the plan's own `Context & Research` and `Sources & References` as evidence. If those sections cite a pattern, learning, or risk that never affects decisions, implementation units, or verification, treat that as a confidence gap.
+以計劃自身之 `Context & Research` 及 `Sources & References` 為證據。若這些章節引用之模式、學習或風險從未影響決策、實施單元或驗證，視為信心缺口。
 
-## 5.3.4 Report and Dispatch Targeted Research
+## 5.3.4 報告並分派定向研究
 
-Before dispatching agents, report what sections are being strengthened and why:
+分派代理前，報告正在強化哪些章節及原因：
 
 ```text
-Strengthening [section names] — [brief reason for each, e.g., "decision rationale is thin", "cross-boundary effects aren't mapped"]
+Strengthening [章節名] — [各則簡短原因，如「決策理據薄弱」、「跨邊界影響未映射」]
 ```
 
-For each selected section, choose the smallest useful agent set. Do **not** run every agent. Use at most **1-3 agents per section** and usually no more than **8 agents total**.
+各選定章節，選擇最小有用代理集。**勿**運行所有代理。每章節至多 **1-3 個代理**，總計通常不超過 **8 個代理**。
 
-Use fully-qualified agent names inside Task calls.
+於 Task 呼叫中使用完全限定代理名稱。
 
-**Deterministic Section-to-Agent Mapping:**
+**確定性章節至代理映射：**
 
-**Requirements Trace / Open Questions classification**
-- `workflow:ce-spec-flow-analyzer` for missing user flows, edge cases, and handoff gaps
-- `research:ce-repo-research-analyst` (Scope: `architecture, patterns`) for repo-grounded patterns, conventions, and implementation reality checks
+**需求追溯 / 待解問題分類**
+- `workflow:ce-spec-flow-analyzer` 用於缺失之用戶流程、邊緣案例及交接缺口
+- `research:ce-repo-research-analyst`（範圍：`architecture, patterns`）用於倉庫立基之模式、慣例及實施現實檢查
 
-**Context & Research / Sources & References gaps**
-- `research:ce-learnings-researcher` for institutional knowledge and past solved problems
-- `research:ce-framework-docs-researcher` for official framework or library behavior
-- `research:ce-best-practices-researcher` for current external patterns and industry guidance
-- Add `research:ce-git-history-analyzer` only when historical rationale or prior art is materially missing
+**上下文與研究 / 來源與參考缺口**
+- `research:ce-learnings-researcher` 用於機構知識及已解決問題
+- `research:ce-framework-docs-researcher` 用於官方框架或函式庫行為
+- `research:ce-best-practices-researcher` 用於當前外部模式及產業指引
+- 僅當歷史理據或先前工藝實質缺失時加入 `research:ce-git-history-analyzer`
 
-**Key Technical Decisions**
-- `review:ce-architecture-strategist` for design integrity, boundaries, and architectural tradeoffs
-- Add `research:ce-framework-docs-researcher` or `research:ce-best-practices-researcher` when the decision needs external grounding beyond repo evidence
+**關鍵技術決策**
+- `review:ce-architecture-strategist` 用於設計完整性、邊界及架構取捨
+- 決策需要倉庫證據以外之外部立基時加入 `research:ce-framework-docs-researcher` 或 `research:ce-best-practices-researcher`
 
-**High-Level Technical Design**
-- `review:ce-architecture-strategist` for validating that the technical design accurately represents the intended approach and identifying gaps
-- `research:ce-repo-research-analyst` (Scope: `architecture, patterns`) for grounding the technical design in existing repo patterns and conventions
-- Add `research:ce-best-practices-researcher` when the technical design involves a DSL, API surface, or pattern that benefits from external validation
+**高層技術設計**
+- `review:ce-architecture-strategist` 用於驗證技術設計準確表達預期方法並識別缺口
+- `research:ce-repo-research-analyst`（範圍：`architecture, patterns`）用於將技術設計立基於既有倉庫模式及慣例
+- 技術設計涉及 DSL、API 介面或受益於外部驗證之模式時加入 `research:ce-best-practices-researcher`
 
-**Implementation Units / Verification**
-- `research:ce-repo-research-analyst` (Scope: `patterns`) for concrete file targets, patterns to follow, and repo-specific sequencing clues
-- `review:ce-pattern-recognition-specialist` for consistency, duplication risks, and alignment with existing patterns
-- Add `workflow:ce-spec-flow-analyzer` when sequencing depends on user flow or handoff completeness
+**實施單元 / 驗證**
+- `research:ce-repo-research-analyst`（範圍：`patterns`）用於具體檔案目標、應遵循之模式及倉庫特定排序線索
+- `review:ce-pattern-recognition-specialist` 用於一致性、重複風險及與既有模式之對齊
+- 排序依賴用戶流程或交接完整性時加入 `workflow:ce-spec-flow-analyzer`
 
-**System-Wide Impact**
-- `review:ce-architecture-strategist` for cross-boundary effects, interface surfaces, and architectural knock-on impact
-- Add the specific specialist that matches the risk:
-  - `review:ce-performance-oracle` for scalability, latency, throughput, and resource-risk analysis
-  - `review:ce-security-sentinel` for auth, validation, exploit surfaces, and security boundary review
-  - `review:ce-data-integrity-guardian` for migrations, persistent state safety, consistency, and data lifecycle risks
+**系統範圍影響**
+- `review:ce-architecture-strategist` 用於跨邊界效應、介面介面及架構連鎖影響
+- 加入匹配風險之特定專家：
+  - `review:ce-performance-oracle` 用於可擴展性、延遲、吞吐量及資源風險分析
+  - `review:ce-security-sentinel` 用於認證、驗證、攻擊面及安全邊界審查
+  - `review:ce-data-integrity-guardian` 用於遷移、持久狀態安全、一致性及資料生命週期風險
 
-**Risks & Dependencies / Operational Notes**
-- Use the specialist that matches the actual risk:
-  - `review:ce-security-sentinel` for security, auth, privacy, and exploit risk
-  - `review:ce-data-integrity-guardian` for persistent data safety, constraints, and transaction boundaries
-  - `review:ce-data-migration-expert` for migration realism, backfills, and production data transformation risk
-  - `review:ce-deployment-verification-agent` for rollout checklists, rollback planning, and launch verification
-  - `review:ce-performance-oracle` for capacity, latency, and scaling concerns
+**風險與依賴 / 運營備註**
+- 使用匹配實際風險之專家：
+  - `review:ce-security-sentinel` 用於安全、認證、隱私及攻擊風險
+  - `review:ce-data-integrity-guardian` 用於持久資料安全、約束及事務邊界
+  - `review:ce-data-migration-expert` 用於遷移現實性、回填及生產資料轉換風險
+  - `review:ce-deployment-verification-agent` 用於推出檢查清單、回滾規劃及上線驗證
+  - `review:ce-performance-oracle` 用於容量、延遲及擴展問題
 
-**Agent Prompt Shape:**
+**代理提示格式：**
 
-For each selected section, pass:
-- The scope prefix from the mapping above when the agent supports scoped invocation
-- A short plan summary
-- The exact section text
-- Why the section was selected, including which checklist triggers fired
-- The plan depth and risk profile
-- A specific question to answer
+各選定章節傳入：
+- 上方映射中之範圍前綴（代理支援範圍調用時）
+- 簡短計劃摘要
+- 精確章節文字
+- 章節被選取之原因，包含觸發之檢查清單項
+- 計劃深度及風險概況
+- 待回答之具體問題
 
-Instruct the agent to return:
-- findings that change planning quality
-- stronger rationale, sequencing, verification, risk treatment, or references
-- no implementation code
-- no shell commands
+指示代理回傳：
+- 改變規劃品質之發現
+- 更強之理據、排序、驗證、風險處理或參考
+- 無實施程式碼
+- 無 shell 命令
 
-## 5.3.5 Choose Research Execution Mode
+## 5.3.5 選擇研究執行模式
 
-Use the lightest mode that will work:
+使用可行之最輕模式：
 
-- **Direct mode** - Default. Use when the selected section set is small and the parent can safely read the agent outputs inline.
-- **Artifact-backed mode** - Use only when the selected research scope is large enough that inline returns would create unnecessary context pressure.
+- **直接模式** - 預設。選定章節集小且父級可安全行內讀取代理輸出時使用。
+- **產物備份模式** - 僅當選定研究範圍大到行內回傳產生不必要之上下文壓力時使用。
 
-Signals that justify artifact-backed mode:
-- More than 5 agents are likely to return meaningful findings
-- The selected section excerpts are long enough that repeating them in multiple agent outputs would be wasteful
-- The topic is high-risk and likely to attract bulky source-backed analysis
+證成產物備份模式之信號：
+- 可能超過 5 個代理回傳有意義發現
+- 選定章節摘錄長度使於多個代理輸出中重複為浪費
+- 主題為高風險，可能吸引大量含來源之分析
 
-If artifact-backed mode is not clearly warranted, stay in direct mode.
+若產物備份模式未被明確證成，保持直接模式。
 
-Artifact-backed mode uses a per-run OS-temp scratch directory. Create it once before dispatching sub-agents and capture its **absolute path** — pass that absolute path to each sub-agent so they write to it directly. Do not use `.context/`; the artifacts are per-run throwaway that are cleaned up when deepening ends (see 5.3.6b), matching the repo Scratch Space convention for one-shot artifacts. Do not pass unresolved shell-variable strings to sub-agents; they need the resolved absolute path.
+產物備份模式使用每次運行之 OS 臨時臨時目錄。分派子代理前一次建立並捕獲其**絕對路徑**——將該絕對路徑傳遞至各子代理使其直接寫入。勿使用 `.context/`；產物為每次運行之一次性品，深化結束時清理（見 5.3.6b），符合倉庫臨時空間慣例中之一-shot 產物。勿將未解析之 shell 變數字串傳遞至子代理；其需要已解析之絕對路徑。
 
 ```bash
 SCRATCH_DIR="$(mktemp -d -t ce-plan-deepen-XXXXXX)"
 echo "$SCRATCH_DIR"
 ```
 
-Refer to the echoed absolute path as `<scratch-dir>` throughout the rest of this workflow.
+將回顯之絕對路徑稱為 `<scratch-dir>`，貫穿此工作流其餘部分。
 
-## 5.3.6 Run Targeted Research
+## 5.3.6 運行定向研究
 
-Launch the selected agents in parallel using the execution mode chosen above. If the current platform does not support parallel dispatch, run them sequentially instead. Omit the `mode` parameter when dispatching so the user's configured permission settings apply.
+使用上方選定之執行模式並行啟動選定代理。若當前平台不支援並行分派，改為順序運行。分派時省略 `mode` 參數，使用戶已配置之權限設定生效。
 
-Prefer local repo and institutional evidence first. Use external research only when the gap cannot be closed responsibly from repo context or already-cited sources.
+偏好先使用本地倉庫及機構證據。僅當缺口無法從倉庫上下文或已引用來源負責任地彌合時使用外部研究。
 
-If a selected section can be improved by reading the origin document more carefully, do that before dispatching external agents.
+若選定章節可透過更仔細閱讀來源文檔改善，先做此事再分派外部代理。
 
-**Direct mode:** Have each selected agent return its findings directly to the parent. Keep the return payload focused: strongest findings only, the evidence or sources that matter, the concrete planning improvement implied by the finding.
+**直接模式：** 各選定代理直接回傳其發現至父級。保持回傳載荷聚焦：僅最強發現、關鍵之證據或來源、發現所暗示之具體規劃改善。
 
-**Artifact-backed mode:** For each selected agent, pass the absolute `<scratch-dir>` path captured earlier and instruct the agent to write one compact artifact file inside that directory, then return only a short completion summary. Each artifact should contain: target section, why selected, 3-7 findings, source-backed rationale, the specific plan change implied by each finding. No implementation code, no shell commands.
+**產物備份模式：** 各選定代理傳入之前捕獲之絕對 `<scratch-dir>` 路徑，指示代理於該目錄內寫入一個精簡產物檔案，然後僅回傳簡短完成摘要。各產物應包含：目標章節、選取原因、3-7 則發現、來源支持之理據、各發現暗示之具體計劃變更。無實施程式碼，無 shell 命令。
 
-If an artifact is missing or clearly malformed, re-run that agent or fall back to direct-mode reasoning for that section.
+若產物缺失或明顯畸形，重新運行該代理或對該章節回退至直接模式推理。
 
-If agent outputs conflict:
-- Prefer repo-grounded and origin-grounded evidence over generic advice
-- Prefer official framework documentation over secondary best-practice summaries when the conflict is about library behavior
-- If a real tradeoff remains, record it explicitly in the plan
+若代理輸出衝突：
+- 偏好倉庫立基及來源立基之證據，而非泛泛建議
+- 衝突關乎函式庫行為時，偏好官方框架文件而非次要最佳實踐摘要
+- 若真實取捨仍存在，於計劃中明確記錄
 
-## 5.3.6b Interactive Finding Review (Interactive Mode Only)
+## 5.3.6b 互動式發現審閱（僅互動模式）
 
-Skip this step in auto mode — proceed directly to 5.3.7.
+自動模式中跳過此步——直接進入 5.3.7。
 
-In interactive mode, present each agent's findings to the user before integration. For each agent that returned findings:
+互動模式中，整合前向用戶呈現各代理之發現。各回傳發現之代理：
 
-1. **Summarize the agent and its target section** — e.g., "The ce-architecture-strategist reviewed Key Technical Decisions and found:"
-2. **Present the findings concisely** — bullet the key points, not the raw agent output. Include enough context for the user to evaluate: what the agent found, what evidence supports it, and what plan change it implies.
-3. **Ask the user** using the platform's blocking question tool when available (see Interaction Method):
-   - **Accept** — integrate these findings into the plan
-   - **Reject** — discard these findings entirely
-   - **Discuss** — the user wants to talk through the findings before deciding
+1. **摘要代理及其目標章節** —— 如 "ce-architecture-strategist 審閱了 Key Technical Decisions 並發現："
+2. **精簡呈現發現** —— 列出要點，非原始代理輸出。包含足夠上下文供用戶評估：代理發現了什麼、支持證據、暗示何種計劃變更。
+3. **使用平台之阻斷式提問工具詢問用戶**（可用時，見互動方式）：
+   - **接受** —— 整合這些發現至計劃
+   - **拒絕** —— 完全丟棄這些發現
+   - **討論** —— 用戶想在決定前討論這些發現
 
-If the user chooses "Discuss", engage in brief dialogue about the findings and then re-ask with only accept/reject (no discuss option on the second ask). The user makes a deliberate choice either way.
+用戶選擇「討論」時，簡短對話後重新詢問，僅保留接受/拒絕（第二次不提供討論選項）。用戶無論如何做出審慎選擇。
 
-When presenting findings from multiple agents targeting the same section, present them one agent at a time so the user can make independent decisions. Do not merge findings from different agents before showing them.
+呈現針對同一章節之多個代理發現時，逐一代理呈現，讓用戶獨立決定。勿在呈現前合併不同代理之發現。
 
-After all agents have been reviewed, carry only the accepted findings forward to 5.3.7.
+所有代理審閱完畢後，僅將已接受之發現帶入 5.3.7。
 
-If the user accepted no findings, report "No findings accepted — plan unchanged." Then proceed directly to Phase 5.4 (skip document-review and synthesis — the plan was not modified). This interactive-mode-only skip does not apply in auto mode; auto mode always proceeds through 5.3.7 and 5.3.8. No explicit scratch cleanup needed — `$SCRATCH_DIR` is OS temp and will be cleaned up by the OS; leaving it in place preserves the rejected agent artifacts for debugging.
+若用戶未接受任何發現，回報「No findings accepted — plan unchanged.」然後直接進入階段 5.4（跳過文檔審閱及綜合——計劃未被修改）。此互動模式專用之跳過不適用於自動模式；自動模式恆經 5.3.7 及 5.3.8。無需明確之臨時清理——`$SCRATCH_DIR` 為 OS 臨時，由 OS 清理；保留之以便調試被拒之代理產物。
 
-If findings were accepted and the plan was modified, proceed through 5.3.7 and 5.3.8 as normal — document-review acts as a quality gate on the changes.
+若發現被接受且計劃被修改，正常通過 5.3.7 及 5.3.8——文檔審閱作為變更之品質閘門。
 
-## 5.3.7 Synthesize and Update the Plan
+## 5.3.7 綜合並更新計劃
 
-Strengthen only the selected sections. Keep the plan coherent and preserve its overall structure.
+僅強化選定章節。保持計劃連貫並保留其整體結構。
 
-**In interactive mode:** Only integrate findings the user accepted in 5.3.6b. If some findings from different agents touch the same section, reconcile them coherently but do not reintroduce rejected findings.
+**互動模式中：** 僅整合用戶於 5.3.6b 中接受之發現。若來自不同代理之部分發現觸及同一章節，連貫調和之，但不重新引入被拒之發現。
 
-Allowed changes:
-- Clarify or strengthen decision rationale
-- Tighten requirements trace or origin fidelity
-- Reorder or split implementation units when sequencing is weak
-- Add missing pattern references, file/test paths, or verification outcomes
-- Expand system-wide impact, risks, or rollout treatment where justified
-- Reclassify open questions between `Resolved During Planning` and `Deferred to Implementation` when evidence supports the change
-- Strengthen, replace, or add a High-Level Technical Design section when the work warrants it and the current representation is weak
-- Strengthen or add per-unit technical design fields where the unit's approach is non-obvious
-- Add or update `deepened: YYYY-MM-DD` in frontmatter when the plan was substantively improved
+允許之變更：
+- 釐清或強化決策理據
+- 收緊需求追溯或來源忠實度
+- 排序薄弱時重新排序或拆分實施單元
+- 添加缺失之模式引用、檔案/測試路徑或驗證結果
+- 於合理處擴展系統範圍影響、風險或推出處理
+- 當證據支持時，在 `Resolved During Planning` 及 `Deferred to Implementation` 之間重新分類待解問題
+- 當工作需要且當前表示薄弱時，強化、替換或添加高層技術設計章節
+- 當單元方法不明顯時，強化或添加各單元之技術設計欄位
+- 計劃被實質改善時添加或更新 frontmatter 中之 `deepened: YYYY-MM-DD`
 
-Do **not**:
-- Add implementation code — no imports, exact method signatures, or framework-specific syntax. Pseudo-code sketches and DSL grammars are allowed
-- Add git commands, commit choreography, or exact test command recipes
-- Add generic `Research Insights` subsections everywhere
-- Rewrite the entire plan from scratch
-- Invent new product requirements, scope changes, or success criteria without surfacing them explicitly
+**勿**：
+- 添加實施程式碼——無 import、精確方法簽名或框架特定語法。偽程式碼草圖及 DSL 語法允許
+- 添加 git 命令、提交編排或精確測試命令配方
+- 處處添加泛泛之 `Research Insights` 子章節
+- 從頭重寫整個計劃
+- 發明新產品需求、範圍變更或成功標準而不明確呈現
 
-If research reveals a product-level ambiguity that should change behavior or scope:
-- Do not silently decide it here
-- Record it under `Open Questions`
-- Recommend `ce-brainstorm` if the gap is truly product-defining
+若研究揭示應改變行為或範圍之產品層級歧義：
+- 勿在此暗中決定
+- 記錄於 `Open Questions`
+- 若缺口確為產品定義級，建議 `ce-brainstorm`

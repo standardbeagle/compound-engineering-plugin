@@ -1,8 +1,8 @@
-# Testing Patterns
+# 測試範式
 
-## Minitest Setup
+## Minitest 配置
 
-Kane exclusively uses Minitest—never RSpec.
+Kane 專用 Minitest，絕不用 RSpec。
 
 ```ruby
 # test/test_helper.rb
@@ -11,24 +11,24 @@ Bundler.require(:default)
 require "minitest/autorun"
 require "minitest/pride"
 
-# Load the gem
+# 載入 gem
 require "gemname"
 
-# Test database setup (if needed)
+# 測試資料庫配置（按需）
 ActiveRecord::Base.establish_connection(
   adapter: "postgresql",
   database: "gemname_test"
 )
 
-# Base test class
+# 基礎測試類
 class Minitest::Test
   def setup
-    # Reset state before each test
+    # 每測試前重設狀態
   end
 end
 ```
 
-## Test File Structure
+## 測試檔結構
 
 ```ruby
 # test/model_test.rb
@@ -58,9 +58,9 @@ class ModelTest < Minitest::Test
 end
 ```
 
-## Multi-Version Testing
+## 多版本測試
 
-Test against multiple Rails/Ruby versions using gemfiles:
+以 gemfile 對多 Rails/Ruby 版本測試：
 
 ```
 test/
@@ -89,7 +89,7 @@ gem "activerecord", "~> 7.2.0"
 gem "sqlite3"
 ```
 
-Run with specific gemfile:
+指定 gemfile 執行：
 
 ```bash
 BUNDLE_GEMFILE=test/gemfiles/activerecord70.gemfile bundle install
@@ -148,10 +148,10 @@ jobs:
       - run: bundle exec rake test
 ```
 
-## Database-Specific Testing
+## 資料庫特定測試
 
 ```yaml
-# .github/workflows/build.yml (with services)
+# .github/workflows/build.yml (含 services)
 services:
   postgres:
     image: postgres:15
@@ -170,13 +170,13 @@ env:
   DATABASE_URL: postgres://postgres:postgres@localhost/gemname_test
 ```
 
-## Test Database Setup
+## 測試資料庫配置
 
 ```ruby
 # test/test_helper.rb
 require "active_record"
 
-# Connect to database
+# 連線
 ActiveRecord::Base.establish_connection(
   ENV["DATABASE_URL"] || {
     adapter: "postgresql",
@@ -184,7 +184,7 @@ ActiveRecord::Base.establish_connection(
   }
 )
 
-# Create tables
+# 建表
 ActiveRecord::Schema.define do
   create_table :users, force: true do |t|
     t.string :email
@@ -193,22 +193,22 @@ ActiveRecord::Schema.define do
   end
 end
 
-# Define models
+# 定義模型
 class User < ActiveRecord::Base
   gemname_feature :email
 end
 ```
 
-## Assertion Patterns
+## 斷言範式
 
 ```ruby
-# Basic assertions
+# 基本斷言
 assert result
 assert_equal expected, actual
 assert_nil value
 assert_empty array
 
-# Exception testing
+# 異常測試
 assert_raises(ArgumentError) { bad_code }
 
 error = assert_raises(GemName::Error) do
@@ -216,13 +216,13 @@ error = assert_raises(GemName::Error) do
 end
 assert_match /expected message/, error.message
 
-# Refutations
+# 反駁
 refute condition
 refute_equal unexpected, actual
 refute_nil value
 ```
 
-## Test Helpers
+## 測試輔助
 
 ```ruby
 # test/test_helper.rb
@@ -247,12 +247,12 @@ class Minitest::Test
 end
 ```
 
-## Skipping Tests
+## 跳過測試
 
 ```ruby
 def test_postgresql_specific
   skip "PostgreSQL only" unless postgresql?
-  # test code
+  # 測試碼
 end
 
 def postgresql?

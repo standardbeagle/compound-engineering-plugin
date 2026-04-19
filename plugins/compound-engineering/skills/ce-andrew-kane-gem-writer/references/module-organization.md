@@ -1,25 +1,25 @@
-# Module Organization Patterns
+# 模組組織範式
 
-## Simple Gem Layout
+## 簡易 Gem 結構
 
 ```
 lib/
-├── gemname.rb          # Entry point, config, errors
+├── gemname.rb          # 入口、配置、錯誤
 └── gemname/
-    ├── helper.rb       # Core functionality
-    ├── engine.rb       # Rails engine (if needed)
-    └── version.rb      # VERSION constant only
+    ├── helper.rb       # 核心功能
+    ├── engine.rb       # Rails engine（按需）
+    └── version.rb      # 僅 VERSION 常數
 ```
 
-## Complex Gem Layout (PgHero pattern)
+## 複雜 Gem 結構（PgHero 範式）
 
 ```
 lib/
 ├── pghero.rb
 └── pghero/
-    ├── database.rb     # Main class
+    ├── database.rb     # 主類
     ├── engine.rb       # Rails engine
-    └── methods/        # Functional decomposition
+    └── methods/        # 按功能分解
         ├── basic.rb
         ├── connections.rb
         ├── indexes.rb
@@ -27,9 +27,9 @@ lib/
         └── replication.rb
 ```
 
-## Method Decomposition Pattern
+## 方法分解範式
 
-Break large classes into includable modules by feature:
+大類按功能拆為可引入之模組：
 
 ```ruby
 # lib/pghero/database.rb
@@ -58,9 +58,9 @@ module PgHero
 end
 ```
 
-## Version File Pattern
+## 版本檔範式
 
-Keep version.rb minimal:
+`version.rb` 極簡：
 
 ```ruby
 # lib/gemname/version.rb
@@ -69,45 +69,45 @@ module GemName
 end
 ```
 
-## Require Order in Entry Point
+## 入口引入順序
 
 ```ruby
 # lib/searchkick.rb
 
-# 1. Standard library
+# 1. 標準庫
 require "forwardable"
 require "json"
 
-# 2. External dependencies (minimal)
+# 2. 外部依賴（極少）
 require "active_support"
 
-# 3. Internal files via require_relative
+# 3. 內部檔用 require_relative
 require_relative "searchkick/index"
 require_relative "searchkick/model"
 require_relative "searchkick/query"
 require_relative "searchkick/version"
 
-# 4. Conditional Rails loading (LAST)
+# 4. 條件式 Rails 載入（末尾）
 require_relative "searchkick/railtie" if defined?(Rails)
 ```
 
 ## Autoload vs Require
 
-Kane uses explicit `require_relative`, not autoload:
+Kane 用顯式 `require_relative`，不用 autoload：
 
 ```ruby
-# CORRECT
+# 宜
 require_relative "gemname/model"
 require_relative "gemname/query"
 
-# AVOID
+# 忌
 autoload :Model, "gemname/model"
 autoload :Query, "gemname/query"
 ```
 
-## Comments Style
+## 註解風格
 
-Minimal section headers only:
+僅用極簡段落標頭：
 
 ```ruby
 # dependencies

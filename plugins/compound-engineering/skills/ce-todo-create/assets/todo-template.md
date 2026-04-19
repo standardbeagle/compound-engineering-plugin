@@ -6,150 +6,150 @@ tags: []
 dependencies: []
 ---
 
-# Brief Task Title
+# 簡短任務標題
 
-Replace with a concise title describing what needs to be done.
+替換為簡明描述待辦事項之標題。
 
-## Problem Statement
+## 問題陳述
 
-What is broken, missing, or needs improvement? Provide clear context about why this matters.
+何者損壞、缺失或需改善？提供清楚上下文說明重要性。
 
-**Example:**
-- Template system lacks comprehensive test coverage for edge cases discovered during PR review
-- Email service is missing proper error handling for rate-limit scenarios
-- Documentation doesn't cover the new authentication flow
+**範例：**
+- 模板系統缺乏 PR 審閱中發現之邊緣案例之全面測試覆蓋
+- 電子郵件服務缺乏速率限制場景之適當錯誤處理
+- 文檔未涵蓋新認證流程
 
-## Findings
+## 發現
 
-Investigation results, root cause analysis, and key discoveries.
+調查結果、根因分析及關鍵發現。
 
-- Finding 1 (with specifics: file, line number if applicable)
-- Finding 2
-- Key discovery with impact assessment
-- Related issues or patterns discovered
+- 發現 1（附細節：檔案、行號如適用）
+- 發現 2
+- 關鍵發現附影響評估
+- 相關議題或模式發現
 
-**Example format:**
-- Identified 12 missing test scenarios in `app/models/user_test.rb`
-- Current coverage: 60% of code paths
-- Missing: empty inputs, special characters, large payloads
-- Similar issues exist in `app/models/post_test.rb` (~8 scenarios)
+**範例格式：**
+- 識別 `app/models/user_test.rb` 中 12 個缺失測試場景
+- 當前覆蓋率：60% 程式碼路徑
+- 缺失：空輸入、特殊字元、大承載
+- `app/models/post_test.rb` 存在類似問題（約 8 個場景）
 
-## Proposed Solutions
+## 建議方案
 
-Present multiple options with pros, cons, effort estimates, and risk assessment.
+提出多個選項附優缺點、工作量估計及風險評估。
 
-### Option 1: [Solution Name]
+### 方案一：[方案名稱]
 
-**Approach:** Describe the solution clearly.
+**方法：** 清楚描述方案。
 
-**Pros:**
-- Benefit 1
-- Benefit 2
+**優點：**
+- 優點 1
+- 優點 2
 
-**Cons:**
-- Drawback 1
-- Drawback 2
+**缺點：**
+- 缺點 1
+- 缺點 2
 
-**Effort:** 2-3 hours
+**工作量：** 2-3 小時
 
-**Risk:** Low / Medium / High
-
----
-
-### Option 2: [Solution Name]
-
-**Approach:** Describe the solution clearly.
-
-**Pros:**
-- Benefit 1
-- Benefit 2
-
-**Cons:**
-- Drawback 1
-- Drawback 2
-
-**Effort:** 4-6 hours
-
-**Risk:** Low / Medium / High
+**風險：** Low / Medium / High
 
 ---
 
-### Option 3: [Solution Name]
+### 方案二：[方案名稱]
 
-(Include if you have alternatives)
+**方法：** 清楚描述方案。
 
-## Recommended Action
+**優點：**
+- 優點 1
+- 優點 2
 
-**To be filled during triage.** Clear, actionable plan for resolving this todo.
+**缺點：**
+- 缺點 1
+- 缺點 2
 
-**Example:**
-"Implement both unit tests (covering each scenario) and integration tests (full pipeline) before merging. Estimated 4 hours total effort. Target coverage > 85% for this module."
+**工作量：** 4-6 小時
 
-## Technical Details
-
-Affected files, related components, database changes, or architectural considerations.
-
-**Affected files:**
-- `app/models/user.rb:45` - full_name method
-- `app/services/user_service.rb:12` - validation logic
-- `test/models/user_test.rb` - existing tests
-
-**Related components:**
-- UserMailer (depends on user validation)
-- AccountPolicy (authorization checks)
-
-**Database changes (if any):**
-- Migration needed? Yes / No
-- New columns/tables? Describe here
-
-## Resources
-
-Links to errors, tests, PRs, documentation, similar issues.
-
-- **PR:** #1287
-- **Related issue:** #456
-- **Error log:** [link to AppSignal incident]
-- **Documentation:** [relevant docs]
-- **Similar patterns:** Issue #200 (completed, ref for approach)
-
-## Acceptance Criteria
-
-Testable checklist items for verifying completion.
-
-- [ ] All acceptance criteria checked
-- [ ] Tests pass (unit + integration if applicable)
-- [ ] Code reviewed and approved
-- [ ] (Example) Test coverage > 85%
-- [ ] (Example) Performance metrics acceptable
-- [ ] (Example) Documentation updated
-
-## Work Log
-
-Chronological record of work sessions, actions taken, and learnings.
-
-### 2025-11-12 - Initial Discovery
-
-**By:** Claude Code
-
-**Actions:**
-- Identified 12 missing test scenarios
-- Analyzed existing test coverage (file:line references)
-- Reviewed similar patterns in codebase
-- Drafted 3 solution approaches
-
-**Learnings:**
-- Similar issues exist in related modules
-- Current test setup supports both unit and integration tests
-- Performance testing would be valuable addition
+**風險：** Low / Medium / High
 
 ---
 
-(Add more entries as work progresses)
+### 方案三：[方案名稱]
 
-## Notes
+（如有替代方案請包含）
 
-Additional context, decisions, or reminders.
+## 建議行動
 
-- Decision: Include both unit and integration tests for comprehensive coverage
-- Blocker: Depends on completion of issue #001
-- Timeline: Priority for sprint due to blocking other work
+**於分流時填入。** 解決此待辦之清晰、可操作計劃。
+
+**範例：**
+"合併前實施單元測試（覆蓋各場景）及整合測試（完整管線）。估計總工時 4 小時。目標覆蓋率 > 85%。"
+
+## 技術細節
+
+受影響檔案、相關元件、資料庫變更或架構考量。
+
+**受影響檔案：**
+- `app/models/user.rb:45` - full_name 方法
+- `app/services/user_service.rb:12` - 驗證邏輯
+- `test/models/user_test.rb` - 既有測試
+
+**相關元件：**
+- UserMailer（依賴用戶驗證）
+- AccountPolicy（授權檢查）
+
+**資料庫變更（如有）：**
+- 需要遷移？ Yes / No
+- 新欄位/表格？在此描述
+
+## 資源
+
+錯誤、測試、PR、文檔、相關議題之連結。
+
+- **PR：** #1287
+- **相關議題：** #456
+- **錯誤日誌：** [連結至 AppSignal 事件]
+- **文檔：** [相關文檔]
+- **類似模式：** Issue #200（已完成，方法參考）
+
+## 驗收標準
+
+驗證完成之可測試檢查清單。
+
+- [ ] 所有驗收標準已勾選
+- [ ] 測試通過（單元 + 整合如適用）
+- [ ] 程式碼已審閱並批准
+- [ ] （範例）測試覆蓋率 > 85%
+- [ ] （範例）效能指標可接受
+- [ ] （範例）文檔已更新
+
+## 工作日誌
+
+工作會話、採取行動及學習之按時間順序記錄。
+
+### 2025-11-12 - 初始發現
+
+**由：** Claude Code
+
+**行動：**
+- 識別 12 個缺失測試場景
+- 分析既有測試覆蓋率（檔案:行引用）
+- 審閱程式碼庫中類似模式
+- 草擬 3 種方案方法
+
+**學習：**
+- 相關模組存在類似問題
+- 當前測試設置支援單元及整合測試
+- 效能測試將為有價值之補充
+
+---
+
+（隨工作進展添加更多條目）
+
+## 備註
+
+額外上下文、決策或提醒。
+
+- 決策：包含單元及整合測試以獲全面覆蓋
+- 阻礙：依賴議題 #001 完成
+- 時程：因阻礙其他工作而為衝刺優先事項

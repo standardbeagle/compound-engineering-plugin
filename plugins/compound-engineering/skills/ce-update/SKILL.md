@@ -1,69 +1,56 @@
 ---
 name: ce-update
 description: |
-  Check if the compound-engineering plugin is up to date and fix stale cache if not.
-  Use when the user says "update compound engineering", "check compound engineering version",
-  "ce update", "is compound engineering up to date", "update ce plugin", or reports issues
-  that might stem from a stale compound-engineering plugin version. This skill only works
-  in Claude Code — it relies on the plugin harness cache layout.
+  檢查 compound-engineering 插件是否為最新版本，若非則修復陳舊快取。
+  適用於用戶說「update compound engineering」、「check compound engineering version」、
+  「ce update」、「is compound engineering up to date」、「update ce plugin」，或回報可能
+  源自陳舊 compound-engineering 插件版本之問題。此技能僅適用於 Claude Code——依賴
+  插件框架快取佈局。
 disable-model-invocation: true
 ce_platforms: [claude]
 ---
 
-# Check & Fix Plugin Version
+# 檢查並修復插件版本
 
-Verify the installed compound-engineering plugin version matches the latest released
-version, and fix stale marketplace/cache state if it doesn't. Claude Code only.
+驗證已安裝之 compound-engineering 插件版本是否與最新發布版本一致，若非則修復陳舊之市場/快取狀態。僅限 Claude Code。
 
-## Pre-resolved context
+## 預解析上下文
 
-The three sections below contain pre-resolved data. Only the **Plugin root
-path** determines whether this session is Claude Code — if it contains an error
-sentinel, an empty value, or a literal `${CLAUDE_PLUGIN_ROOT}` string, tell the
-user this skill only works in Claude Code and stop. The other two sections may
-contain error sentinels even in valid Claude Code sessions; the decision logic
-below handles those cases.
+下方三段含預解析資料。僅**插件根路徑**決定此對話是否為 Claude Code——若含錯誤哨兵、空值或字面 `${CLAUDE_PLUGIN_ROOT}` 字串，告知用戶此技能僅適用於 Claude Code 並停止。其餘兩段即使在有效 Claude Code 對話中亦可能含錯誤哨兵；下方決策邏輯處理此類情況。
 
-**Plugin root path:**
+**插件根路徑：**
 !`echo "${CLAUDE_PLUGIN_ROOT}" 2>/dev/null || echo '__CE_UPDATE_ROOT_FAILED__'`
 
-**Latest released version:**
+**最新發布版本：**
 !`gh release list --repo EveryInc/compound-engineering-plugin --limit 30 --json tagName --jq '[.[] | select(.tagName | startswith("compound-engineering-v"))][0].tagName | sub("compound-engineering-v";"")' 2>/dev/null || echo '__CE_UPDATE_VERSION_FAILED__'`
 
-**Cached version folder(s):**
+**已快取版本資料夾：**
 !`ls "${CLAUDE_PLUGIN_ROOT}/cache/compound-engineering-plugin/compound-engineering/" 2>/dev/null || echo '__CE_UPDATE_CACHE_FAILED__'`
 
-## Decision logic
+## 決策邏輯
 
-### 1. Platform gate
+### 一、平台關卡
 
-If **Plugin root path** contains `__CE_UPDATE_ROOT_FAILED__`, a literal
-`${CLAUDE_PLUGIN_ROOT}` string, or is empty: tell the user this skill requires Claude Code
-and stop. No further action.
+若**插件根路徑**含 `__CE_UPDATE_ROOT_FAILED__`、字面 `${CLAUDE_PLUGIN_ROOT}` 字串，或為空：告知用戶此技能需要 Claude Code 並停止。不作進一步動作。
 
-### 2. Compare versions
+### 二、比對版本
 
-If **Latest released version** contains `__CE_UPDATE_VERSION_FAILED__`: tell the user the
-latest release could not be fetched (gh may be unavailable or rate-limited) and stop.
+若**最新發布版本**含 `__CE_UPDATE_VERSION_FAILED__`：告知用戶無法取得最新發布版本（gh 或不可用或受限），並停止。
 
-If **Cached version folder(s)** contains `__CE_UPDATE_CACHE_FAILED__`: no marketplace cache
-exists. Tell the user: "No marketplace cache found — this appears to be a local dev checkout
-or fresh install." and stop.
+若**已快取版本資料夾**含 `__CE_UPDATE_CACHE_FAILED__`：無市場快取存在。告知用戶：「No marketplace cache found — this appears to be a local dev checkout or fresh install.」並停止。
 
-Take the **latest released version** and the **cached folder list**.
+取**最新發布版本**與**已快取資料夾列表**。
 
-**Up to date** — exactly one cached folder exists AND its name matches the latest version:
-- Tell the user: "compound-engineering **v{version}** is installed and up to date."
+**已為最新**——恰好一個快取資料夾存在，且其名稱與最新版本一致：
+- 告知用戶：「compound-engineering **v{version}** is installed and up to date.」
 
-**Out of date or corrupted** — multiple cached folders exist, OR the single folder name
-does not match the latest version. Use the **Plugin root path** value from above to
-construct the delete path.
+**過時或損壞**——多個快取資料夾存在，或唯一資料夾名稱與最新版本不符。使用上方**插件根路徑**值構建刪除路徑。
 
-**Clear the stale cache:**
+**清除陳舊快取：**
 ```bash
 rm -rf "<plugin-root-path>/cache/compound-engineering-plugin/compound-engineering"
 ```
 
-Tell the user:
-- "compound-engineering was on **v{old}** but **v{latest}** is available."
-- "Cleared the plugin cache. Now run `/plugin marketplace update` in this session, then restart Claude Code to pick up v{latest}."
+告知用戶：
+- 「compound-engineering was on **v{old}** but **v{latest}** is available.」
+- 「Cleared the plugin cache. Now run `/plugin marketplace update` in this session, then restart Claude Code to pick up v{latest}.」

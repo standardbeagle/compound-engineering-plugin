@@ -4,79 +4,79 @@ description: "Write or regenerate a value-first pull-request description (title 
 argument-hint: "[PR ref e.g. pr:561 | #561 | URL] [free-text steering]"
 ---
 
-# CE PR Description
+# CE PR 描述
 
-Generate a conventional-commit-style title and a value-first body describing a pull request's work. Returns structured `{title, body_file}` for the caller to apply — this skill never invokes `gh pr edit` or `gh pr create`, and never prompts for interactive confirmation.
+生 convention-commit 體題與價值為先之 PR 本文。返 `{title, body_file}` 結構，供調用者施用——此技不調 `gh pr edit` 或 `gh pr create`，亦不索確認。
 
-Why a separate skill: several callers need the same writing logic without the single-PR interactive scaffolding that lives in `ce-commit-push-pr`. `ce-pr-stack`'s splitting workflow runs this once per layer as a batch; `ce-commit-push-pr` runs it inside its full-flow and refresh-mode paths. Extracting keeps one source of truth for the writing principles.
+何以別立一技：數調用者需同源撰述之理，而 `ce-commit-push-pr` 中之單 PR 交互腳手不宜共取。`ce-pr-stack` 逐層批量調之，`ce-commit-push-pr` 於全流及刷新路徑中調之。抽取以存一源之真。
 
-**Naming rationale:** `ce-pr-description`, not `git-pr-description`. Stacking and PR creation are GitHub features; the "PR" in the name refers to the GitHub artifact. Using the `ce-` prefix matches the plugin naming convention for all skills.
+**命名理據：** `ce-pr-description`，非 `git-pr-description`。堆疊與 PR 創建乃 GitHub 功能；名中 "PR" 指 GitHub 文物。`ce-` 前綴循插件命名之例。
 
 ---
 
-## Inputs
+## 輸入
 
-Input is a free-form prompt. Parse it into two parts:
+輸入為自由格式之提示。析為二部：
 
-- **A PR reference, if present.** Any of these patterns counts: a full GitHub PR URL (`https://github.com/owner/repo/pull/NN`), `pr:<number>` or `pr:<URL>`, a bare hashmark form (`#NN`), or the argument being just a number (`561`). Extract the PR reference and treat the rest of the argument as steering text.
-- **Everything else is steering text** (a "focus" hint like "emphasize the benchmarks" or "do a good job with the perf story"). It may be combined with a PR reference or stand alone.
+- **PR 引用，若有。** 下列諸式皆可：完整 GitHub PR URL（`https://github.com/owner/repo/pull/NN`）、`pr:<number>` 或 `pr:<URL>`、裸 `#NN`、或參數獨為數字（`561`）。取其引用，餘為導引文本。
+- **餘者皆導引文本**（如「著重基準測試」或「善述效能敘事」之類）。可與 PR 引用並存，亦可獨行。
 
-No specific grammar is required — read the argument as natural language and identify whichever PR reference is present. If no PR reference is present, default to describing the current branch.
+無須特定語法——以自然語言讀之，辨其 PR 引用。若無引用，預設描述當前分支。
 
-### Mode selection
+### 模式選擇
 
-| What the caller passes | Mode |
+| 調用者所傳 | 模式 |
 |---|---|
-| No PR reference (empty argument or steering text only) | **Current-branch mode** — describe the commits on HEAD vs the repo's default base |
-| A PR reference (URL, `pr:`, `#NN`, or bare number) | **PR mode** — describe the specified PR |
+| 無 PR 引用（空參或僅導引文本） | **當前分支模式** — 述 HEAD 相對倉庫預設基之提交 |
+| PR 引用（URL、`pr:`、`#NN`、裸數） | **PR 模式** — 述所指 PR |
 
-Steering text is always optional. If present, incorporate it alongside the diff-derived narrative; do not let it override the value-first principles or fabricate content unsupported by the diff.
+導引文本恆為可選。若在，與差異所生敘事並用；勿令其凌駕價值為先之原則，亦勿憑空捏造差異所無之內容。
 
-**Optional `base:<ref>` override (current-branch mode only).** When a caller already knows the intended base branch (e.g., `ce-commit-push-pr` has detected `origin/develop` or `origin/release/2026-04` as the target), it can pass `base:<ref>` to pin the base explicitly. The ref must resolve locally. This overrides auto-detection for current-branch mode; PR mode ignores it (PRs already define their own base via `baseRefName`). Most invocations don't need this — auto-detection (existing PR's `baseRefName` → `origin/HEAD`) covers the common case.
+**可選 `base:<ref>` 覆寫（僅當前分支模式）。** 調用者已知目標基分支時（如 `ce-commit-push-pr` 測得 `origin/develop` 或 `origin/release/2026-04`），可傳 `base:<ref>` 以定之。引用須本地可解。此覆寫當前分支模式之自動偵測；PR 模式忽之（PR 已藉 `baseRefName` 自定其基）。多數調用不需此——自動偵測（既有 PR 之 `baseRefName` → `origin/HEAD`）足矣。
 
-**Examples**:
+**示例**:
 
-- `ce-pr-description` → current-branch, no focus, auto-detect base
-- `ce-pr-description emphasize the benchmarks` → current-branch, focus = "emphasize the benchmarks"
-- `ce-pr-description base:origin/develop` → current-branch, base pinned to `origin/develop`
-- `ce-pr-description base:origin/develop emphasize perf` → same + focus
-- `ce-pr-description pr:561` → PR #561, no focus
-- `ce-pr-description #561 do a good job with the perf story` → PR #561, focus = "do a good job with the perf story"
-- `ce-pr-description https://github.com/foo/bar/pull/561 emphasize safety` → PR #561 in foo/bar, focus = "emphasize safety"
+- `ce-pr-description` → 當前分支，無焦點，自動偵測基
+- `ce-pr-description emphasize the benchmarks` → 當前分支，焦點 = "emphasize the benchmarks"
+- `ce-pr-description base:origin/develop` → 當前分支，基定於 `origin/develop`
+- `ce-pr-description base:origin/develop emphasize perf` → 同上 + 焦點
+- `ce-pr-description pr:561` → PR #561，無焦點
+- `ce-pr-description #561 do a good job with the perf story` → PR #561，焦點 = "do a good job with the perf story"
+- `ce-pr-description https://github.com/foo/bar/pull/561 emphasize safety` → foo/bar 之 PR #561，焦點 = "emphasize safety"
 
-## Output
+## 輸出
 
-Return a structured result with two fields:
+返結構化結果，含二欄：
 
-- **`title`** -- conventional-commit format: `type: description` or `type(scope): description`. Under 72 characters. Choose `type` based on intent (feat/fix/refactor/docs/chore/perf/test), not file type. Pick the narrowest useful `scope` (skill or agent name, CLI area, or shared label); omit when no single label adds clarity.
-- **`body_file`** -- absolute path to an OS temp file (created via `mktemp`) containing the body markdown that follows the writing principles below. Do not emit the body inline in the return.
+- **`title`** -- convention-commit 格式：`type: description` 或 `type(scope): description`。七十二字符以內。`type` 依意圖選（feat/fix/refactor/docs/chore/perf/test），非依檔類。取最狹有用之 `scope`（技能或代理名、CLI 區域、共享標籤）；無益則省。
+- **`body_file`** -- OS 臨時檔之絕對路徑（以 `mktemp` 建），內含循下述原則所撰之本文 Markdown。勿將本文內嵌於返值。
 
-The caller decides whether to apply via `gh pr edit`, `gh pr create`, or discard, reading the body from `body_file` (e.g., `--body "$(cat "$BODY_FILE")"`). This skill does NOT call those commands itself. No cleanup is required — `mktemp` files live in OS temp storage, which the OS reaps on its own schedule.
-
----
-
-## What this skill does not do
-
-- No interactive confirmation prompts. If the diff is ambiguous about something important (e.g., the focus hint conflicts with the actual changes), surface the ambiguity in the returned output or raise it to the caller — do not prompt the user directly.
-- No branch checkout. Current-branch mode describes the HEAD in the user's current checkout; PR mode describes the specified PR. Neither mode checks out a different branch.
-- No compare-and-confirm narrative ("here's what changed since the last version"). The description describes the end state; the caller owns any compare-and-confirm framing.
-- No auto-apply via `gh pr edit` or `gh pr create`. Return the output and stop.
-
-Interactive scaffolding (confirmation prompts, compare-and-confirm, apply step) is the caller's responsibility.
+調用者決定以 `gh pr edit`、`gh pr create` 施之或棄之，自 `body_file` 讀取（如 `--body "$(cat "$BODY_FILE")"`）。此技不調此等指令。無須清理——`mktemp` 檔居 OS 臨時處，系統自會回收。
 
 ---
 
-## Step 1: Resolve the diff and commit list
+## 此技不為之事
 
-Parse the input (see Inputs above) and branch on which mode it selects.
+- 無交互確認提示。若差異含混（如焦點與實際變更相牾），於輸出中揭露或呈予調用者——勿直接問用戶。
+- 無分支切換。當前分支模式述用戶當前檢出之 HEAD；PR 模式述所指 PR。皆不切分支。
+- 無比較確認敘事。描述所述為終態；比較確認之框架歸調用者。
+- 不自動以 `gh pr edit` 或 `gh pr create` 施用。返輸出即止。
 
-### Current-branch mode (default when no PR reference was given)
+交互腳手（確認提示、比較確認、施用步驟）乃調用者之責。
 
-Determine the base against which to compare, in this priority order:
+---
 
-1. **Caller-supplied `base:<ref>`** — if present, use it verbatim. The caller is asserting the correct base. The ref must resolve locally.
-2. **Existing PR's `baseRefName`** — if the current branch already has an open PR on this repo, use that PR's base. Handles feature branches targeting non-default bases (e.g., `develop`) when the PR is already open.
-3. **Repo default (`origin/HEAD`)** — fall back for branches with no PR yet and no caller-supplied base.
+## 步驟一：解析差異與提交清單
+
+析輸入（見上）並依模式分支。
+
+### 當前分支模式（無 PR 引用時之預設）
+
+以下列優先序定比較之基：
+
+1. **調用者所傳 `base:<ref>`** — 若在，直用之。調用者斷言正確之基。引用須本地可解。
+2. **既有 PR 之 `baseRefName`** — 若當前分支於此倉已有開放 PR，用其基。處理目標非預設基（如 `develop`）之特性分支。
+3. **倉庫預設（`origin/HEAD`）** — 無 PR 亦無調用者所傳基時之後備。
 
 ```bash
 # Detect current branch (fail if detached HEAD)
@@ -100,230 +100,230 @@ else
 fi
 ```
 
-If `$BASE_REF` does not resolve locally (`git rev-parse --verify "$BASE_REF"` fails), the caller (or the user) needs to fetch it first. Exit gracefully with `"Base ref $BASE_REF does not resolve locally. Fetch it before invoking the skill."` — do not attempt recovery.
+若 `$BASE_REF` 本地不可解（`git rev-parse --verify "$BASE_REF"` 失敗），調用者（或用戶）需先取之。以 `"Base ref $BASE_REF does not resolve locally. Fetch it before invoking the skill."` 優雅退出——勿試恢復。
 
-Gather merge base, commit list, and full diff:
+取合併基、提交清單及全量差異：
 
 ```bash
 MERGE_BASE=$(git merge-base "$BASE_REF" HEAD) && echo "MERGE_BASE=$MERGE_BASE" && echo '=== COMMITS ===' && git log --oneline $MERGE_BASE..HEAD && echo '=== DIFF ===' && git diff $MERGE_BASE...HEAD
 ```
 
-If the commit list is empty, report `"No commits between $BASE_REF and HEAD"` and exit gracefully — there is nothing to describe.
+若提交清單為空，報 `"No commits between $BASE_REF and HEAD"` 並優雅退出——無可述者。
 
-If an existing PR was found in step 1, also capture its body for evidence preservation in Step 3.
+若步驟一中發現既有 PR，亦取其本文，供步驟三憑證保全之用。
 
-### PR mode (when the input contained a PR reference)
+### PR 模式（輸入含 PR 引用時）
 
-Normalize the reference into a form `gh pr view` accepts: a bare number (`561`), a full URL (`https://github.com/owner/repo/pull/561`), or the number extracted from `pr:561` or `#561`. `gh pr view`'s positional argument accepts bare numbers, URLs, and branch names — not `owner/repo#NN` shorthand. For a cross-repo number reference without a URL, the caller would use `-R owner/repo`; this skill accepts a full URL as the simplest cross-repo path, and that's what most callers use.
+正規化引用為 `gh pr view` 所受之形：裸數（`561`）、完整 URL（`https://github.com/owner/repo/pull/561`）、或自 `pr:561`/`#561` 所取之數。`gh pr view` 之位置參數受裸數、URL 及分支名——不受 `owner/repo#NN` 簡寫。跨倉數字引用無 URL 時，調用者用 `-R owner/repo`；此技受完整 URL 為最簡跨倉路徑，多數調用者亦用此。
 
 ```bash
 gh pr view <pr-ref> --json number,state,title,body,baseRefName,baseRefOid,headRefName,headRefOid,headRepository,headRepositoryOwner,isCrossRepository,commits,url
 ```
 
-Key JSON fields: `headRefOid` (PR head SHA — prefer over indexing into `commits`), `baseRefOid` (base-branch SHA), `headRepository` + `headRepositoryOwner` (PR source repo), `isCrossRepository`. There is no `baseRepository` field — the base repo is the one queried by `gh pr view` itself.
+關鍵 JSON 欄：`headRefOid`（PR 頭 SHA——優先於索引 `commits`）、`baseRefOid`（基分支 SHA）、`headRepository` + `headRepositoryOwner`（PR 來源倉）、`isCrossRepository`。無 `baseRepository` 欄——基倉即 `gh pr view` 所查之倉。
 
-If the returned `state` is not `OPEN`, report `"PR <number> is <state> (not open); cannot regenerate description"` and exit gracefully without output. Callers expecting `{title, body_file}` must handle this empty case.
+若返 `state` 非 `OPEN`，報 `"PR <number> is <state> (not open); cannot regenerate description"` 並優雅退出不輸出。期望 `{title, body_file}` 之調用者須處此空況。
 
-**Determine whether the PR lives in the current working directory's repo** by parsing the URL's `<owner>/<repo>` path segments and comparing against `git remote get-url origin` (strip `.git` suffix; handle both `git@github.com:owner/repo` and `https://github.com/owner/repo` forms). If the URL repo matches `origin`'s repo, route to the local-git path (Case A). Otherwise route to the API-only path (Case B). Bare numbers and `#NN` forms implicitly target the current repo → Case A.
+**判 PR 是否居當前工作目錄之倉**，藉解析 URL 之 `<owner>/<repo>` 路徑段並與 `git remote get-url origin` 比對（去 `.git` 後綴；兼處 `git@github.com:owner/repo` 與 `https://github.com/owner/repo`）。若 URL 倉與 `origin` 倉相符，走本地 Git 路徑（情甲）。否則走僅 API 路徑（情乙）。裸數與 `#NN` 隱指當前倉 → 情甲。
 
-**Case A → Case B fallback:** Even when the URL repo matches `origin`, the local clone may not be usable for this PR's refs — shallow clone, detached state missing the base branch, offline, auth issues, GHES quirks. If Case A's fetch or `git merge-base` fails, fall back to Case B rather than failing the skill. Note the fallback in the caller-facing output.
+**情甲 → 情乙後備：** URL 倉雖與 `origin` 相符，本地克隆或不可用於此 PR 之引用——淺克隆、缺少基分支之分離態、離線、認證問題、GHES 怪癖。若情甲之取或 `git merge-base` 失敗，退至情乙而非令技失敗。於調用者可見之輸出中註明後備。
 
-**Case A — PR is in the current repo:**
+**情甲 — PR 在當前倉：**
 
-Read the PR head SHA directly from `headRefOid` in the JSON response above. Fetch the base ref and the head SHA in one call (the fetch is idempotent when refs are already local):
+自上 JSON 響應直取 PR 頭 SHA `headRefOid`。一次調用取基引用與頭 SHA（引用已本地時取冪等）：
 
 ```bash
 PR_HEAD_SHA=<headRefOid from JSON>
 git fetch --no-tags origin <baseRefName> $PR_HEAD_SHA
 ```
 
-Using the explicit `$PR_HEAD_SHA` in downstream commands avoids `FETCH_HEAD`'s multi-ref ordering problem (`git rev-parse FETCH_HEAD` returns only the first fetched ref's SHA, which silently breaks a multi-ref fetch).
+下游指令用顯式 `$PR_HEAD_SHA`，避 `FETCH_HEAD` 多引用排序之弊（`git rev-parse FETCH_HEAD` 僅返首取引用之 SHA，多引用取時暗損）。
 
 ```bash
 MERGE_BASE=$(git merge-base origin/<baseRefName> $PR_HEAD_SHA) && echo "MERGE_BASE=$MERGE_BASE" && echo '=== COMMITS ===' && git log --oneline $MERGE_BASE..$PR_HEAD_SHA && echo '=== DIFF ===' && git diff $MERGE_BASE...$PR_HEAD_SHA
 ```
 
-If the explicit-SHA fetch is rejected (rare on GitHub, possible on some GHES configurations that disallow fetching non-tip SHAs), fall back to fetching `refs/pull/<number>/head` and reading the PR head SHA from `.git/FETCH_HEAD` by pull-ref pattern:
+若顯式 SHA 取遭拒（GitHub 罕見，某些 GHES 配置禁取非尖端 SHA 可遇），退取 `refs/pull/<number>/head` 並自 `.git/FETCH_HEAD` 按 PR 引用模式讀頭 SHA：
 
 ```bash
 git fetch --no-tags origin "refs/pull/<number>/head"
 PR_HEAD_SHA=$(awk '/refs\/pull\/[0-9]+\/head/ {print $1; exit}' "$(git rev-parse --git-dir)/FETCH_HEAD")
 ```
 
-**Case B — PR is in a different repo:**
+**情乙 — PR 在異倉：**
 
-Skip local git entirely. Read the diff and commit list from the API:
+盡略本地 Git。自 API 讀差異與提交清單：
 
 ```bash
 gh pr diff <pr-ref>
 gh pr view <pr-ref> --json commits --jq '.commits[] | [.oid[0:7], .messageHeadline] | @tsv'
 ```
 
-Same classification/framing/writing pipeline. Note in the caller-facing output that the API fallback was used.
+分類、框架、撰述管線同。於調用者可見之輸出中註明使用 API 後備。
 
-Also capture the existing PR body for evidence preservation in Step 3 (both cases).
-
----
-
-## Step 2: Classify commits before writing
-
-Scan the commit list and classify each commit:
-
-- **Feature commits** -- implement the PR's purpose (new functionality, intentional refactors, design changes). These drive the description.
-- **Fix-up commits** -- iteration work (code review fixes, lint fixes, test fixes, rebase resolutions, style cleanups). Invisible to the reader.
-
-When sizing the description, mentally subtract fix-up commits: a branch with 12 commits but 9 fix-ups is a 3-commit PR.
+亦取既有 PR 本文供步驟三憑證保全（二情皆然）。
 
 ---
 
-## Step 3: Decide on evidence
+## 步驟二：撰前分類提交
 
-Decide whether evidence capture is possible from the full branch diff.
+遍覽提交清單，逐一分類：
 
-**Evidence is possible** when the diff changes observable behavior demonstrable from the workspace: UI, CLI output, API behavior with runnable code, generated artifacts, or workflow output.
+- **特性提交** — 實現 PR 意圖（新功能、有意的重構、設計變更）。此驅動描述。
+- **修補提交** — 迭代之功（碼審修復、lint 修、測試修、變基解決、風格清理）。讀者不可見。
 
-**Evidence is not possible** for:
-- Docs-only, markdown-only, changelog-only, release metadata, CI/config-only, test-only, or pure internal refactors
-- Behavior requiring unavailable credentials, paid/cloud services, bot tokens, deploy-only infrastructure, or hardware not provided
-
-**This skill does NOT prompt the user** to capture evidence. The decision logic is:
-
-1. **PR mode invocation** (any form: bare number, `#NN`, `pr:<N>`, or a full URL — anything that resolves to an existing PR whose body we fetched) **and the existing body contains a `## Demo` or `## Screenshots` section with image embeds:** preserve it verbatim unless the steering text asks to refresh or remove it. Include the preserved block in the returned body. This applies regardless of which input shape the caller used; what matters is that a PR exists and its body was read.
-2. **Current-branch mode or PR mode without an evidence block:** omit the evidence section entirely. If the caller wants to capture evidence, the caller is responsible for invoking `ce-demo-reel` separately and splicing the result in, or for asking this skill to regenerate with updated steering text after capture.
-
-Do not label test output as "Demo" or "Screenshots". Place any preserved evidence block before the Compound Engineering badge.
+度量描述時，心扣修補提交：十二提交而九為修補者，實三提交之 PR 也。
 
 ---
 
-## Step 4: Frame the narrative before sizing
+## 步驟三：憑證決策
 
-Articulate the PR's narrative frame:
+自全分支差異判憑證採集是否可行。
 
-1. **Before**: What was broken, limited, or impossible? (One sentence.)
-2. **After**: What's now possible or improved? (One sentence.)
-3. **Scope rationale** (only if 2+ separable-looking concerns): Why do these ship together? (One sentence.)
+**憑證可行**：差異變更可觀察之行為，可自工作區演示——UI、CLI 輸出、可執行碼之 API 行為、生成文物、工作流輸出。
 
-This frame becomes the opening. For small+simple PRs, the "after" sentence alone may be the entire description.
+**憑證不可行**：
+- 純文檔、純 Markdown、純更新日誌、發布元數據、純 CI/配置、純測試、純內部重構
+- 行為需不可得之憑證、付費/雲服務、機器人令牌、僅部署基礎設施、或未提供之硬體
+
+**此技不提示用戶採集憑證。** 決策邏輯：
+
+1. **PR 模式調用**（任何形式：裸數、`#NN`、`pr:<N>`、完整 URL——凡解析為既有 PR 且已取其本文者）**且既有本文含 `## Demo` 或 `## Screenshots` 段並含圖片嵌入：** 原文保留，除非導引文本要求刷新或移除。將保留之塊納入返還之本文。此不拘輸入形式；關鍵在 PR 存在且其本文已讀。
+2. **當前分支模式或 PR 模式無憑證塊：** 盡略憑證段。調用者若欲採集，自責另調 `ce-demo-reel` 並拼合結果，或俟採集後以更新之導引文本令此技再生。
+
+勿標測試輸出為 "Demo" 或 "Screenshots"。任何保留之憑證塊置於 Compound Engineering 徽章之前。
 
 ---
 
-## Step 5: Size the change
+## 步驟四：度量前構建敘事框架
 
-Assess size (files, diff volume) and complexity (design decisions, trade-offs, cross-cutting concerns) to select description depth:
+闡述 PR 之敘事框架：
 
-| Change profile | Description approach |
+1. **之前**：何者損壞、受限、或不可為？（一句。）
+2. **之後**：今有何可能或改善？（一句。）
+3. **範圍理據**（僅當有二以上可分離之關切）：何以並投？（一句。）
+
+此框架即開篇。小型簡單 PR，"之後" 一句或即全部描述。
+
+---
+
+## 步驟五：度量變更
+
+衡大小（檔案數、差異量）與複雜度（設計決策、權衡、跨切關切）以選描述深度：
+
+| 變更輪廓 | 描述方式 |
 |---|---|
-| Small + simple (typo, config, dep bump) | 1-2 sentences, no headers. Under ~300 characters. |
-| Small + non-trivial (bugfix, behavioral change) | Short narrative, ~3-5 sentences. No headers unless two distinct concerns. |
-| Medium feature or refactor | Narrative frame (before/after/scope), then what changed and why. Call out design decisions. |
-| Large or architecturally significant | Full narrative: problem context, approach (and why), key decisions, migration/rollback if relevant. |
-| Performance improvement | Include before/after measurements if available. Markdown table works well. |
+| 小而簡（筆誤、配置、依賴升級） | 一二句，無標題。約三百字符內。 |
+| 小而繁（缺陷修、行為變更） | 短敘事，約三至五句。無標題，除非有二不同關切。 |
+| 中型特性或重構 | 敘事框架（之前/之後/範圍），繼以所變與其理。指出設計決策。 |
+| 大型或架構意義重大 | 完整敘事：問題背景、方案（及其理）、關鍵決策、遷移/回退（若相關）。 |
+| 效能改善 | 若有度量，含之前/之後。Markdown 表格為佳。 |
 
-When in doubt, shorter is better. Match description weight to change weight.
+疑則取短。描述之重當匹變更之重。
 
 ---
 
-## Step 6: Apply writing principles
+## 步驟六：施用撰述原則
 
-### Writing voice
+### 撰述語調
 
-If the repo has documented style preferences in context, follow those. Otherwise:
+若倉庫上下文中有文檔化之風格偏好，從之。否則：
 
-- Active voice. No em dashes or `--` substitutes; use periods, commas, colons, or parentheses.
-- Vary sentence length. Never three similar-length sentences in a row.
-- Do not make a claim and immediately explain it. Trust the reader.
-- Plain English. Technical jargon fine; business jargon never.
-- No filler: "it's worth noting", "importantly", "essentially", "in order to", "leverage", "utilize."
-- Digits for numbers ("3 files"), not words ("three files").
+- 主動語態。不用破折號或 `--` 代用品；用句號、逗號、冒號、或括號。
+- 變換句長。勿連三等長之句。
+- 勿先斷言後即釋之。信讀者。
+- 純英文。技術術語可用；商務術語禁用。
+- 無贅詞："it's worth noting"、"importantly"、"essentially"、"in order to"、"leverage"、"utilize"。
+- 數字用阿拉伯數字（"3 files"），非文字（"three files"）。
 
-### Writing principles
+### 撰述原則
 
-- **Lead with value**: Open with what's now possible or fixed, not what was moved around. The subtler failure is leading with the mechanism ("Replace the hardcoded capture block with a tiered skill") instead of the outcome ("Evidence capture now works for CLI tools and libraries, not just web apps").
-- **No orphaned opening paragraphs**: If the description uses `##` headings anywhere, the opening must also be under a heading (e.g., `## Summary`). For short descriptions with no sections, a bare paragraph is fine.
-- **Describe the net result, not the journey**: The description covers the end state, not how you got there. No iteration history, debugging steps, intermediate failures, or bugs found and fixed during development. This applies equally when regenerating for an existing PR: rewrite from the current state, not as a log of what changed since the last version. Exception: process details critical to understand a design choice.
-- **When commits conflict, trust the final diff**: The commit list is supporting context, not the source of truth. If commits describe intermediate steps later revised or reverted, describe the end state from the full branch diff.
-- **Explain the non-obvious**: If the diff is self-explanatory, don't narrate it. Spend space on things the diff doesn't show: why this approach, what was rejected, what the reviewer should watch.
-- **Use structure when it earns its keep**: Headers, bullets, and tables aid comprehension, not mandatory template sections.
-- **Markdown tables for data**: Before/after comparisons, performance numbers, or option trade-offs communicate well as tables.
-- **No empty sections**: If a section doesn't apply, omit it. No "N/A" or "None."
-- **Test plan — only when non-obvious**: Include when testing requires edge cases the reviewer wouldn't think of, hard-to-verify behavior, or specific setup. Omit when "run the tests" is the only useful guidance. When the branch adds test files, name them with what they cover.
+- **價值為先**：以今可為或已修者開篇，非以所搬移者。微妙的失敗是以機制開篇（"Replace the hardcoded capture block with a tiered skill"）而非以結果開篇（"Evidence capture now works for CLI tools and libraries, not just web apps"）。
+- **無孤立開篇段**：若描述某處用 `##` 標題，開篇亦須在標題下（如 `## Summary`）。短描述無分節者，裸段可也。
+- **述淨結果，非歷程**：描述所述為終態，非所經之路。無迭代歷史、除錯步驟、中間失敗、或開發中發現並修復之缺陷。重新生成既有 PR 時亦然：自當前狀態重寫，非為上一版後變更之誌。例外：理解設計抉擇所必需之過程細節。
+- **提交相牾時，信終差異**：提交清單為輔助上下文，非真源。提交描述其後已修正或回退之中間步驟者，以全分支差異描述終態。
+- **釋不明顯者**：差異自明則不敘。以篇幅述差異所未見者：何以取此方案、何者見棄、審閱者應注意何處。
+- **結構當有所值方用**：標題、要點、表格助理解，非必備模板段。
+- **Markdown 表格述數據**：之前/之後比較、效能數值、或選項權衡以表格傳達為佳。
+- **無空段**：段不適用則省之。勿書 "N/A" 或 "None"。
+- **測試方案——僅當不明顯時**：測試需審閱者未必想到之邊界情況、難以驗證之行為、或特定設置時方含。「跑測試」為唯一有用指引時省之。分支增測試檔時，以其所覆者名之。
 
-### Visual communication
+### 視覺傳達
 
-Include a visual aid only when the change is structurally complex enough that a reviewer would struggle to reconstruct the mental model from prose alone.
+僅當變更結構複雜至審閱者難自散文重建心智模型時，方含視覺輔助。
 
-**The core distinction — structure vs. parallel variation:**
+**核心區別——結構 vs. 平行變體：**
 
-- Use a **Mermaid diagram** when the change has **topology** — components with directed relationships (calls, flows, dependencies, state transitions, data paths). Diagrams express "A talks to B, B talks to C, C does not talk back to A" in a way tables cannot.
-- Use a **markdown table** when the change has **parallel variation of a single shape** — N things that share the same attributes but differ in their values. Tables express "option 1 costs X, option 2 costs Y, option 3 costs Z" cleanly.
+- **Mermaid 圖**用於變更具**拓撲**——組件間有向關係（調用、流、依賴、狀態轉換、數據路徑）。圖表達 "A 與 B 通，B 與 C 通，C 不與 A 通"，表格所不能。
+- **Markdown 表格**用於變更具**單形之平行變體**——N 物共享相同屬性而值異。表格利 "選項一耗 X，選項二耗 Y，選項三耗 Z"。
 
-Architecture changes are almost always topology (components + edges), so Mermaid is usually the right call — a table of "components that interact" loses the edges and becomes a flat list. Reserve tables for genuinely parallel data: before/after measurements, option trade-offs, flag matrices, config enumerations.
+架構變更幾皆為拓撲（組件 + 邊），故 Mermaid 常為正選——"交互組件"之表格失邊而成平表。保留表格於真正平行數據：之前/之後度量、選項權衡、旗標矩陣、配置列舉。
 
-**When to include (prefer Mermaid, not a table, for architecture/flow):**
+**何時含（架構/流優選 Mermaid，非表格）：**
 
-| PR changes... | Visual aid |
+| PR 變更... | 視覺輔助 |
 |---|---|
-| Architecture touching 3+ interacting components (the components have *directed relationships* — who calls whom, who owns what, which skill delegates to which) | **Mermaid** component or interaction diagram. Do not substitute a table — tables cannot show edges. |
-| Multi-step workflow or data flow with non-obvious sequencing | **Mermaid** flow diagram |
-| State machine with 3+ states and non-trivial transitions | **Mermaid** state diagram |
-| Data model changes with 3+ related entities | **Mermaid** ERD |
-| Before/after performance or behavioral measurements (same metric, different values) | **Markdown table** |
-| Option or flag trade-offs (same attributes evaluated across variants) | **Markdown table** |
-| Feature matrix / compatibility grid | **Markdown table** |
+| 架構觸及三以上交互組件（組件有*有向關係*——誰調誰、誰擁何物、哪個技能委託哪個） | **Mermaid** 組件或交互圖。勿以表格代之——表格不能示邊。 |
+| 多步工作流或數據流，順序不明顯 | **Mermaid** 流程圖 |
+| 三以上狀態且轉換非平凡之狀態機 | **Mermaid** 狀態圖 |
+| 數據模型變更涉及三以上相關實體 | **Mermaid** ERD |
+| 之前/之後效能或行為度量（同一指標，不同值） | **Markdown 表格** |
+| 選項或旗標權衡（同一屬性跨變體評估） | **Markdown 表格** |
+| 特性矩陣 / 相容性網格 | **Markdown 表格** |
 
-**When in doubt, ask: "Does the information have edges (A → B) or does it have rows (attribute × variant)?"** Edges → Mermaid. Rows → table. Architecture has edges almost by definition.
+**疑則問：「信息有邊（A → B）抑或有行（屬性 × 變體）？」** 邊 → Mermaid。行 → 表格。架構幾乎定義上即有邊。
 
-**When to skip any visual:**
-- Sizing routes to "1-2 sentences"
-- Prose already communicates clearly
-- The diagram would just restate the diff visually
-- Mechanical changes (renames, dep bumps, config, formatting)
+**何時略一切視覺：**
+- 度量歸為 "一二句"
+- 散文已明晰傳達
+- 圖僅視覺重述差異
+- 機械變更（更名、依賴升級、配置、格式化）
 
-**Format details:**
-- **Mermaid** (default for topology). 5-10 nodes typical, up to 15 for genuinely complex changes. Use `TB` direction. Source should be readable as fallback.
-- **ASCII diagrams** for annotated flows needing rich in-box content. 80-column max.
-- **Markdown tables** for parallel-variation data only.
-- Place inline at point of relevance, not in a separate section.
-- Prose is authoritative when it conflicts with a visual.
+**格式細節：**
+- **Mermaid**（拓撲預設）。五至十節點為常，極複雜者至多十五。用 `TB` 方向。源碼當可讀作後備。
+- **ASCII 圖**用於需豐富框內標註之流程。八十列為限。
+- **Markdown 表格**僅用於平行變體數據。
+- 置於相關處之內聯，非獨立段落。
+- 散文與視覺衝突時，以散文為準。
 
-Verify generated diagrams against the change before including.
+含入前驗證所生圖表。
 
-### Numbering and references
+### 編號與引用
 
-Never prefix list items with `#` in PR descriptions — GitHub interprets `#1`, `#2` as issue references and auto-links them.
+PR 描述中勿前置列表項以 `#`——GitHub 將 `#1`、`#2` 解析為議題引用並自動連結。
 
-When referencing actual GitHub issues or PRs, use `org/repo#123` or the full URL. Never use bare `#123` unless verified.
+引用實際 GitHub 議題或 PR 時，用 `org/repo#123` 或完整 URL。勿用裸 `#123`，除非已驗證。
 
-### Applying the focus hint
+### 施用焦點提示
 
-If a `focus:` hint was provided, incorporate it alongside the diff-derived narrative. Treat focus as steering, not override: do not invent content the diff does not support, and do not suppress important content the diff demands simply because focus did not mention it. When focus and diff materially disagree (e.g., focus says "include benchmarking" but the diff has no benchmarks), note the conflict in a way the caller can see (leave a brief inline note or raise to the caller) rather than fabricating content.
-
----
-
-## Step 7: Compose the title
-
-Title format: `type: description` or `type(scope): description`.
-
-- **Type** is chosen by intent, not file extension. `feat` for new functionality, `fix` for a bug fix, `refactor` for a behavior-preserving change, `docs` for doc-only, `chore` for tooling/maintenance, `perf` for performance, `test` for test-only.
-- **Scope** (optional) is the narrowest useful label: a skill/agent name, CLI area, or shared area. Omit when no single label adds clarity.
-- **Description** is imperative, lowercase, under 72 characters total. No trailing period.
-- If the repo has commit-title conventions visible in recent commits, match them.
-
-Breaking changes use `!` (e.g., `feat!: ...`) or document in the body with a `BREAKING CHANGE:` footer.
+若提供 `focus:` 提示，與差異所生敘事並用。以焦點為導引，非覆寫：勿捏造差異所無之內容，亦勿因焦點未提而壓抑差異所要求之重要內容。焦點與差異實質相牾時（如焦點曰 "include benchmarking" 而差異無基準測試），以調用者可見之方式註明衝突（留簡短內聯註或呈予調用者），而非捏造內容。
 
 ---
 
-## Step 8: Compose the body
+## 步驟七：構建標題
 
-Assemble the body in this order:
+標題格式：`type: description` 或 `type(scope): description`。
 
-1. **Opening** -- the narrative frame from Step 4, at the depth chosen in Step 5. Under a heading (e.g., `## Summary`) if the description uses any `##` headings elsewhere; a bare paragraph otherwise.
-2. **Body sections** -- only the sections that earn their keep for this change: what changed and why, design decisions, tables for data, visual aids when complexity warrants. Skip empty sections entirely.
-3. **Test plan** -- only when non-obvious per the writing principles. Omit otherwise.
-4. **Evidence block** -- only the preserved block from Step 3, if one exists. Do not fabricate or placeholder.
-5. **Compound Engineering badge** -- append a badge footer separated by a `---` rule. Skip if the existing body (for `pr:` input) already contains the badge.
+- **Type** 依意圖選，非依檔案副檔名。`feat` 為新功能，`fix` 為缺陷修，`refactor` 為行為保持不變之變更，`docs` 為純文檔，`chore` 為工具/維護，`perf` 為效能，`test` 為純測試。
+- **Scope**（可選）為最狹有用標籤：技能/代理名、CLI 區域、或共享區域。無益則省。
+- **Description** 為祈使語態，小寫，全長七十二字符以內。無尾隨句號。
+- 若倉庫近期提交有可見之提交標題慣例，從之。
 
-**Badge:**
+破壞性變更用 `!`（如 `feat!: ...`）或於本文中以 `BREAKING CHANGE:` 頁腳文檔化。
+
+---
+
+## 步驟八：構建本文
+
+依此序組裝本文：
+
+1. **開篇** — 步驟四之敘事框架，以步驟五所選深度。若描述某處用 `##` 標題，則在標題下（如 `## Summary`）；否則裸段。
+2. **本文各段** — 僅為此變更所值之段落：所變與其理、設計決策、數據表格、複雜度所需之視覺輔助。盡略空段。
+3. **測試方案** — 僅當撰述原則所定之不明顯時。否則省之。
+4. **憑證塊** — 僅步驟三所保留之塊，若有。勿捏造或佔位。
+5. **Compound Engineering 徽章** — 以 `---` 分隔線附加徽章頁腳。既有本文（`pr:` 輸入）已含徽章時略之。
+
+**徽章：**
 
 ```markdown
 ---
@@ -332,7 +332,7 @@ Assemble the body in this order:
 ![HARNESS](https://img.shields.io/badge/MODEL_SLUG-COLOR?logo=LOGO&logoColor=white)
 ```
 
-**Harness lookup:**
+**Harness 對照：**
 
 | Harness | `LOGO` | `COLOR` |
 |---------|--------|---------|
@@ -340,13 +340,13 @@ Assemble the body in this order:
 | Codex | (omit logo param) | `000000` |
 | Gemini CLI | `googlegemini` | `4285F4` |
 
-**Model slug:** Replace spaces with underscores. Append context window and thinking level in parentheses if known. Examples: `Opus_4.6_(1M,_Extended_Thinking)`, `Sonnet_4.6_(200K)`, `Gemini_3.1_Pro`.
+**模型標識：** 空格替為下劃線。若已知，附上下文窗口與思考等級。示例：`Opus_4.6_(1M,_Extended_Thinking)`、`Sonnet_4.6_(200K)`、`Gemini_3.1_Pro`。
 
 ---
 
-## Step 9: Return `{title, body_file}`
+## 步驟九：返 `{title, body_file}`
 
-Write the composed body to an OS temp file, then return the title and the file path. Do not call `gh pr edit`, `gh pr create`, or any other mutating command. Do not ask the user to confirm — the caller owns apply.
+將所構本文寫入 OS 臨時檔，然後返標題與檔案路徑。勿調 `gh pr edit`、`gh pr create` 或任何變更指令。勿問用戶確認——調用者主施用。
 
 ```bash
 BODY_FILE=$(mktemp "${TMPDIR:-/tmp}/ce-pr-body.XXXXXX") && cat > "$BODY_FILE" <<'__CE_PR_BODY_END__' && echo "$BODY_FILE"
@@ -354,9 +354,9 @@ BODY_FILE=$(mktemp "${TMPDIR:-/tmp}/ce-pr-body.XXXXXX") && cat > "$BODY_FILE" <<
 __CE_PR_BODY_END__
 ```
 
-The quoted sentinel `'__CE_PR_BODY_END__'` keeps `$VAR`, backticks, `${...}`, and any literal `EOF` inside the body from being expanded or clashing with the terminator. Keep `echo "$BODY_FILE"` chained with `&&` so a failed `mktemp` or write never yields a success exit status with a path to a missing file.
+引號哨兵 `'__CE_PR_BODY_END__'` 使 `$VAR`、反引號、`${...}` 及任何字面 `EOF` 不被展開或與終止符衝突。以 `&&` 鏈接 `echo "$BODY_FILE"`，使 `mktemp` 或寫入失敗時不會產生指向缺失檔案之成功退出態與路徑。
 
-Format the return as a clearly labeled block the caller can extract cleanly:
+格式返值為清晰標記之塊，調用者可乾淨提取：
 
 ```
 === TITLE ===
@@ -366,16 +366,16 @@ Format the return as a clearly labeled block the caller can extract cleanly:
 <absolute path to the mktemp body file>
 ```
 
-Do not emit the body markdown in the return block — the caller reads it from `BODY_FILE`.
+勿於返值塊中輸出本文 Markdown——調用者自 `BODY_FILE` 讀之。
 
-If Step 1 exited gracefully (closed/merged PR, invalid range, empty commit list), do not create a body file — just return the reason string.
+若步驟一優雅退出（已關閉/合併之 PR、無效範圍、空提交清單），不建本文檔——僅返原因字串。
 
-**The return block is a hand-off, not task completion.** When invoked by a parent skill (e.g., `git-commit-push-pr`), emit the return block and then continue executing the parent's remaining steps (typically `gh pr create` or `gh pr edit` with the returned title and body file). Do not stop after the return block unless invoked directly by the user with no parent workflow.
+**返值塊乃交接，非任務完成。** 被父技能調用時（如 `git-commit-push-pr`），輸出返值塊後繼續執行父技能之後續步驟（通常為以所返標題與本文檔調 `gh pr create` 或 `gh pr edit`）。除非用戶直接調用且無父工作流，勿於返值塊後停止。
 
 ---
 
-## Cross-platform notes
+## 跨平台備註
 
-This skill does not ask questions directly. If the diff is ambiguous about something the caller should decide (e.g., focus conflicts with the actual changes, or evidence is technically capturable but the caller did not pre-stage it), surface the ambiguity in the returned output or a short note to the caller — do not invoke a platform question tool.
+此技不直接發問。若差異對調用者應決之事含混（如焦點與實際變更相牾，或憑證技術上可採集但調用者未預備），於輸出或簡短註記中揭露——勿調用平台發問工具。
 
-Callers that need to ask the user are responsible for using their own platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini) before or after invoking this skill.
+需向用戶發問之調用者，自責用其平台之阻塞發問工具（Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`）於此技前後調用。

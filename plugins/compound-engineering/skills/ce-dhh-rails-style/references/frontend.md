@@ -1,69 +1,69 @@
-# Frontend - DHH Rails Style
+# 前端 — DHH Rails風
 
 <turbo_patterns>
-## Turbo Patterns
+## Turbo模式
 
-**Turbo Streams** for partial updates:
+**Turbo Streams** 做局部更新：
 ```erb
 <%# app/views/cards/closures/create.turbo_stream.erb %>
 <%= turbo_stream.replace @card %>
 ```
 
-**Morphing** for complex updates:
+**Morphing** 做複雜更新：
 ```ruby
 render turbo_stream: turbo_stream.morph(@card)
 ```
 
-**Global morphing** - enable in layout:
+**全域morphing** — 於layout啟用：
 ```ruby
 turbo_refreshes_with method: :morph, scroll: :preserve
 ```
 
-**Fragment caching** with `cached: true`:
+**片段快取** 以`cached: true`：
 ```erb
 <%= render partial: "card", collection: @cards, cached: true %>
 ```
 
-**No ViewComponents** - standard partials work fine.
+**不用ViewComponents** — 標準partial足矣。
 </turbo_patterns>
 
 <turbo_morphing>
-## Turbo Morphing Best Practices
+## Turbo Morphing要訣
 
-**Listen for morph events** to restore client state:
+**監聽morph事件** 以恢復客戶端狀態：
 ```javascript
 document.addEventListener("turbo:morph-element", (event) => {
   // Restore any client-side state after morph
 })
 ```
 
-**Permanent elements** - skip morphing with data attribute:
+**永久元素** — 以data屬性略過morph：
 ```erb
 <div data-turbo-permanent id="notification-count">
   <%= @count %>
 </div>
 ```
 
-**Frame morphing** - add refresh attribute:
+**Frame morphing** — 加refresh屬性：
 ```erb
 <%= turbo_frame_tag :assignment, src: path, refresh: :morph %>
 ```
 
-**Common issues and solutions:**
+**常見問題與對策：**
 
-| Problem | Solution |
-|---------|----------|
-| Timers not updating | Clear/restart in morph event listener |
-| Forms resetting | Wrap form sections in turbo frames |
-| Pagination breaking | Use turbo frames with `refresh: :morph` |
-| Flickering on replace | Switch to morph instead of replace |
-| localStorage loss | Listen to `turbo:morph-element`, restore state |
+| 問題 | 對策 |
+|------|------|
+| 計時器不更新 | 於morph事件中清除/重啟 |
+| 表單重設 | 以turbo frames包裹 |
+| 分頁失效 | 用turbo frames附`refresh: :morph` |
+| 替換時閃爍 | 改用morph |
+| localStorage遺失 | 監`turbo:morph-element`，復原狀態 |
 </turbo_morphing>
 
 <turbo_frames>
 ## Turbo Frames
 
-**Lazy loading** with spinner:
+**延遲載入** 附spinner：
 ```erb
 <%= turbo_frame_tag "menu",
       src: menu_path,
@@ -72,7 +72,7 @@ document.addEventListener("turbo:morph-element", (event) => {
 <% end %>
 ```
 
-**Inline editing** with edit/view toggle:
+**行內編輯** 附edit/view切換：
 ```erb
 <%= turbo_frame_tag dom_id(card, :edit) do %>
   <%= link_to "Edit", edit_card_path(card),
@@ -80,12 +80,12 @@ document.addEventListener("turbo:morph-element", (event) => {
 <% end %>
 ```
 
-**Target parent frame** without hardcoding:
+**定位父frame** 免硬編碼：
 ```erb
 <%= form_with model: @card, data: { turbo_frame: "_parent" } do |f| %>
 ```
 
-**Real-time subscriptions:**
+**即時訂閱：**
 ```erb
 <%= turbo_stream_from @card %>
 <%= turbo_stream_from @card, :activity %>
@@ -93,18 +93,18 @@ document.addEventListener("turbo:morph-element", (event) => {
 </turbo_frames>
 
 <stimulus_controllers>
-## Stimulus Controllers
+## Stimulus控制器
 
-52 controllers in Fizzy, split 62% reusable, 38% domain-specific.
+Fizzy中52控制器，62%可複用、38%領域專屬。
 
-**Characteristics:**
-- Single responsibility per controller
-- Configuration via values/classes
-- Events for communication
-- Private methods with #
-- Most under 50 lines
+**特徵：**
+- 每控制器單一職責
+- 以values/classes配置
+- 以事件通訊
+- 私有方法用#
+- 多數不滿50行
 
-**Examples:**
+**範例：**
 
 ```javascript
 // copy-to-clipboard (25 lines)
@@ -227,9 +227,9 @@ export default class extends Controller {
 </stimulus_controllers>
 
 <stimulus_best_practices>
-## Stimulus Best Practices
+## Stimulus要訣
 
-**Values API** over getAttribute:
+**Values API** 勝getAttribute：
 ```javascript
 // Good
 static values = { delay: { type: Number, default: 300 } }
@@ -238,7 +238,7 @@ static values = { delay: { type: Number, default: 300 } }
 this.element.getAttribute("data-delay")
 ```
 
-**Cleanup in disconnect:**
+**disconnect中清理：**
 ```javascript
 disconnect() {
   clearTimeout(this.timeout)
@@ -247,12 +247,12 @@ disconnect() {
 }
 ```
 
-**Action filters** - `:self` prevents bubbling:
+**動作篩選** — `:self`防止冒泡：
 ```erb
 <div data-action="click->menu#toggle:self">
 ```
 
-**Helper extraction** - shared utilities in separate modules:
+**輔助抽取** — 共用工具置於獨立模組：
 ```javascript
 // app/javascript/helpers/timing.js
 export function debounce(fn, delay) {
@@ -264,16 +264,16 @@ export function debounce(fn, delay) {
 }
 ```
 
-**Event dispatching** for loose coupling:
+**事件派發** 以鬆耦合：
 ```javascript
 this.dispatch("selected", { detail: { id: this.idValue } })
 ```
 </stimulus_best_practices>
 
 <view_helpers>
-## View Helpers (Stimulus-Integrated)
+## View輔助（整合Stimulus）
 
-**Dialog helper:**
+**Dialog輔助：**
 ```ruby
 def dialog_tag(id, &block)
   tag.dialog(
@@ -287,7 +287,7 @@ def dialog_tag(id, &block)
 end
 ```
 
-**Auto-submit form helper:**
+**自動提交表單輔助：**
 ```ruby
 def auto_submit_form_with(model:, delay: 300, **options, &block)
   form_with(
@@ -303,7 +303,7 @@ def auto_submit_form_with(model:, delay: 300, **options, &block)
 end
 ```
 
-**Copy button helper:**
+**複製按鈕輔助：**
 ```ruby
 def copy_button(content:, label: "Copy")
   tag.button(
@@ -319,11 +319,11 @@ end
 </view_helpers>
 
 <css_architecture>
-## CSS Architecture
+## CSS架構
 
-Vanilla CSS with modern features, no preprocessors.
+原生CSS配現代特性，無預處理器。
 
-**CSS @layer** for cascade control:
+**CSS @layer** 控制層疊：
 ```css
 @layer reset, base, components, modules, utilities;
 
@@ -348,7 +348,7 @@ Vanilla CSS with modern features, no preprocessors.
 }
 ```
 
-**OKLCH color system** for perceptual uniformity:
+**OKLCH色彩系統** 以感知均勻：
 ```css
 :root {
   --color-primary: oklch(60% 0.15 250);
@@ -358,7 +358,7 @@ Vanilla CSS with modern features, no preprocessors.
 }
 ```
 
-**Dark mode** via CSS variables:
+**暗色模式** 以CSS變數：
 ```css
 :root {
   --bg: oklch(98% 0 0);
@@ -373,7 +373,7 @@ Vanilla CSS with modern features, no preprocessors.
 }
 ```
 
-**Native CSS nesting:**
+**原生CSS巢狀：**
 ```css
 .card {
   padding: var(--space-4);
@@ -388,20 +388,20 @@ Vanilla CSS with modern features, no preprocessors.
 }
 ```
 
-**~60 minimal utilities** vs Tailwind's hundreds.
+**約60精簡工具類** vs Tailwind數百。
 
-**Modern features used:**
-- `@starting-style` for enter animations
-- `color-mix()` for color manipulation
-- `:has()` for parent selection
-- Logical properties (`margin-inline`, `padding-block`)
+**所用現代特性：**
+- `@starting-style` 供進入動畫
+- `color-mix()` 供色彩操縱
+- `:has()` 供父選取
+- 邏輯屬性（`margin-inline`、`padding-block`）
 - Container queries
 </css_architecture>
 
 <view_patterns>
-## View Patterns
+## View模式
 
-**Standard partials** - no ViewComponents:
+**標準partial** — 無ViewComponents：
 ```erb
 <%# app/views/cards/_card.html.erb %>
 <article id="<%= dom_id(card) %>" class="card">
@@ -411,19 +411,19 @@ Vanilla CSS with modern features, no preprocessors.
 </article>
 ```
 
-**Fragment caching:**
+**片段快取：**
 ```erb
 <% cache card do %>
   <%= render "cards/card", card: card %>
 <% end %>
 ```
 
-**Collection caching:**
+**集合快取：**
 ```erb
 <%= render partial: "card", collection: @cards, cached: true %>
 ```
 
-**Simple component naming** - no strict BEM:
+**簡潔組件命名** — 無嚴格BEM：
 ```css
 .card { }
 .card .title { }
@@ -434,9 +434,9 @@ Vanilla CSS with modern features, no preprocessors.
 </view_patterns>
 
 <caching_with_personalization>
-## User-Specific Content in Caches
+## 快取中之用戶專屬內容
 
-Move personalization to client-side JavaScript to preserve caching:
+將個人化移至客戶端JS以保快取：
 
 ```erb
 <%# Cacheable fragment %>
@@ -465,7 +465,7 @@ export default class extends Controller {
 }
 ```
 
-**Extract dynamic content** to separate frames:
+**動態內容抽取至獨立frames：**
 ```erb
 <% cache [card, board] do %>
   <article class="card">
@@ -476,13 +476,13 @@ export default class extends Controller {
 <% end %>
 ```
 
-Assignment dropdown updates independently without invalidating parent cache.
+指派下拉獨立更新，不致父快取失效。
 </caching_with_personalization>
 
 <broadcasting>
-## Broadcasting with Turbo Streams
+## 以Turbo Streams廣播
 
-**Model callbacks** for real-time updates:
+**Model回呼** 供即時更新：
 ```ruby
 class Card < ApplicationRecord
   include Broadcastable
@@ -506,5 +506,5 @@ class Card < ApplicationRecord
 end
 ```
 
-**Scope by tenant** using `[Current.account, resource]` pattern.
+**依租戶限域** 以`[Current.account, resource]`模式。
 </broadcasting>

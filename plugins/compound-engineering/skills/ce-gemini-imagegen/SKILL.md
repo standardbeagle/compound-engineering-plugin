@@ -1,34 +1,34 @@
 ---
 name: ce-gemini-imagegen
-description: This skill should be used when generating and editing images using the Gemini API (Nano Banana Pro). It applies when creating images from text prompts, editing existing images, applying style transfers, generating logos with text, creating stickers, product mockups, or any image generation/manipulation task. Supports text-to-image, image editing, multi-turn refinement, and composition from multiple reference images.
+description: 使用 Gemini API（Nano Banana Pro）生成與編輯圖片時使用。適用於從文字提示生成圖片、編輯既有圖片、套用風格轉換、生成含文字之標誌、建立貼圖、產品模型或任何圖片生成/操作任務。支援文字轉圖片、圖片編輯、多輪精煉及多張參考圖片之合成。
 ---
 
-# Gemini Image Generation (Nano Banana Pro)
+# Gemini 圖片生成（Nano Banana Pro）
 
-Generate and edit images using Google's Gemini API. The environment variable `GEMINI_API_KEY` must be set.
+使用 Google Gemini API 生成與編輯圖片。環境變數 `GEMINI_API_KEY` 必須已設定。
 
-## Default Model
+## 預設模型
 
-| Model | Resolution | Best For |
+| 模型 | 解析度 | 最適用途 |
 |-------|------------|----------|
-| `gemini-3-pro-image-preview` | 1K-4K | All image generation (default) |
+| `gemini-3-pro-image-preview` | 1K-4K | 所有圖片生成（預設） |
 
-**Note:** Always use this Pro model. Only use a different model if explicitly requested.
+**注意：** 一律使用此 Pro 模型。僅在明確要求時方使用不同模型。
 
-## Quick Reference
+## 快速參照
 
-### Default Settings
-- **Model:** `gemini-3-pro-image-preview`
-- **Resolution:** 1K (default, options: 1K, 2K, 4K)
-- **Aspect Ratio:** 1:1 (default)
+### 預設設定
+- **模型：** `gemini-3-pro-image-preview`
+- **解析度：** 1K（預設，選項：1K, 2K, 4K）
+- **寬高比：** 1:1（預設）
 
-### Available Aspect Ratios
-`1:1`, `2:3`, `3:2`, `3:4`, `4:3`, `4:5`, `5:4`, `9:16`, `16:9`, `21:9`
+### 可用寬高比
+`1:1`、`2:3`、`3:2`、`3:4`、`4:3`、`4:5`、`5:4`、`9:16`、`16:9`、`21:9`
 
-### Available Resolutions
-`1K` (default), `2K`, `4K`
+### 可用解析度
+`1K`（預設）、`2K`、`4K`
 
-## Core API Pattern
+## 核心 API 模式
 
 ```python
 import os
@@ -54,7 +54,7 @@ for part in response.parts:
         image.save("output.png")
 ```
 
-## Custom Resolution & Aspect Ratio
+## 自訂解析度與寬高比
 
 ```python
 from google.genai import types
@@ -72,7 +72,7 @@ response = client.models.generate_content(
 )
 ```
 
-### Resolution Examples
+### 解析度範例
 
 ```python
 # 1K (default) - Fast, good for previews
@@ -85,7 +85,7 @@ image_config=types.ImageConfig(image_size="2K")
 image_config=types.ImageConfig(image_size="4K")
 ```
 
-### Aspect Ratio Examples
+### 寬高比範例
 
 ```python
 # Square (default)
@@ -104,9 +104,9 @@ image_config=types.ImageConfig(aspect_ratio="9:16")
 image_config=types.ImageConfig(aspect_ratio="4:3")
 ```
 
-## Editing Images
+## 編輯圖片
 
-Pass existing images with text prompts:
+以文字提示傳入既有圖片：
 
 ```python
 from PIL import Image
@@ -121,9 +121,9 @@ response = client.models.generate_content(
 )
 ```
 
-## Multi-Turn Refinement
+## 多輪精煉
 
-Use chat for iterative editing:
+使用聊天進行迭代編輯：
 
 ```python
 from google.genai import types
@@ -140,28 +140,28 @@ response = chat.send_message("Make the text bolder and add a blue gradient")
 # Save refined image...
 ```
 
-## Prompting Best Practices
+## 提示詞最佳實踐
 
-### Photorealistic Scenes
-Include camera details: lens type, lighting, angle, mood.
+### 寫實場景
+包含相機細節：鏡頭類型、光線、角度、氛圍。
 > "A photorealistic close-up portrait, 85mm lens, soft golden hour light, shallow depth of field"
 
-### Stylized Art
-Specify style explicitly:
+### 風格化藝術
+明確指定風格：
 > "A kawaii-style sticker of a happy red panda, bold outlines, cel-shading, white background"
 
-### Text in Images
-Be explicit about font style and placement:
+### 圖片中文字
+明確說明字體風格與位置：
 > "Create a logo with text 'Daily Grind' in clean sans-serif, black and white, coffee bean motif"
 
-### Product Mockups
-Describe lighting setup and surface:
+### 產品模型
+描述光線設置與表面：
 > "Studio-lit product photo on polished concrete, three-point softbox setup, 45-degree angle"
 
-## Advanced Features
+## 進階功能
 
-### Google Search Grounding
-Generate images based on real-time data:
+### Google 搜尋接地
+基於即時資料生成圖片：
 
 ```python
 response = client.models.generate_content(
@@ -174,8 +174,8 @@ response = client.models.generate_content(
 )
 ```
 
-### Multiple Reference Images (Up to 14)
-Combine elements from multiple sources:
+### 多張參考圖片（最多 14 張）
+合併多個來源之元素：
 
 ```python
 response = client.models.generate_content(
@@ -192,9 +192,9 @@ response = client.models.generate_content(
 )
 ```
 
-## Important: File Format & Media Type
+## 重要：檔案格式與媒體類型
 
-**CRITICAL:** The Gemini API returns images in JPEG format by default. When saving, always use `.jpg` extension to avoid media type mismatches.
+**關鍵：** Gemini API 預設以 JPEG 格式回傳圖片。儲存時一律使用 `.jpg` 副檔名以避免媒體類型不匹配。
 
 ```python
 # CORRECT - Use .jpg extension (Gemini returns JPEG)
@@ -204,9 +204,9 @@ image.save("output.jpg")
 image.save("output.png")  # Creates JPEG with PNG extension!
 ```
 
-### Converting to PNG (if needed)
+### 轉換為 PNG（若需要）
 
-If you specifically need PNG format:
+若確實需要 PNG 格式：
 
 ```python
 from PIL import Image
@@ -219,19 +219,19 @@ for part in response.parts:
         img.save("output.png", format="PNG")
 ```
 
-### Verifying Image Format
+### 驗證圖片格式
 
-Check actual format vs extension with the `file` command:
+以 `file` 指令檢查實際格式 vs. 副檔名：
 
 ```bash
 file image.png
 # If output shows "JPEG image data" - rename to .jpg!
 ```
 
-## Notes
+## 備註
 
-- All generated images include SynthID watermarks
-- Gemini returns **JPEG format by default** - always use `.jpg` extension
-- Image-only mode (`responseModalities: ["IMAGE"]`) won't work with Google Search grounding
-- For editing, describe changes conversationally—the model understands semantic masking
-- Default to 1K resolution for speed; use 2K/4K when quality is critical
+- 所有生成圖片含 SynthID 浮水印
+- Gemini 預設回傳 **JPEG 格式** ——一律使用 `.jpg` 副檔名
+- 僅圖片模式（`responseModalities: ["IMAGE"]`）不適用於 Google Search grounding
+- 編輯時以對話方式描述變更——模型理解語義遮罩
+- 預設 1K 解析度以求速度；品質關鍵時使用 2K/4K

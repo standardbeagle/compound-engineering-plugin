@@ -1,41 +1,41 @@
-# `.claude/launch.json` schema
+# `.claude/launch.json` 結構描述
 
-Polish reads `.claude/launch.json` at the repo root to resolve the dev-server start command. The schema is a subset of VS Code's `launch.json` format — chosen because Claude Code, Cursor, and VS Code all understand it and because users often already have one for editor integration.
+Polish 讀取倉庫根目錄之 `.claude/launch.json` 以解析開發伺服器啟動命令。此 schema 為 VS Code `launch.json` 格式之子集——選擇此格式因 Claude Code、Cursor 及 VS Code 皆理解，且用戶常已有用於編輯器整合者。
 
-## Top-level shape
+## 頂層結構
 
 ```json
 {
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "<human label>",
-      "runtimeExecutable": "<binary>",
-      "runtimeArgs": ["<arg>", "<arg>"],
-      "port": <number>,
-      "cwd": "<optional, repo-relative>",
-      "env": { "<key>": "<value>" }
+      "name": "<人類可讀標籤>",
+      "runtimeExecutable": "<二進位>",
+      "runtimeArgs": ["<引數>", "<引數>"],
+      "port": <數字>,
+      "cwd": "<可選，倉庫相對>",
+      "env": { "<鍵>": "<值>" }
     }
   ]
 }
 ```
 
-## Fields polish consumes
+## Polish 消耗之欄位
 
-| Field | Required | Purpose |
-|-------|----------|---------|
-| `name` | yes (when multiple configurations) | Used to disambiguate when the array has more than one entry. Polish asks the user to pick by `name`. |
-| `runtimeExecutable` | yes | The binary polish spawns (e.g., `bin/dev`, `npm`, `overmind`, `bun`). |
-| `runtimeArgs` | no | Array of arguments passed to `runtimeExecutable`. Default: empty array. |
-| `port` | yes | The port the dev server will listen on. Polish probes `http://localhost:<port>` for reachability and uses it for the IDE browser handoff. |
-| `cwd` | no | Repo-relative working directory for the dev server. Default: repo root. Useful for monorepos (`apps/web`, `packages/frontend`). |
-| `env` | no | Additional environment variables for the dev-server process. Default: inherit polish's environment. |
+| 欄位 | 必須 | 用途 |
+|------|------|------|
+| `name` | 是（多配置時） | 陣列有多於一個條目時用於消歧。Polish 請用戶以 `name` 選擇。 |
+| `runtimeExecutable` | 是 | Polish 生成之二進位（如 `bin/dev`、`npm`、`overmind`、`bun`）。 |
+| `runtimeArgs` | 否 | 傳遞至 `runtimeExecutable` 之引數陣列。預設：空陣列。 |
+| `port` | 是 | 開發伺服器監聽之埠號。Polish 探測 `http://localhost:<port>` 以確認可達性，用於 IDE 瀏覽器交接。 |
+| `cwd` | 否 | 開發伺服器之倉庫相對工作目錄。預設：倉庫根目錄。適用於 monorepo（`apps/web`、`packages/frontend`）。 |
+| `env` | 否 | 開發伺服器進程之額外環境變數。預設：繼承 polish 之環境。 |
 
-## Stub template (written on first run when user accepts)
+## 存根模板（用戶接受首次運行時寫入）
 
-When polish auto-detects a project type and the user confirms "Save this as `.claude/launch.json`?", polish writes a minimal stub derived from the detected type. These templates intentionally hard-code common defaults — users can edit them later.
+Polish 自動偵測專案類型且用戶確認「儲存為 `.claude/launch.json`？」時，寫入偵測類型衍生之最小存根。這些模板刻意硬編碼常見預設——用戶可稍後編輯。
 
-### Rails stub
+### Rails 存根
 
 ```json
 {
@@ -51,7 +51,7 @@ When polish auto-detects a project type and the user confirms "Save this as `.cl
 }
 ```
 
-### Next.js stub
+### Next.js 存根
 
 ```json
 {
@@ -67,7 +67,7 @@ When polish auto-detects a project type and the user confirms "Save this as `.cl
 }
 ```
 
-### Vite stub
+### Vite 存根
 
 ```json
 {
@@ -83,7 +83,7 @@ When polish auto-detects a project type and the user confirms "Save this as `.cl
 }
 ```
 
-### Procfile / Overmind stub
+### Procfile / Overmind 存根
 
 ```json
 {
@@ -99,7 +99,7 @@ When polish auto-detects a project type and the user confirms "Save this as `.cl
 }
 ```
 
-### Nuxt stub
+### Nuxt 存根
 
 ```json
 {
@@ -115,7 +115,7 @@ When polish auto-detects a project type and the user confirms "Save this as `.cl
 }
 ```
 
-### Astro stub
+### Astro 存根
 
 ```json
 {
@@ -131,7 +131,7 @@ When polish auto-detects a project type and the user confirms "Save this as `.cl
 }
 ```
 
-### Remix stub
+### Remix 存根
 
 ```json
 {
@@ -147,7 +147,7 @@ When polish auto-detects a project type and the user confirms "Save this as `.cl
 }
 ```
 
-### SvelteKit stub
+### SvelteKit 存根
 
 ```json
 {
@@ -163,15 +163,15 @@ When polish auto-detects a project type and the user confirms "Save this as `.cl
 }
 ```
 
-## Why a subset of VS Code's schema
+## 何以為 VS Code schema 之子集
 
-Polish does not use `type`, `request`, `console`, `stopOnEntry`, or any of the other VS Code fields. Including them is harmless — polish ignores them — but the stub writer never adds them. The fields polish cares about are the ones that describe *how to start a long-running dev server on a known port*, which is a smaller surface than what VS Code uses for debug-stepping.
+Polish 不使用 `type`、`request`、`console`、`stopOnEntry` 或 VS Code 其他欄位。包含之無害——polish 忽略之——但存根寫入器永不添加。Polish 關注之欄位描述*如何在已知埠號上啟動長時間運行之開發伺服器*，此為比 VS Code 用於除錯步進更小之介面。
 
-## Cross-IDE notes
+## 跨 IDE 備註
 
-`.claude/launch.json` is not yet a fully unified standard across Claude Code, Cursor, VS Code, and Codex. Polish leads with `.claude/launch.json` because:
-- Claude Code, Cursor, and VS Code can all read it as a launch config
-- It sits at a clean repo-root trust boundary (user-authored, not auto-detected)
-- Users who prefer `.vscode/launch.json` can symlink or mirror the two files manually
+`.claude/launch.json` 尚未為 Claude Code、Cursor、VS Code 及 Codex 間之完全統一標準。Polish 以 `.claude/launch.json` 為先因：
+- Claude Code、Cursor 及 VS Code 皆可將其讀作啟動配置
+- 其位於清晰之倉庫根信任邊界（用戶撰寫，非自動偵測）
+- 偏好 `.vscode/launch.json` 之用戶可手動符號連結或鏡像兩個檔案
 
-If a cross-IDE standard emerges (e.g., `.workspace/launch.json`), the stub writer and reader can swap paths without touching the rest of the skill.
+若跨 IDE 標準出現（如 `.workspace/launch.json`），存根寫入器及讀取器可替換路徑而不觸碰技能其餘部分。

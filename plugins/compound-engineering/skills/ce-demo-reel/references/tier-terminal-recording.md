@@ -1,24 +1,24 @@
-# Tier: Terminal Recording
+# 層：終端錄製
 
-Record a terminal session using VHS (charmbracelet/vhs) to produce a GIF demo.
+以 VHS（charmbracelet/vhs）錄製終端會話產生 GIF 展示。
 
-**Best for:** CLI tools, scripts, command-line features with interaction or motion (typing, streaming output, progressive rendering).
-**Output:** GIF (direct from VHS)
-**Label:** "Demo"
-**Required tools:** vhs
+**適用：** CLI 工具、腳本、含互動或動態之命令列功能（打字、串流輸出、漸進渲染）。
+**產出：** GIF（VHS 直接產出）
+**標籤：** "Demo"
+**所需工具：** vhs
 
-## Step 1: Plan the Recording
+## 步驟一：規劃錄製
 
-Before generating a .tape file, determine:
+生成 .tape 檔前，確定：
 
-- **What command(s) to run** -- The actual product command, not test commands. "I ran npm test" is test evidence, not a demo.
-- **Expected output** -- What the terminal should show when the command succeeds.
-- **Terminal dimensions** -- Wide enough for the longest output line, tall enough to avoid scrolling.
-- **Timing** -- Target 5-10 seconds total. Enough sleep after each command for output to render.
+- **執行何命令**——實際產品命令，非測試命令。「跑了 npm test」乃測試證據，非展示。
+- **預期輸出**——命令成功時終端應顯示什麼。
+- **終端尺寸**——寬度足以容最長輸出行，高度足以免捲動。
+- **時序**——總計5-10秒。每命令後充分等待以渲染輸出。
 
-## Step 2: Generate .tape File
+## 步驟二：生成 .tape 檔
 
-Write a VHS tape file to `[RUN_DIR]/demo.tape`:
+寫 VHS tape 檔至 `[RUN_DIR]/demo.tape`：
 
 ```tape
 Output [RUN_DIR]/demo.gif
@@ -46,43 +46,43 @@ Sleep 3s
 Sleep 2s
 ```
 
-**Key .tape directives:**
-- `Output [path]` -- Where to write the GIF (must be first line)
-- `Set FontSize [14-18]` -- Larger for readability
-- `Set Width/Height [pixels]` -- Match content needs
-- `Set Theme [name]` -- "Catppuccin Mocha" or "Dracula" are readable defaults
-- `Set TypingSpeed [ms]` -- 30-50ms feels natural
-- `Hide`/`Show` -- Skip boring setup (cd, source, npm install)
-- `Type [text]` -- Types characters (does not execute)
-- `Enter` -- Presses enter (executes the typed command)
-- `Sleep [duration]` -- Wait for output to render
+**關鍵 .tape 指令：**
+- `Output [path]`——GIF 寫入處（須為首行）
+- `Set FontSize [14-18]`——放大以利閱讀
+- `Set Width/Height [pixels]`——配合內容需求
+- `Set Theme [name]`——"Catppuccin Mocha" 或 "Dracula" 為可讀預設
+- `Set TypingSpeed [ms]`——30-50ms 覺自然
+- `Hide`/`Show`——跳過無聊前置（cd, source, npm install）
+- `Type [text]`——鍵入字符（不執行）
+- `Enter`——按回車（執行所鍵命令）
+- `Sleep [duration]`——等待輸出渲染
 
-**Avoid:**
-- Non-deterministic output (random IDs, timestamps that change between runs)
-- Commands that require interactive input (prompts, password entry)
-- Very long output that scrolls off screen
+**避免：**
+- 不確定輸出（隨機 ID、每次不同之時間戳）
+- 需互動輸入之命令（提示、密碼輸入）
+- 過長輸出致捲出螢幕
 
-## Step 3: Run VHS
+## 步驟三：執行 VHS
 
-Use the capture pipeline script to execute the tape file and validate output:
+以擷取管線腳本執行 tape 檔並驗證輸出：
 
 ```bash
 python3 scripts/capture-demo.py terminal-recording --output [RUN_DIR]/demo.gif --tape [RUN_DIR]/demo.tape
 ```
 
-The script runs VHS, validates the output exists, and reports the file size. If the GIF exceeds 10 MB, reduce by adjusting the .tape: smaller terminal dimensions (`Set Width/Height`), shorter recording (fewer sleeps), or lower font size. Re-run.
+腳本運行 VHS、驗證輸出存在、報告檔案大小。GIF 超 10 MB 時，調整 .tape 以縮減：更小終端尺寸（`Set Width/Height`）、更短錄製（更少 sleep）、或更低字體大小。重新執行。
 
-## Step 4: Quality Check
+## 步驟四：品質檢查
 
-Read the generated GIF to verify:
+讀取生成之 GIF 驗證：
 
-1. Commands are visible and readable
-2. Output renders completely (not cut off)
-3. The feature being demonstrated is clearly shown
-4. No secrets, credentials, or sensitive paths are visible
+1. 命令清晰可讀
+2. 輸出完整渲染（未被截斷）
+3. 所展示功能明確呈現
+4. 無密鑰、憑證或敏感路徑可見
 
-If quality is poor, revise the .tape file and re-record.
+品質不佳時，修訂 .tape 檔重新錄製。
 
-**If VHS fails** (crashes, produces empty GIF, or the command being demonstrated fails): fall back to the screenshot reel tier. Write the same commands and expected output as text frames and stitch via silicon + ffmpeg. If silicon is also unavailable, fall back to static screenshots.
+**VHS 失敗時**（崩潰、產出空 GIF、或所展示命令失敗）：退至截圖影卷層。以同樣命令與預期輸出作為文字幀，經 silicon + ffmpeg 縫合。silicon 亦不可用時，退至靜態截圖。
 
-Proceed to `references/upload-and-approval.md`.
+續至 `references/upload-and-approval.md`。

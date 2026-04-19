@@ -1,12 +1,12 @@
-# DSPy.rb Toolsets
+# DSPy.rb 工具集
 
 ## Tools::Base
 
-`DSPy::Tools::Base` is the base class for single-purpose tools. Each subclass exposes one operation to an LLM agent through a `call` method.
+`DSPy::Tools::Base` 為單一用途工具之基類。各子類透過 `call` 方法向語言模型代理暴露單一操作。
 
-### Defining a Tool
+### 定義工具
 
-Set the tool's identity with the `tool_name` and `tool_description` class-level DSL methods. Define the `call` instance method with a Sorbet `sig` declaration so DSPy.rb can generate the JSON schema the LLM uses to invoke the tool.
+以 `tool_name` 及 `tool_description` 類別級 DSL 方法設定工具身份。定義 `call` 實例方法並附 Sorbet `sig` 宣告，使 DSPy.rb 能生成語言模型調用工具所需之 JSON schema。
 
 ```ruby
 class WeatherLookup < DSPy::Tools::Base
@@ -17,23 +17,23 @@ class WeatherLookup < DSPy::Tools::Base
 
   sig { params(city: String, units: T.nilable(String)).returns(String) }
   def call(city:, units: nil)
-    # Fetch weather data and return a string summary
+    # 擷取天氣資料並回傳字串摘要
     "72F and sunny in #{city}"
   end
 end
 ```
 
-Key points:
+要點：
 
-- Inherit from `DSPy::Tools::Base`, not `DSPy::Tool`.
-- Use `tool_name` (class method) to set the name the LLM sees. Without it, the class name is lowercased as a fallback.
-- Use `tool_description` (class method) to set the human-readable description surfaced in the tool schema.
-- The `call` method must use **keyword arguments**. Positional arguments are supported but keyword arguments produce better schemas.
-- Always attach a Sorbet `sig` to `call`. Without a signature, the generated schema has empty properties and the LLM cannot determine parameter types.
+- 繼承 `DSPy::Tools::Base`，非 `DSPy::Tool`。
+- 用 `tool_name`（類別方法）設定語言模型所見名稱。未設則以類別名小寫為後備。
+- 用 `tool_description`（類別方法）設定工具 schema 中展示之描述。
+- `call` 方法須使用**關鍵字引數**。位置引數亦支援，但關鍵字引數生成更佳 schema。
+- 必須為 `call` 附加 Sorbet `sig`。缺少簽名則生成之 schema 屬性為空，語言模型無法判斷參數類型。
 
-### Schema Generation
+### Schema 生成
 
-`call_schema_object` introspects the Sorbet signature on `call` and returns a hash representing the JSON Schema `parameters` object:
+`call_schema_object` 內省 `call` 之 Sorbet 簽名，回傳代表 JSON Schema `parameters` 物件之雜湊：
 
 ```ruby
 WeatherLookup.call_schema_object
@@ -47,7 +47,7 @@ WeatherLookup.call_schema_object
 # }
 ```
 
-`call_schema` wraps this in the full LLM tool-calling format:
+`call_schema` 將其包裹為完整語言模型工具呼叫格式：
 
 ```ruby
 WeatherLookup.call_schema
@@ -61,9 +61,9 @@ WeatherLookup.call_schema
 # }
 ```
 
-### Using Tools with ReAct
+### 搭配 ReAct 使用工具
 
-Pass tool instances in an array to `DSPy::ReAct`:
+將工具實例以陣列傳入 `DSPy::ReAct`：
 
 ```ruby
 agent = DSPy::ReAct.new(
@@ -75,15 +75,15 @@ result = agent.call(question: "What is the weather in Berlin?")
 puts result.answer
 ```
 
-Access output fields with dot notation (`result.answer`), not hash access (`result[:answer]`).
+以點記法存取輸出欄位（`result.answer`），非雜湊存取（`result[:answer]`）。
 
 ---
 
 ## Tools::Toolset
 
-`DSPy::Tools::Toolset` groups multiple related methods into a single class. Each exposed method becomes an independent tool from the LLM's perspective.
+`DSPy::Tools::Toolset` 將多個相關方法歸入單一類別。各暴露方法自語言模型視角成為獨立工具。
 
-### Defining a Toolset
+### 定義工具集
 
 ```ruby
 class DatabaseToolset < DSPy::Tools::Toolset
@@ -97,44 +97,44 @@ class DatabaseToolset < DSPy::Tools::Toolset
 
   sig { params(sql: String).returns(String) }
   def query(sql:)
-    # Execute read query
+    # 執行唯讀查詢
   end
 
   sig { params(table: String, data: T::Hash[String, String]).returns(String) }
   def insert(table:, data:)
-    # Insert record
+    # 新增紀錄
   end
 
   sig { params(table: String, id: Integer).returns(String) }
   def delete(table:, id:)
-    # Delete record
+    # 刪除紀錄
   end
 end
 ```
 
-### DSL Methods
+### DSL 方法
 
-**`toolset_name(name)`** -- Set the prefix for all generated tool names. If omitted, the class name minus `Toolset` suffix is lowercased (e.g., `DatabaseToolset` becomes `database`).
+**`toolset_name(name)`** —— 設定所有生成工具名稱之前綴。省略則以類別名減去 `Toolset` 後綴之小寫（如 `DatabaseToolset` → `database`）。
 
 ```ruby
 toolset_name "db"
-# tool :query produces a tool named "db_query"
+# tool :query 產生名為 "db_query" 之工具
 ```
 
-**`tool(method_name, tool_name:, description:)`** -- Expose a method as a tool.
+**`tool(method_name, tool_name:, description:)`** —— 將方法暴露為工具。
 
-- `method_name` (Symbol, required) -- the instance method to expose.
-- `tool_name:` (String, optional) -- override the default `<toolset_name>_<method_name>` naming.
-- `description:` (String, optional) -- description shown to the LLM. Defaults to a humanized version of the method name.
+- `method_name`（Symbol，必須）—— 欲暴露之實例方法。
+- `tool_name:`（String，可選）—— 覆寫預設 `<toolset_name>_<method_name>` 命名。
+- `description:`（String，可選）—— 展示給語言模型之描述。預設為方法名之人性化版本。
 
 ```ruby
 tool :word_count, tool_name: "text_wc", description: "Count lines, words, and characters"
-# Produces a tool named "text_wc" instead of "text_word_count"
+# 產生名為 "text_wc" 之工具，非 "text_word_count"
 ```
 
-### Converting to a Tool Array
+### 轉換為工具陣列
 
-Call `to_tools` on the class (not an instance) to get an array of `ToolProxy` objects compatible with `DSPy::Tools::Base`:
+於類別（非實例）上呼叫 `to_tools` 取得相容 `DSPy::Tools::Base` 之 `ToolProxy` 物件陣列：
 
 ```ruby
 agent = DSPy::ReAct.new(
@@ -143,11 +143,11 @@ agent = DSPy::ReAct.new(
 )
 ```
 
-Each `ToolProxy` wraps one method, delegates `call` to the underlying toolset instance, and generates its own JSON schema from the method's Sorbet signature.
+各 `ToolProxy` 包裝一個方法，將 `call` 委託至底層工具集實例，並從方法之 Sorbet 簽名生成自身 JSON schema。
 
-### Shared State
+### 共享狀態
 
-All tool proxies from a single `to_tools` call share one toolset instance. Store shared state (connections, caches, configuration) in the toolset's `initialize`:
+單次 `to_tools` 呼叫之所有工具代理共享一個工具集實例。將共享狀態（連線、快取、配置）存於工具集之 `initialize`：
 
 ```ruby
 class ApiToolset < DSPy::Tools::Toolset
@@ -178,11 +178,11 @@ end
 
 ---
 
-## Type Safety
+## 類型安全
 
-Sorbet signatures on tool methods drive both JSON schema generation and automatic type coercion of LLM responses.
+工具方法上之 Sorbet 簽名驅動 JSON schema 生成及語言模型回應之自動類型強制轉換。
 
-### Basic Types
+### 基本類型
 
 ```ruby
 sig { params(
@@ -197,24 +197,24 @@ def analyze(text:, count:, score:, enabled:, threshold:)
 end
 ```
 
-| Sorbet Type      | JSON Schema                                        |
-|------------------|----------------------------------------------------|
-| `String`         | `{"type": "string"}`                               |
-| `Integer`        | `{"type": "integer"}`                              |
-| `Float`          | `{"type": "number"}`                               |
-| `Numeric`        | `{"type": "number"}`                               |
-| `T::Boolean`     | `{"type": "boolean"}`                              |
-| `T::Enum`        | `{"type": "string", "enum": [...]}`                |
-| `T::Struct`      | `{"type": "object", "properties": {...}}`          |
-| `T::Array[Type]` | `{"type": "array", "items": {...}}`                |
-| `T::Hash[K, V]`  | `{"type": "object", "additionalProperties": {...}}`|
-| `T.nilable(Type)`| `{"type": [original, "null"]}`                     |
-| `T.any(T1, T2)`  | `{"oneOf": [{...}, {...}]}`                        |
-| `T.class_of(X)`  | `{"type": "string"}`                               |
+| Sorbet 類型       | JSON Schema                                         |
+|-------------------|-----------------------------------------------------|
+| `String`          | `{"type": "string"}`                                |
+| `Integer`         | `{"type": "integer"}`                               |
+| `Float`           | `{"type": "number"}`                                |
+| `Numeric`         | `{"type": "number"}`                                |
+| `T::Boolean`      | `{"type": "boolean"}`                               |
+| `T::Enum`         | `{"type": "string", "enum": [...]}`                 |
+| `T::Struct`       | `{"type": "object", "properties": {...}}`           |
+| `T::Array[Type]`  | `{"type": "array", "items": {...}}`                 |
+| `T::Hash[K, V]`   | `{"type": "object", "additionalProperties": {...}}` |
+| `T.nilable(Type)` | `{"type": [original, "null"]}`                      |
+| `T.any(T1, T2)`   | `{"oneOf": [{...}, {...}]}`                         |
+| `T.class_of(X)`   | `{"type": "string"}`                                |
 
-### T::Enum Parameters
+### T::Enum 參數
 
-Define a `T::Enum` and reference it in a tool signature. DSPy.rb generates a JSON Schema `enum` constraint and automatically deserializes the LLM's string response into the correct enum instance.
+定義 `T::Enum` 並於工具簽名中引用。DSPy.rb 生成 JSON Schema `enum` 約束，並自動將語言模型之字串回應反序列化為正確列舉實例。
 
 ```ruby
 class Priority < T::Enum
@@ -240,7 +240,7 @@ def update_task(priority:, status:)
 end
 ```
 
-The generated schema constrains the parameter to valid values:
+生成之 schema 將參數約束為有效值：
 
 ```json
 {
@@ -251,11 +251,11 @@ The generated schema constrains the parameter to valid values:
 }
 ```
 
-**Case-insensitive matching**: When the LLM returns `"HIGH"` or `"High"` instead of `"high"`, DSPy.rb first tries an exact `try_deserialize`, then falls back to a case-insensitive lookup. This prevents failures caused by LLM casing variations.
+**不區分大小寫匹配：** 語言模型回傳 `"HIGH"` 或 `"High"` 而非 `"low"` 時，DSPy.rb 先嘗試精確 `try_deserialize`，再回退至不區分大小寫查找。防止語言模型大小寫變異導致失敗。
 
-### T::Struct Parameters
+### T::Struct 參數
 
-Use `T::Struct` for complex nested objects. DSPy.rb generates nested JSON Schema properties and recursively coerces the LLM's hash response into struct instances.
+用 `T::Struct` 表達複雜巢狀物件。DSPy.rb 生成巢狀 JSON Schema 屬性，並遞迴將語言模型之雜湊回應強制轉換為結構實例。
 
 ```ruby
 class TaskMetadata < T::Struct
@@ -279,11 +279,11 @@ def create_task(task:)
 end
 ```
 
-The LLM sees the full nested object schema and DSPy.rb reconstructs the struct tree from the JSON response, including enum fields inside nested structs.
+語言模型可見完整巢狀物件 schema，DSPy.rb 自 JSON 回應重建結構樹，包含巢狀結構內之列舉欄位。
 
-### Nilable Parameters
+### 可空參數
 
-Mark optional parameters with `T.nilable(...)` and provide a default value of `nil` in the method signature. These parameters are excluded from the JSON Schema `required` array.
+以 `T.nilable(...)` 標記可選參數，方法簽名中提供 `nil` 預設值。此類參數排除於 JSON Schema `required` 陣列之外。
 
 ```ruby
 sig { params(
@@ -292,13 +292,13 @@ sig { params(
   filter: T.nilable(String)
 ).returns(String) }
 def search(query:, max_results: nil, filter: nil)
-  # query is required; max_results and filter are optional
+  # query 必須；max_results 及 filter 可選
 end
 ```
 
-### Collections
+### 集合
 
-Typed arrays and hashes generate precise item/value schemas:
+帶型別之陣列與雜湊生成精確之元素/值 schema：
 
 ```ruby
 sig { params(
@@ -307,41 +307,41 @@ sig { params(
   config: T::Hash[String, T.any(String, Integer, Float)]
 ).returns(String) }
 def configure(tags:, priorities:, config:)
-  # Array elements and hash values are validated and coerced
+  # 陣列元素與雜湊值經驗證並強制轉換
 end
 ```
 
-### Union Types
+### 聯合類型
 
-`T.any(...)` generates a `oneOf` JSON Schema. When one of the union members is a `T::Struct`, DSPy.rb uses the `_type` discriminator field to select the correct struct class during coercion.
+`T.any(...)` 生成 `oneOf` JSON Schema。聯合成員含 `T::Struct` 時，DSPy.rb 於強制轉換期間使用 `_type` 鑑別欄位選擇正確結構類別。
 
 ```ruby
 sig { params(value: T.any(String, Integer, Float)).returns(String) }
 def handle_flexible(value:)
-  # Accepts multiple types
+  # 接受多種類型
 end
 ```
 
 ---
 
-## Built-in Toolsets
+## 內建工具集
 
 ### TextProcessingToolset
 
-`DSPy::Tools::TextProcessingToolset` provides Unix-style text analysis and manipulation operations. Toolset name prefix: `text`.
+`DSPy::Tools::TextProcessingToolset` 提供 Unix 風格之文字分析與操作。工具集名稱前綴：`text`。
 
-| Tool Name                         | Method            | Description                                |
-|-----------------------------------|-------------------|--------------------------------------------|
-| `text_grep`                       | `grep`            | Search for patterns with optional case-insensitive and count-only modes |
-| `text_wc`                         | `word_count`      | Count lines, words, and characters         |
-| `text_rg`                         | `ripgrep`         | Fast pattern search with context lines     |
-| `text_extract_lines`              | `extract_lines`   | Extract a range of lines by number         |
-| `text_filter_lines`               | `filter_lines`    | Keep or reject lines matching a regex      |
-| `text_unique_lines`               | `unique_lines`    | Deduplicate lines, optionally preserving order |
-| `text_sort_lines`                 | `sort_lines`      | Sort lines alphabetically or numerically   |
-| `text_summarize_text`             | `summarize_text`  | Produce a statistical summary (counts, averages, frequent words) |
+| 工具名                              | 方法             | 描述                                     |
+|------------------------------------|-----------------|------------------------------------------|
+| `text_grep`                        | `grep`          | 搜尋模式，可選不區分大小寫及僅計數模式         |
+| `text_wc`                          | `word_count`    | 計算行數、詞數及字元數                       |
+| `text_rg`                          | `ripgrep`       | 快速模式搜尋，附上下文行                     |
+| `text_extract_lines`               | `extract_lines` | 依行號提取行範圍                            |
+| `text_filter_lines`                | `filter_lines`  | 保留或排除匹配正則表達式之行                   |
+| `text_unique_lines`                | `unique_lines`  | 行去重，可選保留順序                         |
+| `text_sort_lines`                  | `sort_lines`    | 按字母或數值排序行                           |
+| `text_summarize_text`              | `summarize_text`| 生成統計摘要（計數、平均值、高頻詞）            |
 
-Usage:
+用法：
 
 ```ruby
 agent = DSPy::ReAct.new(
@@ -355,19 +355,19 @@ puts result.answer
 
 ### GitHubCLIToolset
 
-`DSPy::Tools::GitHubCLIToolset` wraps the `gh` CLI for read-oriented GitHub operations. Toolset name prefix: `github`.
+`DSPy::Tools::GitHubCLIToolset` 包裝 `gh` CLI 用於唯讀導向之 GitHub 操作。工具集名稱前綴：`github`。
 
-| Tool Name              | Method            | Description                                       |
-|------------------------|-------------------|---------------------------------------------------|
-| `github_list_issues`   | `list_issues`     | List issues filtered by state, labels, assignee   |
-| `github_list_prs`      | `list_prs`        | List pull requests filtered by state, author, base|
-| `github_get_issue`     | `get_issue`       | Retrieve details of a single issue                |
-| `github_get_pr`        | `get_pr`          | Retrieve details of a single pull request         |
-| `github_api_request`   | `api_request`     | Make an arbitrary GET request to the GitHub API    |
-| `github_traffic_views` | `traffic_views`   | Fetch repository traffic view counts              |
-| `github_traffic_clones`| `traffic_clones`  | Fetch repository traffic clone counts             |
+| 工具名                   | 方法             | 描述                                          |
+|-------------------------|-----------------|-----------------------------------------------|
+| `github_list_issues`    | `list_issues`   | 按狀態、標籤、指派人篩選議題列表                 |
+| `github_list_prs`       | `list_prs`      | 按狀態、作者、基礎分支篩選拉取請求列表            |
+| `github_get_issue`      | `get_issue`     | 取得單一議題詳情                                |
+| `github_get_pr`         | `get_pr`        | 取得單一拉取請求詳情                             |
+| `github_api_request`    | `api_request`   | 對 GitHub API 發起任意 GET 請求                  |
+| `github_traffic_views`  | `traffic_views` | 取得倉庫流量瀏覽計數                             |
+| `github_traffic_clones` | `traffic_clones`| 取得倉庫流量複製計數                             |
 
-This toolset uses `T::Enum` parameters (`IssueState`, `PRState`, `ReviewState`) for state filters, demonstrating enum-based tool signatures in practice.
+此工具集使用 `T::Enum` 參數（`IssueState`、`PRState`、`ReviewState`）作為狀態篩選器，展示實際中之列舉式工具簽名。
 
 ```ruby
 agent = DSPy::ReAct.new(
@@ -378,11 +378,11 @@ agent = DSPy::ReAct.new(
 
 ---
 
-## Testing
+## 測試
 
-### Unit Testing Individual Tools
+### 單元測試個別工具
 
-Test `DSPy::Tools::Base` subclasses by instantiating and calling `call` directly:
+實例化 `DSPy::Tools::Base` 子類並直接呼叫 `call` 以測試：
 
 ```ruby
 RSpec.describe WeatherLookup do
@@ -405,9 +405,9 @@ RSpec.describe WeatherLookup do
 end
 ```
 
-### Unit Testing Toolsets
+### 單元測試工具集
 
-Test toolset methods directly on an instance. Verify tool generation with `to_tools`:
+於實例上直接測試工具集方法。以 `to_tools` 驗證工具生成：
 
 ```ruby
 RSpec.describe DatabaseToolset do
@@ -432,9 +432,9 @@ RSpec.describe DatabaseToolset do
 end
 ```
 
-### Mocking Predictions Inside Tools
+### 模擬工具內部預測
 
-When a tool calls a DSPy predictor internally, stub the predictor to isolate tool logic from LLM calls:
+工具內部呼叫 DSPy 預測器時，截取預測器以隔離工具邏輯與語言模型呼叫：
 
 ```ruby
 class SmartSearchTool < DSPy::Tools::Base
@@ -457,7 +457,7 @@ class SmartSearchTool < DSPy::Tools::Base
   private
 
   def perform_search(query)
-    # actual search logic
+    # 實際搜尋邏輯
   end
 end
 
@@ -477,15 +477,15 @@ RSpec.describe SmartSearchTool do
 end
 ```
 
-### Testing Enum Coercion
+### 測試列舉強制轉換
 
-Verify that string values from LLM responses deserialize into the correct enum instances:
+驗證語言模型回應之字串值反序列化為正確列舉實例：
 
 ```ruby
 RSpec.describe "enum coercion" do
   it "handles case-insensitive enum values" do
     toolset = GitHubCLIToolset.new
-    # The LLM may return "OPEN" instead of "open"
+    # 語言模型可能回傳 "OPEN" 而非 "open"
     result = toolset.list_issues(state: IssueState::Open)
     expect(result).to be_a(String)
   end
@@ -494,9 +494,9 @@ end
 
 ---
 
-## Constraints
+## 約束
 
-- All exposed tool methods must use **keyword arguments**. Positional-only parameters generate schemas but keyword arguments produce more reliable LLM interactions.
-- Each exposed method becomes a **separate, independent tool**. Method chaining or multi-step sequences within a single tool call are not supported.
-- Shared state across tool proxies is scoped to a single `to_tools` call. Separate `to_tools` invocations create separate toolset instances.
-- Methods without a Sorbet `sig` produce an empty parameter schema. The LLM will not know what arguments to pass.
+- 所有暴露之工具方法須使用**關鍵字引數**。僅位置參數可生成 schema，但關鍵字引數產生更可靠之語言模型互動。
+- 各暴露方法成為**獨立、分離之工具**。單次工具呼叫內不支援方法鏈結或多步序列。
+- 工具代理間之共享狀態作用域限於單次 `to_tools` 呼叫。獨立之 `to_tools` 呼叫建立獨立之工具集實例。
+- 缺少 Sorbet `sig` 之方法生成空參數 schema。語言模型無從知悉應傳入何種引數。

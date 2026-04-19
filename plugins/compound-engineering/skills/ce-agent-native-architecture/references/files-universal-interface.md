@@ -1,43 +1,43 @@
 <overview>
-Files are the universal interface for agent-native applications. Agents are naturally fluent with file operations—they already know how to read, write, and organize files. This document covers why files work so well, how to organize them, and the context.md pattern for accumulated knowledge.
+檔案乃agent-native應用之通用介面。代理天生精通檔案操作——已知如何讀、寫、組織檔案。此文涵蓋何以檔案如此有效、如何組織、及context.md積累知識模式。
 </overview>
 
 <why_files>
-## Why Files
+## 何以檔案
 
-Agents are naturally good at files. Claude Code works because bash + filesystem is the most battle-tested agent interface. When building agent-native apps, lean into this.
+代理天生擅長檔案。Claude Code有效，因bash + filesystem乃最經實戰驗證之代理介面。構建agent-native應用時，善用此優勢。
 
-### Agents Already Know How
+### 代理已知如何
 
-You don't need to teach the agent your API—it already knows `cat`, `grep`, `mv`, `mkdir`. File operations are the primitives it's most fluent with.
+無需教導代理你的API——已知`cat`、`grep`、`mv`、`mkdir`。檔案操作乃其最精通之原語。
 
-### Files Are Inspectable
+### 檔案可檢查
 
-Users can see what the agent created, edit it, move it, delete it. No black box. Complete transparency into agent behavior.
+使用者可見代理建立之物、編輯之、移動之、刪除之。無黑盒。代理行為完全透明。
 
-### Files Are Portable
+### 檔案可攜
 
-Export is trivial. Backup is trivial. Users own their data. No vendor lock-in, no complex migration paths.
+匯出輕易。備份輕易。使用者擁有其資料。無廠商鎖定，無複雜遷移路徑。
 
-### App State Stays in Sync
+### 應用狀態保持同步
 
-On mobile, if you use the file system with iCloud, all devices share the same file system. The agent's work on one device appears on all devices—without you having to build a server.
+行動裝置上，若使用iCloud之檔案系統，所有裝置共享相同檔案系統。代理在一裝置上之工作出現於所有裝置——無需建構伺服器。
 
-### Directory Structure Is Information Architecture
+### 目錄結構即資訊架構
 
-The filesystem gives you hierarchy for free. `/projects/acme/notes/` is self-documenting in a way that `SELECT * FROM notes WHERE project_id = 123` isn't.
+檔案系統免費提供層級。`/projects/acme/notes/`自我文件化，而`SELECT * FROM notes WHERE project_id = 123`則否。
 </why_files>
 
 <file_organization>
-## File Organization Patterns
+## 檔案組織模式
 
-> **Needs validation:** These conventions are one approach that's worked so far, not a prescription. Better solutions should be considered.
+> **需驗證：** 此等慣例乃目前有效之一法，非處方。應考慮更佳方案。
 
-A general principle of agent-native design: **Design for what agents can reason about.** The best proxy for that is what would make sense to a human. If a human can look at your file structure and understand what's going on, an agent probably can too.
+agent-native設計之通則：**為代理所能推理者而設計。** 最佳代理乃人類可理解者。若人類可觀看檔案結構而理解發生何事，代理大概亦可。
 
-### Entity-Scoped Directories
+### 實體範圍目錄
 
-Organize files around entities, not actors or file types:
+以實體組織檔案，非以行為者或檔案類型：
 
 ```
 {entity_type}/{entity_id}/
@@ -46,11 +46,11 @@ Organize files around entities, not actors or file types:
 └── related materials
 ```
 
-**Example:** `Research/books/{bookId}/` contains everything about one book—full text, notes, sources, agent logs.
+**範例：** `Research/books/{bookId}/`包含關於一本書之一切——全文、筆記、來源、代理日誌。
 
-### Naming Conventions
+### 命名慣例
 
-| File Type | Naming Pattern | Example |
+| 檔案類型 | 命名模式 | 範例 |
 |-----------|---------------|---------|
 | Entity data | `{entity}.json` | `library.json`, `status.json` |
 | Human-readable content | `{content_type}.md` | `introduction.md`, `profile.md` |
@@ -61,15 +61,15 @@ Organize files around entities, not actors or file types:
 | Checkpoints | `{sessionId}.checkpoint` | UUID-based |
 | Configuration | `config.json` | Feature settings |
 
-### Directory Naming
+### 目錄命名
 
-- **Entity-scoped:** `{entityType}/{entityId}/` (e.g., `Research/books/{bookId}/`)
-- **Type-scoped:** `{type}/` (e.g., `AgentCheckpoints/`, `AgentLogs/`)
-- **Convention:** Lowercase with underscores, not camelCase
+- **實體範圍：** `{entityType}/{entityId}/`（如`Research/books/{bookId}/`）
+- **類型範圍：** `{type}/`（如`AgentCheckpoints/`、`AgentLogs/`）
+- **慣例：** 小寫加底線，非camelCase
 
-### Ephemeral vs. Durable Separation
+### 短暫與持久分離
 
-Separate agent working files from user's permanent data:
+分離代理工作檔案與使用者永久資料：
 
 ```
 Documents/
@@ -81,16 +81,16 @@ Documents/
     └── books/{bookId}/
 ```
 
-### The Split: Markdown vs JSON
+### 分野：Markdown vs JSON
 
-- **Markdown:** For content users might read or edit
-- **JSON:** For structured data the app queries
+- **Markdown：** 使用者可能閱讀或編輯之內容
+- **JSON：** 應用查詢之結構化資料
 </file_organization>
 
 <context_md_pattern>
-## The context.md Pattern
+## context.md 模式
 
-A file the agent reads at the start of each session and updates as it learns:
+代理於每次會話開始時讀取並隨學習而更新之檔案：
 
 ```markdown
 # Context
@@ -121,23 +121,23 @@ Reading assistant for the Every app.
 - Last sync: 10 minutes ago
 ```
 
-### Benefits
+### 益處
 
-- **Agent behavior evolves without code changes** - Update the context, behavior changes
-- **Users can inspect and modify** - Complete transparency
-- **Natural place for accumulated context** - Learnings persist across sessions
-- **Portable across sessions** - Restart agent, knowledge preserved
+- **代理行為無需程式碼變更即演化** - 更新上下文，行為即變
+- **使用者可檢查與修改** - 完全透明
+- **積累上下文之天然位置** - 學習跨會話持久化
+- **跨會話可攜** - 重啟代理，知識保留
 
-### How It Works
+### 運作方式
 
-1. Agent reads `context.md` at session start
-2. Agent updates it when learning something important
-3. System can also update it (recent activity, new resources)
-4. Context persists across sessions
+1. 代理於會話開始時讀取`context.md`
+2. 學習重要事物時更新之
+3. 系統亦可更新之（最近活動、新資源）
+4. 上下文跨會話持久化
 
-### What to Include
+### 應含內容
 
-| Section | Purpose |
+| 區段 | 目的 |
 |---------|---------|
 | Who I Am | Agent identity and role |
 | What I Know About This User | Learned preferences, interests |
@@ -148,29 +148,29 @@ Reading assistant for the Every app.
 </context_md_pattern>
 
 <files_vs_database>
-## Files vs. Database
+## 檔案 vs 資料庫
 
-> **Needs validation:** This framing is informed by mobile development. For web apps, the tradeoffs are different.
+> **需驗證：** 此框架基於行動裝置開發。網頁應用之權衡不同。
 
-| Use files for... | Use database for... |
+| 用檔案於... | 用資料庫於... |
 |------------------|---------------------|
-| Content users should read/edit | High-volume structured data |
-| Configuration that benefits from version control | Data that needs complex queries |
-| Agent-generated content | Ephemeral state (sessions, caches) |
-| Anything that benefits from transparency | Data with relationships |
-| Large text content | Data that needs indexing |
+| 使用者應讀/編輯之內容 | 大量結構化資料 |
+| 受益於版本控制之配置 | 需複雜查詢之資料 |
+| 代理生成之內容 | 短暫狀態（sessions, caches） |
+| 受益於透明度之任何事物 | 有關聯之資料 |
+| 大型文本內容 | 需索引之資料 |
 
-**The principle:** Files for legibility, databases for structure. When in doubt, files—they're more transparent and users can always inspect them.
+**原則：** 檔案為可讀性，資料庫為結構。猶疑時用檔案——更透明，使用者始終可檢查。
 
-### When Files Work Best
+### 檔案最佳情境
 
-- Scale is small (one user's library, not millions of records)
-- Transparency is valued over query speed
-- Cloud sync (iCloud, Dropbox) works well with files
+- 規模小（一個使用者之圖書館，非百萬筆記錄）
+- 透明度優先於查詢速度
+- 雲端同步（iCloud、Dropbox）適用於檔案
 
-### Hybrid Approach
+### 混合方法
 
-Even if you need a database for performance, consider maintaining a file-based "source of truth" that the agent works with, synced to the database for the UI:
+即使需要資料庫以提升效能，考慮維護基於檔案之"真實來源"供代理工作，同步至資料庫供UI：
 
 ```
 Files (agent workspace):
@@ -182,23 +182,23 @@ Database (UI queries):
 </files_vs_database>
 
 <conflict_model>
-## Conflict Model
+## 衝突模型
 
-If agents and users write to the same files, you need a conflict model.
+若代理與使用者寫入相同檔案，需衝突模型。
 
-### Current Reality
+### 當前現實
 
-Most implementations use **last-write-wins** via atomic writes:
+多數實作使用**最後寫入者勝出**，透過原子寫入：
 
 ```swift
 try data.write(to: url, options: [.atomic])
 ```
 
-This is simple but can lose changes.
+簡單但可能遺失變更。
 
-### Options
+### 選項
 
-| Strategy | Pros | Cons |
+| 策略 | 優點 | 缺點 |
 |----------|------|------|
 | **Last write wins** | Simple | Changes can be lost |
 | **Agent checks before writing** | Preserves user edits | More complexity |
@@ -206,18 +206,18 @@ This is simple but can lose changes.
 | **Append-only logs** | Never overwrites | Files grow forever |
 | **File locking** | Safe concurrent access | Complexity, can block |
 
-### Recommended Approaches
+### 建議方法
 
-**For files agents write frequently (logs, status):** Last-write-wins is fine. Conflicts are rare.
+**代理頻繁寫入之檔案（logs、status）：** 最後寫入者勝出即可。衝突罕見。
 
-**For files users edit (profiles, notes):** Consider explicit handling:
-- Agent checks modification time before overwriting
-- Or keep agent output separate from user-editable content
-- Or use append-only pattern
+**使用者編輯之檔案（profiles、notes）：** 考慮明確處理：
+- 代理覆寫前檢查修改時間
+- 或保持代理輸出與使用者可編輯內容分離
+- 或使用僅附加模式
 
-### iCloud Considerations
+### iCloud 注意事項
 
-iCloud sync adds complexity. It creates `{filename} (conflict).md` files when sync conflicts occur. Monitor for these:
+iCloud同步增加複雜度。同步衝突時產生`{filename} (conflict).md`檔案。監看此等：
 
 ```swift
 NotificationCenter.default.addObserver(
@@ -226,9 +226,9 @@ NotificationCenter.default.addObserver(
 )
 ```
 
-### System Prompt Guidance
+### 系統提示指引
 
-Tell the agent about the conflict model:
+告知代理關於衝突模型：
 
 ```markdown
 ## Working with User Content
@@ -242,7 +242,7 @@ If a file has been modified since you last wrote it, ask before overwriting.
 </conflict_model>
 
 <examples>
-## Example: Reading App File Structure
+## 範例：閱讀應用檔案結構
 
 ```
 Documents/
@@ -264,38 +264,38 @@ Documents/
 └── context.md                    # Agent's accumulated knowledge
 ```
 
-**How it works:**
+**運作方式：**
 
-1. User adds book → creates entry in `library.json`
-2. Agent downloads text → saves to `Research/books/{id}/full_text.txt`
-3. Agent researches → saves to `sources/`
-4. Agent generates intro → saves to `introduction.md`
-5. User edits intro → agent sees changes on next read
-6. Agent updates `context.md` with learnings
+1. 使用者新增書籍 → 在`library.json`建立條目
+2. 代理下載文本 → 儲存至`Research/books/{id}/full_text.txt`
+3. 代理研究 → 儲存至`sources/`
+4. 代理生成簡介 → 儲存至`introduction.md`
+5. 使用者編輯簡介 → 代理下次讀取時可見變更
+6. 代理以所學更新`context.md`
 </examples>
 
 <checklist>
-## Files as Universal Interface Checklist
+## 檔案作為通用介面清單
 
-### Organization
-- [ ] Entity-scoped directories (`{type}/{id}/`)
-- [ ] Consistent naming conventions
-- [ ] Ephemeral vs durable separation
-- [ ] Markdown for human content, JSON for structured data
+### 組織
+- [ ] 實體範圍目錄（`{type}/{id}/`）
+- [ ] 一致命名慣例
+- [ ] 短暫與持久分離
+- [ ] 人類內容用Markdown，結構化資料用JSON
 
 ### context.md
-- [ ] Agent reads context at session start
-- [ ] Agent updates context when learning
-- [ ] Includes: identity, user knowledge, what exists, guidelines
-- [ ] Persists across sessions
+- [ ] 代理於會話開始時讀取上下文
+- [ ] 代理學習時更新上下文
+- [ ] 含：身份、使用者知識、存在何物、指引
+- [ ] 跨會話持久化
 
-### Conflict Handling
-- [ ] Conflict model defined (last-write-wins, check-before-write, etc.)
-- [ ] Agent guidance in system prompt
-- [ ] iCloud conflict monitoring (if applicable)
+### 衝突處理
+- [ ] 衝突模型已定義（last-write-wins、check-before-write等）
+- [ ] 系統提示中有代理指引
+- [ ] iCloud衝突監看（若適用）
 
-### Integration
-- [ ] UI observes file changes (or shared service)
-- [ ] Agent can read user edits
-- [ ] User can inspect agent output
+### 整合
+- [ ] UI觀察檔案變更（或共享服務）
+- [ ] 代理可讀取使用者編輯
+- [ ] 使用者可檢查代理輸出
 </checklist>

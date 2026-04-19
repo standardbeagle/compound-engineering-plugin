@@ -1,20 +1,20 @@
 ---
 name: ce-slack-research
-description: "Search Slack for interpreted organizational context -- decisions, constraints, and discussion arcs that shape the current task. Produces a research digest with cross-cutting analysis and research-value assessment, not raw message lists. Use when searching Slack for context during planning, brainstorming, or any task where organizational knowledge matters. Trigger phrases: 'search slack for', 'what did we discuss about', 'slack context for', 'organizational context about', 'what does the team think about', 'any slack discussions on'. Differs from slack:find-discussions which returns individual message results without synthesis."
+description: "搜尋 Slack 以獲取經詮釋之組織脈絡——決策、約束、討論脈絡等形塑當前任務之資訊。產出含跨領域分析與研究價值評估之研究摘要，非原始訊息列表。適用於規劃、腦力激盪或任何組織知識攸關之任務中搜尋 Slack 脈絡。觸發詞：'search slack for'、'what did we discuss about'、'slack context for'、'organizational context about'、'what does the team think about'、'any slack discussions on'。有別於 slack:find-discussions——後者回傳個別訊息結果而無綜合分析。"
 ---
 
 # /ce-slack-research
 
-Search Slack for organizational context and receive an interpreted research digest.
+搜尋 Slack 以獲取組織脈絡，取得經詮釋之研究摘要。
 
-## Usage
+## 用法
 
 ```
 /ce-slack-research [topic or question]
 /ce-slack-research
 ```
 
-## Examples
+## 範例
 
 ```
 /ce-slack-research free trial
@@ -23,19 +23,19 @@ Search Slack for organizational context and receive an interpreted research dige
 /ce-slack-research onboarding flow after:2026-03-01
 ```
 
-The input can be a keyword, a natural language question, or include Slack search modifiers like channel hints (`in:#channel`) and date filters (`after:YYYY-MM-DD`). The agent extracts the topic and formulates searches from whatever form the input takes.
+輸入可為關鍵詞、自然語言提問，或含 Slack 搜尋修飾詞（如頻道提示 `in:#channel`、日期篩選 `after:YYYY-MM-DD`）。代理自任何形式之輸入提取主題並構建搜尋。
 
-## Execution
+## 執行
 
-If no argument is provided, ask what topic to research. Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, ask in plain text and wait for a reply.
+若未提供參數，詢問欲研究之主題。使用平台之阻塞式提問工具（Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`）。若無提問工具，以純文字發問並等候回覆。
 
-Dispatch `research:ce-slack-researcher` with the user's topic as the task prompt. Omit the `mode` parameter so the user's configured permission settings apply.
+分派 `research:ce-slack-researcher`，以用戶之主題作為任務提示。省略 `mode` 參數，俾用戶已配置之權限設定生效。
 
-The agent handles everything from here -- Slack MCP discovery, search execution, thread reads, and synthesis. It returns a digest with:
+代理自此刻處理一切——Slack MCP 探索、搜尋執行、串流讀取、綜合分析。回傳摘要含：
 
-- **Workspace identifier** so the user can verify the correct Slack instance was searched
-- **Research-value assessment** (high / moderate / low / none) with justification
-- **Findings organized by topic** with source channels and dates
-- **Cross-cutting analysis** surfacing patterns across findings
+- **工作區識別碼**，俾用戶驗證搜尋了正確之 Slack 實例
+- **研究價值評估**（高 / 中 / 低 / 無）附理由
+- **依主題組織之發現**，附來源頻道與日期
+- **跨領域分析**，揭露發現間之模式
 
-If the agent reports that Slack is unavailable (MCP not connected or auth expired), relay the message to the user. Do not attempt alternative research methods.
+若代理回報 Slack 不可用（MCP 未連線或認證過期），轉達予用戶。勿嘗試替代研究方法。

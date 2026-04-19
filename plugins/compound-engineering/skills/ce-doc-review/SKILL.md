@@ -1,96 +1,96 @@
 ---
 name: ce-doc-review
-description: Review requirements or plan documents using parallel persona agents that surface role-specific issues. Use when a requirements document or plan document exists and the user wants to improve it.
+description: 以並行角色代理審查需求或計劃文檔，揭露各角色特定之問題。適用於已有需求或計劃文檔且用戶欲改進之時。
 argument-hint: "[mode:headless] [path/to/document.md]"
 ---
 
-# Document Review
+# 文檔審查
 
-Review requirements or plan documents through multi-persona analysis. Dispatches specialized reviewer agents in parallel, auto-fixes quality issues, and presents strategic questions for user decision.
+透過多角色分析審查需求或計劃文檔。並行分派專門審查代理，自動修復品質問題，並呈現策略性問題供用戶決策。
 
-## Phase 0: Detect Mode
+## 階段零：偵測模式
 
-Check the skill arguments for `mode:headless`. Arguments may contain a document path, `mode:headless`, or both. Tokens starting with `mode:` are flags, not file paths -- strip them from the arguments and use the remaining token (if any) as the document path for Phase 1.
+檢查技能參數中是否含 `mode:headless`。參數可能含文檔路徑、`mode:headless` 或兩者俱有。以 `mode:` 開頭之詞元為旗標，非檔案路徑——剝離之，以剩餘詞元（若有）作為文檔路徑供階段一使用。
 
-If `mode:headless` is present, set **headless mode** for the rest of the workflow.
+若 `mode:headless` 存在，為後續工作流設定**無頭模式**。
 
-**Headless mode** changes the interaction model, not the classification boundaries. Document-review still applies the same judgment about what has one clear correct fix vs. what needs user judgment. The only difference is how non-auto findings are delivered:
-- `auto` fixes are applied silently (same as interactive)
-- `present` findings are returned as structured text for the caller to handle -- no AskUserQuestion prompts, no interactive approval
-- Phase 5 returns immediately with "Review complete" (no refine/complete question)
+**無頭模式**改變互動模型，非分類邊界。文檔審查仍適用相同判斷——何者有明確正確修復 vs. 何者需用戶判斷。唯一差異在非自動發現之傳遞方式：
+- `auto` 修復靜默套用（與互動模式相同）
+- `present` 發現以結構化文字回傳供呼叫方處理——無 AskUserQuestion 提示、無互動批准
+- 階段五立即回傳 "Review complete"（無精煉/完成提問）
 
-The caller receives findings with their original classifications intact and decides what to do with them.
+呼叫方接收保留原始分類之發現，自行決定如何處理。
 
-Callers invoke headless mode by including `mode:headless` in the skill arguments, e.g.:
+呼叫方以如下方式啟用無頭模式：
 ```
 Skill("ce-doc-review", "mode:headless docs/plans/my-plan.md")
 ```
 
 
-If `mode:headless` is not present, the skill runs in its default interactive mode with no behavior change.
+若 `mode:headless` 不存在，技能以預設互動模式運行，行為不變。
 
-## Phase 1: Get and Analyze Document
+## 階段一：取得並分析文檔
 
-**If a document path is provided:** Read it, then proceed.
+**若提供文檔路徑：** 讀取之，再續。
 
-**If no document is specified (interactive mode):** Ask which document to review, or find the most recent in `docs/brainstorms/` or `docs/plans/` using a file-search/glob tool (e.g., Glob in Claude Code).
+**若未指定文檔（互動模式）：** 詢問欲審查哪份文檔，或以檔案搜尋/glob 工具（如 Claude Code 之 Glob）自 `docs/brainstorms/` 或 `docs/plans/` 找最近者。
 
-**If no document is specified (headless mode):** Output "Review failed: headless mode requires a document path. Re-invoke with: Skill(\"ce-doc-review\", \"mode:headless <path>\")" without dispatching agents.
+**若未指定文檔（無頭模式）：** 輸出 "Review failed: headless mode requires a document path. Re-invoke with: Skill(\"ce-doc-review\", \"mode:headless <path>\")" 而不分派代理。
 
-### Classify Document Type
+### 分類文檔類型
 
-After reading, classify the document:
-- **requirements** -- from `docs/brainstorms/`, focuses on what to build and why
-- **plan** -- from `docs/plans/`, focuses on how to build it with implementation details
+讀取後，分類文檔：
+- **requirements**——來自 `docs/brainstorms/`，聚焦於建什麼與為何建
+- **plan**——來自 `docs/plans/`，聚焦於如何建置及實作細節
 
-### Select Conditional Personas
+### 選擇條件式角色
 
-Analyze the document content to determine which conditional personas to activate. Check for these signals:
+分析文檔內容以決定啟用哪些條件式角色。檢查以下信號：
 
-**product-lens** -- activate when the document makes challengeable claims about what to build and why, or when the proposed work carries strategic weight beyond the immediate problem. The system's users may be end users, developers, operators, maintainers, or any other audience -- the criteria are domain-agnostic. Check for either leg:
+**product-lens**——文檔就建什麼與為何建提出可受質疑之主張，或所提工作具超越眼前問題之策略份量時啟用。系統之使用者可為終端用戶、開發者、運維人員、維護者或任何受眾——標準與領域無關。檢查任一支線：
 
-*Leg 1 — Premise claims:* The document stakes a position on what to build or why that a knowledgeable stakeholder could reasonably challenge -- not merely describing a task or restating known requirements:
-- Problem framing where the stated need is non-obvious or debatable, not self-evident from existing context
-- Solution selection where alternatives plausibly exist (implicit or explicit)
-- Prioritization decisions that explicitly rank what gets built vs deferred
-- Goal statements that predict specific user outcomes, not just restate constraints or describe deliverables
+*支線一——前提主張：* 文檔就建什麼或為何建立場，且該立場可被知情利益相關者合理質疑——非僅描述任務或複述已知需求：
+- 問題框架中之需求非顯而易見或有爭議
+- 解決方案選擇有替代方案（隱含或明示）
+- 優先序決策明確排序建什麼 vs. 延後什麼
+- 目標陳述預測特定用戶結果，非僅複述約束或描述交付物
 
-*Leg 2 — Strategic weight:* The proposed work could affect system trajectory, user perception, or competitive positioning, even if the premise is sound:
-- Changes that shape how the system is perceived or what it becomes known for
-- Complexity or simplicity bets that affect adoption, onboarding, or cognitive load
-- Work that opens or closes future directions (path dependencies, architectural commitments)
-- Opportunity cost implications -- building this means not building something else
+*支線二——策略份量：* 所提工作可能影響系統走向、用戶認知或競爭定位，即使前提穩固：
+- 改變系統認知或其知名特徵之變更
+- 影響採用、入門或認知負載之複雜度或簡潔度抉擇
+- 開啟或關閉未來方向之工作（路徑依賴、架構承諾）
+- 機會成本——建此即不建彼
 
-**design-lens** -- activate when the document contains:
-- UI/UX references, frontend components, or visual design language
-- User flows, wireframes, screen/page/view mentions
-- Interaction descriptions (forms, buttons, navigation, modals)
-- References to responsive behavior or accessibility
+**design-lens**——文檔含以下內容時啟用：
+- UI/UX 參照、前端元件或視覺設計語言
+- 用戶流程、線框圖、畫面/頁面/視圖提及
+- 互動描述（表單、按鈕、導航、模態框）
+- 響應式行為或無障礙之參照
 
-**security-lens** -- activate when the document contains:
-- Auth/authorization mentions, login flows, session management
-- API endpoints exposed to external clients
-- Data handling, PII, payments, tokens, credentials, encryption
-- Third-party integrations with trust boundary implications
+**security-lens**——文檔含以下內容時啟用：
+- 認證/授權提及、登入流程、會話管理
+- 暴露予外部客戶端之 API 端點
+- 資料處理、PII、支付、令牌、憑證、加密
+- 含信任邊界影響之第三方整合
 
-**scope-guardian** -- activate when the document contains:
-- Multiple priority tiers (P0/P1/P2, must-have/should-have/nice-to-have)
-- Large requirement count (>8 distinct requirements or implementation units)
-- Stretch goals, nice-to-haves, or "future work" sections
-- Scope boundary language that seems misaligned with stated goals
-- Goals that don't clearly connect to requirements
+**scope-guardian**——文檔含以下內容時啟用：
+- 多重優先序層級（P0/P1/P2、必須/應該/錦上添花）
+- 大量需求（>8 個不同需求或實作單元）
+- 延伸目標、錦上添花或「未來工作」區段
+- 範圍邊界語言似乎與所述目標不一致
+- 目標未清楚連結至需求
 
-**adversarial** -- activate when the document contains:
-- More than 5 distinct requirements or implementation units
-- Explicit architectural or scope decisions with stated rationale
-- High-stakes domains (auth, payments, data migrations, external integrations)
-- Proposals of new abstractions, frameworks, or significant architectural patterns
+**adversarial**——文檔含以下內容時啟用：
+- 超過 5 個不同需求或實作單元
+- 明確之架構或範圍決策及其理由
+- 高風險領域（認證、支付、資料遷移、外部整合）
+- 新抽象、框架或重要架構模式之提案
 
-## Phase 2: Announce and Dispatch Personas
+## 階段二：宣布並分派角色
 
-### Announce the Review Team
+### 宣布審查團隊
 
-Tell the user which personas will review and why. For conditional personas, include the justification:
+告知用戶哪些角色將參與審查及理由。條件式角色附理由：
 
 ```
 Reviewing with:
@@ -100,49 +100,49 @@ Reviewing with:
 - ce-security-lens-reviewer -- plan adds API endpoints with auth flow
 ```
 
-### Build Agent List
+### 建立代理列表
 
-Always include:
+一律包含：
 - `document-review:ce-coherence-reviewer`
 - `document-review:ce-feasibility-reviewer`
 
-Add activated conditional personas:
+加入已啟用之條件式角色：
 - `document-review:ce-product-lens-reviewer`
 - `document-review:ce-design-lens-reviewer`
 - `document-review:ce-security-lens-reviewer`
 - `document-review:ce-scope-guardian-reviewer`
 - `document-review:ce-adversarial-document-reviewer`
 
-### Dispatch
+### 分派
 
-Dispatch all agents in **parallel** using the platform's task/agent tool (e.g., Agent tool in Claude Code, spawn in Codex). Omit the `mode` parameter so the user's configured permission settings apply. Each agent receives the prompt built from the subagent template included below with these variables filled:
+以**並行**方式分派所有代理，使用平台之任務/代理工具（如 Claude Code 之 Agent 工具、Codex 之 spawn）。省略 `mode` 參數，俾用戶已配置之權限設定生效。每個代理接收以下變數填入之子代理模板：
 
-| Variable | Value |
+| 變數 | 值 |
 |----------|-------|
-| `{persona_file}` | Full content of the agent's markdown file |
-| `{schema}` | Content of the findings schema included below |
-| `{document_type}` | "requirements" or "plan" from Phase 1 classification |
-| `{document_path}` | Path to the document |
-| `{document_content}` | Full text of the document |
+| `{persona_file}` | 代理 markdown 檔案之完整內容 |
+| `{schema}` | 下方所附之發現綱要內容 |
+| `{document_type}` | 階段一分類之 "requirements" 或 "plan" |
+| `{document_path}` | 文檔路徑 |
+| `{document_content}` | 文檔全文 |
 
-Pass each agent the **full document** -- do not split into sections.
+傳遞每個代理**完整文檔**——勿分段。
 
-**Error handling:** If an agent fails or times out, proceed with findings from agents that completed. Note the failed agent in the Coverage section. Do not block the entire review on a single agent failure.
+**錯誤處理：** 若代理失敗或超時，以已完成代理之發現繼續。於覆蓋範圍區段注明失敗之代理。勿因單一代理失敗而阻塞整個審查。
 
-**Dispatch limit:** Even at maximum (7 agents), use parallel dispatch. These are document reviewers with bounded scope reading a single document -- parallel is safe and fast.
+**分派上限：** 即使最大值（7 個代理），使用並行分派。此為文件審查者，範圍有限，閱讀單一文檔——並行安全且快速。
 
-## Phases 3-5: Synthesis, Presentation, and Next Action
+## 階段三至五：綜合、呈現與後續行動
 
-After all dispatched agents return, read `references/synthesis-and-presentation.md` for the synthesis pipeline (validate, gate, dedup, promote, resolve contradictions, route by autofix class), auto-fix application, finding presentation, and next-action menu. Do not load this file before agent dispatch completes.
+所有分派代理回傳後，讀取 `references/synthesis-and-presentation.md` 以了解綜合管線（驗證、關卡、去重、晉升、解決矛盾、依自動修復類別路由）、自動修復套用、發現呈現及後續行動選單。代理分派完成前勿載入此檔。
 
 ---
 
-## Included References
+## 內附參照
 
-### Subagent Template
+### 子代理模板
 
 @./references/subagent-template.md
 
-### Findings Schema
+### 發現綱要
 
 @./references/findings-schema.json

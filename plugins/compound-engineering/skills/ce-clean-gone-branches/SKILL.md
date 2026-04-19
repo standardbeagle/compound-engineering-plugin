@@ -1,17 +1,17 @@
 ---
 name: ce-clean-gone-branches
-description: Clean up local branches whose remote tracking branch is gone. Use when the user says "clean up branches", "delete gone branches", "prune local branches", "clean gone", or wants to remove stale local branches that no longer exist on the remote. Also handles removing associated worktrees for branches that have them.
+description: 清理遠端追蹤分支已消失之本地分支。適用於用戶說「clean up branches」、「delete gone branches」、「prune local branches」、「clean gone」或欲移除遠端已不存在之陳舊本地分支。亦處理分支之相關 worktree 移除。
 ---
 
-# Clean Gone Branches
+# 清理已消失分支
 
-Delete local branches whose remote tracking branch has been deleted, including any associated worktrees.
+刪除遠端追蹤分支已被刪除之本地分支，含相關聯之 worktree。
 
-## Workflow
+## 工作流
 
-### Step 1: Discover gone branches
+### 步驟一：探索已消失分支
 
-Run the discovery script to fetch the latest remote state and identify gone branches:
+執行探索腳本以取得最新遠端狀態並識別已消失分支：
 
 ```bash
 bash scripts/clean-gone
@@ -19,13 +19,13 @@ bash scripts/clean-gone
 
 [scripts/clean-gone](./scripts/clean-gone)
 
-The script runs `git fetch --prune` first, then parses `git branch -vv` for branches marked `: gone]`.
+腳本先執行 `git fetch --prune`，再解析 `git branch -vv` 中標記 `: gone]` 之分支。
 
-If the script outputs `__NONE__`, report that no stale branches were found and stop.
+若腳本輸出 `__NONE__`，回報無陳舊分支並停止。
 
-### Step 2: Present branches and ask for confirmation
+### 步驟二：呈現分支並請求確認
 
-Show the user the list of branches that will be deleted. Format as a simple list:
+向用戶展示將刪除之分支列表。格式如下：
 
 ```
 These local branches have been deleted from the remote:
@@ -37,19 +37,19 @@ These local branches have been deleted from the remote:
 Delete all of them? (y/n)
 ```
 
-Wait for the user's answer using the platform's question tool (e.g., `AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the list and wait for the user's reply before proceeding.
+使用平台之提問工具等候用戶回答（如 Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`）。若無提問工具，呈現列表並等候用戶回覆後方續。
 
-This is a yes-or-no decision on the entire list -- do not offer multi-selection or per-branch choices.
+此為對整份列表之是/否決定——勿提供多選或逐分支選項。
 
-### Step 3: Delete confirmed branches
+### 步驟三：刪除已確認分支
 
-If the user confirms, delete each branch. For each branch:
+若用戶確認，逐一刪除各分支。每個分支：
 
-1. Check if it has an associated worktree (`git worktree list | grep "\\[$branch\\]"`)
-2. If a worktree exists and is not the main repo root, remove it first: `git worktree remove --force "$worktree_path"`
-3. Delete the branch: `git branch -D "$branch"`
+1. 檢查是否有關聯 worktree（`git worktree list | grep "\\[$branch\\]"`）
+2. 若 worktree 存在且非主倉庫根目錄，先移除之：`git worktree remove --force "$worktree_path"`
+3. 刪除分支：`git branch -D "$branch"`
 
-Report results as you go:
+逐項回報結果：
 
 ```
 Removed worktree: .worktrees/feature/old-thing
@@ -60,4 +60,4 @@ Deleted branch: experiment/abandoned
 Cleaned up 3 branches.
 ```
 
-If the user declines, acknowledge and stop without deleting anything.
+若用戶拒絕，確認並停止，不作任何刪除。

@@ -1,9 +1,9 @@
-# Controllers - DHH Rails Style
+# 控制器 — DHH Rails風
 
 <rest_mapping>
-## Everything Maps to CRUD
+## 萬物歸CRUD
 
-Custom actions become new resources. Instead of verbs on existing resources, create noun resources:
+自訂動作化為新資源。動詞改名詞：
 
 ```ruby
 # Instead of this:
@@ -17,7 +17,7 @@ DELETE /cards/:id/closure    # destroy closure
 POST /cards/:id/archival     # create archival
 ```
 
-**Real examples from 37signals:**
+**37signals實例：**
 ```ruby
 resources :cards do
   resource :closure       # closing/reopening
@@ -27,15 +27,15 @@ resources :cards do
 end
 ```
 
-Each resource gets its own controller with standard CRUD actions.
+每資源各擁控制器，行標準CRUD動作。
 </rest_mapping>
 
 <controller_concerns>
-## Concerns for Shared Behavior
+## 關切共用行為
 
-Controllers use concerns extensively. Common patterns:
+控制器廣用concerns。常見模式：
 
-**CardScoped** - loads @card, @board, provides render_card_replacement
+**CardScoped** — 載@card、@board，供render_card_replacement
 ```ruby
 module CardScoped
   extend ActiveSupport::Concern
@@ -56,20 +56,20 @@ module CardScoped
 end
 ```
 
-**BoardScoped** - loads @board
-**CurrentRequest** - populates Current with request data
-**CurrentTimezone** - wraps requests in user's timezone
-**FilterScoped** - handles complex filtering
-**TurboFlash** - flash messages via Turbo Stream
-**ViewTransitions** - disables on page refresh
-**BlockSearchEngineIndexing** - sets X-Robots-Tag header
-**RequestForgeryProtection** - Sec-Fetch-Site CSRF (modern browsers)
+**BoardScoped** — 載@board
+**CurrentRequest** — 填Current以請求資料
+**CurrentTimezone** — 以用戶時區包裹請求
+**FilterScoped** — 處理複雜篩選
+**TurboFlash** — 以Turbo Stream傳閃訊
+**ViewTransitions** — 頁面刷新時停用
+**BlockSearchEngineIndexing** — 設X-Robots-Tag標頭
+**RequestForgeryProtection** — Sec-Fetch-Site CSRF（現代瀏覽器）
 </controller_concerns>
 
 <authorization_patterns>
-## Authorization Patterns
+## 授權模式
 
-Controllers check permissions via before_action, models define what permissions mean:
+控制器以before_action查驗許可，model定義許可含義：
 
 ```ruby
 # Controller concern
@@ -92,7 +92,7 @@ class BoardsController < ApplicationController
 end
 ```
 
-**Model-level authorization:**
+**Model層授權：**
 ```ruby
 class Board < ApplicationRecord
   def editable_by?(user)
@@ -105,14 +105,14 @@ class Board < ApplicationRecord
 end
 ```
 
-Keep authorization simple, readable, colocated with domain.
+授權宜簡、可讀、與領域同置。
 </authorization_patterns>
 
 <security_concerns>
-## Security Concerns
+## 安全關切
 
-**Sec-Fetch-Site CSRF Protection:**
-Modern browsers send Sec-Fetch-Site header. Use it for defense in depth:
+**Sec-Fetch-Site CSRF防護：**
+現代瀏覽器傳Sec-Fetch-Site標頭。以之為縱深防禦：
 
 ```ruby
 module RequestForgeryProtection
@@ -134,20 +134,20 @@ module RequestForgeryProtection
 end
 ```
 
-**Rate Limiting (Rails 8+):**
+**速率限制（Rails 8+）：**
 ```ruby
 class MagicLinksController < ApplicationController
   rate_limit to: 10, within: 15.minutes, only: :create
 end
 ```
 
-Apply to: auth endpoints, email sending, external API calls, resource creation.
+適用於：認證端點、寄信、外部API呼叫、資源建立。
 </security_concerns>
 
 <request_context>
-## Request Context Concerns
+## 請求上下文關切
 
-**CurrentRequest** - populates Current with HTTP metadata:
+**CurrentRequest** — 填Current以HTTP元資料：
 ```ruby
 module CurrentRequest
   extend ActiveSupport::Concern
@@ -166,7 +166,7 @@ module CurrentRequest
 end
 ```
 
-**CurrentTimezone** - wraps requests in user's timezone:
+**CurrentTimezone** — 以用戶時區包裹請求：
 ```ruby
 module CurrentTimezone
   extend ActiveSupport::Concern
@@ -187,7 +187,7 @@ module CurrentTimezone
 end
 ```
 
-**SetPlatform** - detects mobile/desktop:
+**SetPlatform** — 偵測mobile/desktop：
 ```ruby
 module SetPlatform
   extend ActiveSupport::Concern
@@ -204,9 +204,9 @@ end
 </request_context>
 
 <turbo_responses>
-## Turbo Stream Responses
+## Turbo Stream回應
 
-Use Turbo Streams for partial updates:
+以Turbo Stream做局部更新：
 
 ```ruby
 class Cards::ClosuresController < ApplicationController
@@ -224,16 +224,16 @@ class Cards::ClosuresController < ApplicationController
 end
 ```
 
-For complex updates, use morphing:
+複雜更新用morphing：
 ```ruby
 render turbo_stream: turbo_stream.morph(@card)
 ```
 </turbo_responses>
 
 <api_patterns>
-## API Design
+## API設計
 
-Same controllers, different format. Convention for responses:
+同控制器，異格式。回應慣例：
 
 ```ruby
 def create
@@ -264,17 +264,17 @@ def destroy
 end
 ```
 
-**Status codes:**
-- Create: 201 Created + Location header
+**狀態碼：**
+- Create: 201 Created + Location標頭
 - Update: 204 No Content
 - Delete: 204 No Content
-- Bearer token authentication
+- Bearer token認證
 </api_patterns>
 
 <http_caching>
-## HTTP Caching
+## HTTP快取
 
-Extensive use of ETags and conditional GETs:
+廣用ETags與條件GET：
 
 ```ruby
 class CardsController < ApplicationController
@@ -290,14 +290,14 @@ class CardsController < ApplicationController
 end
 ```
 
-Key insight: Times render server-side in user's timezone, so timezone must affect the ETag to prevent serving wrong times to other timezones.
+要旨：伺服端以用戶時區渲染時間→時區須入ETag→免錯投他區。
 
-**ApplicationController global etag:**
+**ApplicationController全域etag：**
 ```ruby
 class ApplicationController < ActionController::Base
   etag { "v1" }  # Bump to invalidate all caches
 end
 ```
 
-Use `touch: true` on associations for cache invalidation.
+以`touch: true`於關聯做快取失效。
 </http_caching>

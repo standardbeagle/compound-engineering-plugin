@@ -1,153 +1,153 @@
 ---
 name: ce-demo-reel
-description: "Capture a visual demo reel (GIF, terminal recording, screenshots) for PR descriptions. Use when shipping UI changes, CLI features, or any work with observable behavior that benefits from visual proof. Also use when asked to add a demo, record a GIF, screenshot a feature, show what changed visually, create a demo reel, capture evidence, add proof to a PR, or create a before/after comparison."
+description: "為 PR 描述擷取視覺展示影片（GIF、終端錄製、截圖）。適用於交付 UI 變更、CLI 功能或任何具可觀察行為且受益於視覺證據之工作。亦適用於被要求加入 demo、錄製 GIF、截圖功能、視覺化展示變更、建立展示影片、擷取證據、為 PR 加入證明、建立前後對比。"
 argument-hint: "[what to capture, e.g. 'the new settings page' or 'CLI output of the migrate command']"
 ---
 
-# Demo Reel
+# 展示影片
 
-Detect project type, recommend a capture tier, record visual evidence, upload to a public URL, and return markdown for PR inclusion.
+偵測專案類型、推薦擷取層級、錄製視覺證據、上傳至公開 URL、回傳 PR 用之 markdown。
 
-**Evidence means USING THE PRODUCT, not running tests.** "I ran npm test" is test evidence. Evidence capture is running the actual CLI command, opening the web app, making the API call, or triggering the feature. The distinction is absolute -- test output is never labeled "Demo" or "Screenshots."
+**證據指使用產品，非跑測試。** "I ran npm test" 是測試證據。證據擷取是執行實際 CLI 指令、開啟網頁應用、呼叫 API 或觸發功能。區別是絕對的——測試輸出永不標記為 "Demo" 或 "Screenshots"。
 
-If real product usage is impractical (requires API keys, cloud deploy, paid services, bot tokens), say so explicitly: "Real evidence would require [X]. Recommending [fallback approach] instead." Do not silently skip to "no evidence needed" or substitute test output.
+若真實產品使用不切實際（需 API 金鑰、雲端部署、付費服務、bot token），明確說明：「Real evidence would require [X]. Recommending [fallback approach] instead.」勿靜默跳至「no evidence needed」或以測試輸出替代。
 
-Never generate fake or placeholder image/GIF URLs. If upload fails, report the failure.
+絕不生成假或佔位圖片/GIF URL。若上傳失敗，回報失敗。
 
-## Arguments
+## 參數
 
-Parse `$ARGUMENTS`:
-- **What to capture**: A description of the feature or behavior to demonstrate. If provided, use it to guide which pages to visit, commands to run, or states to capture.
-- If blank, infer what to capture from recoverable branch or PR context. If the target remains ambiguous after that, ask the user what they want to demonstrate before proceeding.
+解析 `$ARGUMENTS`：
+- **擷取目標**：要展示之功能或行為描述。若提供，用以引導訪問哪些頁面、執行哪些指令或擷取哪些狀態。
+- 若留空，自可恢復之分支或 PR 上下文推斷。若目標仍模糊，先問用戶想展示什麼再繼續。
 
-## Step 0: Discover Capture Target
+## 步驟零：發現擷取目標
 
-Treat target discovery as stateless and branch-aware. The agent may be invoked in a fresh session after the work was already done, so do not rely on conversation history or assume the caller knows the right artifact.
+將目標發現視為無狀態且分支感知。代理可能在工作完成後之新對話中被調用，故不依賴對話歷史或假設呼叫方知道正確產物。
 
-If invoked by another skill, treat the caller-provided target as a hint, not proof. Rerun target discovery and validation before capturing anything.
+若由另一技能調用，將呼叫方提供之目標視為提示，非證明。擷取前重新執行目標發現與驗證。
 
-Use the lightest available context to identify the best evidence target:
+以最輕量之可用上下文識別最佳證據目標：
 
-- Current branch name
-- Open PR title and description, if one exists
-- Changed files and diff against the base branch
-- Recent commits
-- A plan file only when it is obviously referenced by the branch, PR, arguments, or caller context
+- 當前分支名稱
+- 開放 PR 之標題與描述（若存在）
+- 相對於基礎分支之變更檔案與 diff
+- 近期提交
+- 計劃檔案——僅當分支、PR、參數或呼叫方上下文明顯引用時
 
-Form a capture hypothesis: "The best evidence appears to be [behavior]."
+形成擷取假說：「The best evidence appears to be [behavior].」
 
-Proceed without asking only when there is exactly one high-confidence observable behavior and a plausible way to exercise it from the workspace. Ask the user what to demonstrate when multiple behaviors are plausible, the diff does not reveal how to exercise the behavior, or the requested target cannot be mapped to a product surface.
+僅在有恰好一個高信心可觀察行為且有合理方式從工作區執行時方不問而進。當多個行為皆有可能、diff 未揭示如何執行行為或請求之目標無法映射至產品表面時，詢問用戶想展示什麼。
 
-Skip evidence with a clear reason when the diff is docs-only, markdown-only, config-only, CI-only, test-only, or a pure internal refactor with no observable output change.
+當 diff 僅含文檔、僅 markdown、僅配置、僅 CI、僅測試或純內部重構無可觀察輸出變更時，附明確理由跳過證據。
 
-## Step 1: Exercise the Feature
+## 步驟一：演練功能
 
-Before capturing anything, verify the feature works by actually using it:
+擷取前先驗證功能確實可用：
 
-- **CLI tool**: Run the new/changed command and confirm the output is correct
-- **Web app**: Navigate to the new/changed page and confirm it renders correctly
-- **Library**: Run example code using the new/changed API
-- **Bug fix**: Reproduce the original bug scenario and confirm it's fixed
+- **CLI 工具**：執行新增/變更之指令並確認輸出正確
+- **網頁應用**：導航至新增/變更之頁面並確認渲染正確
+- **函式庫**：執行使用新增/變更 API 之範例程式碼
+- **錯誤修復**：重現原始錯誤情境並確認已修復
 
-Use the workspace where the feature was built. Do not reinstall from scratch. If setup requires credentials or services, use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini) to ask the user.
+使用建構功能之工作區。勿從頭重新安裝。若設定需要憑證或服務，使用平台之阻塞式提問工具（Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`）詢問用戶。
 
-## Step 2: Detect Project Type
+## 步驟二：偵測專案類型
 
-Use the capture target from Step 0 to decide which directory to classify. If the diff touches a specific subdirectory with its own package manifest (e.g., `packages/cli/`, `apps/web/`), pass that as the root. Otherwise use the repo root.
+使用步驟零之擷取目標決定分類哪個目錄。若 diff 觸及特定子目錄且有其自有的套件清單（如 `packages/cli/`、`apps/web/`），以之作為根目錄。否則使用倉庫根目錄。
 
 ```bash
 python3 scripts/capture-demo.py detect --repo-root [TARGET_DIR]
 ```
 
-This outputs JSON with `type` and `reason`. The result is a signal, not a gate. If the agent's understanding from Step 0 contradicts the script's classification (e.g., the diff clearly changes CLI behavior but the repo root classifies as `web-app` because of a sibling Next.js app), the agent's judgment wins.
+輸出含 `type` 與 `reason` 之 JSON。結果為信號，非關卡。若代理自步驟零之理解與腳本之分類矛盾（如 diff 明確改變 CLI 行為但倉庫根因兄弟 Next.js 應用而分類為 `web-app`），代理之判斷優先。
 
-## Step 3: Assess Change Type
+## 步驟三：評估變更類型
 
-Step 0 already handled the "no observable behavior" early exit. This step classifies changes that DO have observable behavior into `motion` or `states` to guide tier selection.
+步驟零已處理「無可觀察行為」之提早退出。此步將有可觀察行為之變更分類為 `motion` 或 `states` 以引導層級選擇。
 
-If arguments describe what to capture, classify based on the description. Otherwise, use the diff context from Step 0.
+若參數描述擷取目標，依描述分類。否則使用步驟零之 diff 上下文。
 
-**Change classification:**
+**變更分類：**
 
-1. **Involves motion or interaction?** (animations, typing flows, drag-and-drop, real-time updates, continuous CLI output) -> classify as `motion`.
-2. **Involves discrete states?** (before/after UI, new page, command with output, API response) -> classify as `states`.
+1. **涉及動態或互動？**（動畫、輸入流程、拖放、即時更新、持續 CLI 輸出）→ 分類為 `motion`。
+2. **涉及離散狀態？**（前後 UI、新頁面、含輸出之指令、API 回應）→ 分類為 `states`。
 
-| Change characteristic | Classification |
+| 變更特徵 | 分類 |
 |---|---|
-| Animations, typing, drag-and-drop, streaming output | `motion` |
-| New UI, before/after, command output, API responses | `states` |
+| 動畫、輸入、拖放、串流輸出 | `motion` |
+| 新 UI、前後、指令輸出、API 回應 | `states` |
 
-**Feature vs bug fix -- what to demonstrate:**
+**功能 vs. 錯誤修復——展示什麼：**
 
-- **New feature (`feat`)**: Demonstrate the feature working. Show the hero moment -- the feature doing its thing.
-- **Bug fix (`fix`)**: Show before AND after. Reproduce the original broken state (if possible) then show the fix. If the broken state can't be reproduced (already fixed in the workspace), capture the fixed state and describe what was broken.
+- **新功能（`feat`）**：展示功能運作。展現高光時刻——功能做它的事。
+- **錯誤修復（`fix`）**：展示前後。重現原始損壞狀態（若可能）再展示修復。若損壞狀態無法重現（工作區中已修復），擷取已修復狀態並描述曾損壞之物。
 
-Infer feat vs fix from commit messages, branch name, or plan file frontmatter (`type: feat` or `type: fix`). If unclear, ask.
+自提交訊息、分支名稱或計劃檔案 frontmatter（`type: feat` 或 `type: fix`）推斷 feat vs. fix。若不明確，詢問。
 
-## Step 4: Tool Preflight
+## 步驟四：工具預檢
 
-Run the preflight check:
+執行預檢：
 
 ```bash
 python3 scripts/capture-demo.py preflight
 ```
 
-This outputs JSON with boolean availability for each tool: `agent_browser`, `vhs`, `silicon`, `ffmpeg`, `ffprobe`. Print a human-readable summary for the user based on the result, noting install commands for missing tools (e.g., `brew install charmbracelet/tap/vhs` for vhs, `brew install silicon` for silicon, `brew install ffmpeg` for ffmpeg).
+輸出含各工具布林可用性之 JSON：`agent_browser`、`vhs`、`silicon`、`ffmpeg`、`ffprobe`。依結果為用戶列印人類可讀之摘要，標注缺失工具之安裝指令（如 vhs 用 `brew install charmbracelet/tap/vhs`、silicon 用 `brew install silicon`、ffmpeg 用 `brew install ffmpeg`）。
 
-## Step 5: Create Run Directory
+## 步驟五：建立執行目錄
 
-Create a per-run scratch directory in the OS temp location:
+於 OS 臨時位置建立每次執行之臨時目錄：
 
 ```bash
 mktemp -d -t demo-reel-XXXXXX
 ```
 
-Use the output as `RUN_DIR`. Pass this concrete run directory to every tier reference. Evidence artifacts are ephemeral — they get uploaded to a public URL and then discarded. The OS temp directory is the right place for them, not the repo tree.
+以輸出作為 `RUN_DIR`。將此具體執行目錄傳予每個層級參照。證據產物為短暫的——上傳至公開 URL 後即丟棄。OS 臨時目錄為正確位置，非倉庫樹。
 
-## Step 6: Recommend Tier and Ask User
+## 步驟六：推薦層級並詢問用戶
 
-Run the recommendation script with the project type from Step 2, change classification from Step 3, and preflight JSON from Step 4:
+以步驟二之專案類型、步驟三之變更分類及步驟四之預檢 JSON 執行推薦腳本：
 
 ```bash
 python3 scripts/capture-demo.py recommend --project-type [TYPE] --change-type [motion|states] --tools '[PREFLIGHT_JSON]'
 ```
 
-This outputs JSON with `recommended` (the best tier), `available` (list of tiers whose tools are present), and `reasoning`.
+輸出含 `recommended`（最佳層級）、`available`（工具已備之層級列表）及 `reasoning` 之 JSON。
 
-Present the available tiers to the user via the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Mark the recommended tier. Always include "No evidence needed" as a final option.
+透過平台之阻塞式提問工具（Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`）向用戶呈現可用層級。標記推薦層級。一律以「No evidence needed」作為最後選項。
 
-**Question:** "How should evidence be captured for this change?"
+**問題：** "How should evidence be captured for this change?"
 
-**Options** (show only tiers from the `available` list, order by recommendation):
-1. **Browser reel** -- Agent-browser screenshots stitched into animated GIF. Best for web apps.
-2. **Terminal recording** -- VHS terminal recording to GIF. Best for CLI tools with interaction/motion.
-3. **Screenshot reel** -- Styled terminal frames stitched into animated GIF. Best for discrete CLI steps.
-4. **Static screenshots** -- Individual PNGs. Fallback when other tools are unavailable.
-5. **No evidence needed** -- The diff speaks for itself. Best for text-only or config changes.
+**選項**（僅顯示 `available` 列表中之層級，依推薦排序）：
+1. **Browser reel** ——Agent-browser 截圖拼接為動畫 GIF。最適網頁應用。
+2. **Terminal recording** ——VHS 終端錄製為 GIF。最適含互動/動態之 CLI 工具。
+3. **Screenshot reel** ——風格化終端框架拼接為動畫 GIF。最適離散 CLI 步驟。
+4. **Static screenshots** ——個別 PNG。其他工具不可用時之後備。
+5. **No evidence needed** ——diff 本身說明一切。最適純文字或配置變更。
 
-If the question tool is unavailable (background agent, batch mode), present the numbered options and wait for the user's reply before proceeding.
+若提問工具不可用（背景代理、批次模式），呈現編號選項並等候用戶回覆後方續。
 
-## Step 7: Execute Selected Tier
+## 步驟七：執行所選層級
 
-Carry the capture hypothesis from Step 0 and the feature exercise results from Step 1 into tier execution — these determine which specific pages to visit, commands to run, or states to screenshot. Substitute `[RUN_DIR]` in the tier reference with the concrete path from Step 5.
+將步驟零之擷取假說與步驟一之功能演練結果帶入層級執行——這些決定訪問哪些頁面、執行哪些指令或截圖哪些狀態。以步驟五之具體路徑替換層級參照中之 `[RUN_DIR]`。
 
-Load the appropriate reference file for the selected tier:
+載入所選層級之對應參照檔案：
 
-- **Browser reel** -> Read `references/tier-browser-reel.md`
-- **Terminal recording** -> Read `references/tier-terminal-recording.md`
-- **Screenshot reel** -> Read `references/tier-screenshot-reel.md`
-- **Static screenshots** -> Read `references/tier-static-screenshots.md`
-- **No evidence needed** -> Skip to output. Set `evidence_url` to null, `evidence_label` to null.
+- **Browser reel** → 讀取 `references/tier-browser-reel.md`
+- **Terminal recording** → 讀取 `references/tier-terminal-recording.md`
+- **Screenshot reel** → 讀取 `references/tier-screenshot-reel.md`
+- **Static screenshots** → 讀取 `references/tier-static-screenshots.md`
+- **No evidence needed** → 跳至輸出。設 `evidence_url` 為 null、`evidence_label` 為 null。
 
-**Runtime failure fallback:** If the selected tier fails during execution (tool crashes, server not accessible, recording produces empty output), fall back to the next available tier rather than failing entirely. The fallback order is: browser reel -> static screenshots, terminal recording -> screenshot reel -> static screenshots, screenshot reel -> static screenshots. Static screenshots is the terminal fallback -- if even that fails, report the failure and let the user decide.
+**運行時失敗後備：** 若所選層級執行期間失敗（工具崩潰、伺服器不可達、錄製產出空輸出），回退至下一可用層級而非完全失敗。後備順序：browser reel → static screenshots、terminal recording → screenshot reel → static screenshots、screenshot reel → static screenshots。Static screenshots 為最終後備——若連它都失敗，回報失敗讓用戶決定。
 
-## Step 8: Upload and Approval
+## 步驟八：上傳與批准
 
-After the selected tier produces an artifact, read `references/upload-and-approval.md` for upload to a public host, user approval gate, and markdown embed generation.
+所選層級產出產物後，讀取 `references/upload-and-approval.md` 以了解上傳至公開主機、用戶批准關卡及 markdown 嵌入生成。
 
-## Output
+## 輸出
 
-Return these values to the caller (e.g., ce-commit-push-pr):
+將以下值回傳予呼叫方（如 ce-commit-push-pr）：
 
 ```
 === Evidence Capture Complete ===
@@ -157,12 +157,12 @@ URL: [public URL or "none" (multiple URLs comma-separated for static screenshots
 === End Evidence ===
 ```
 
-The `Description` is a 1-line summary derived from the capture hypothesis in Step 0 (e.g., "CLI detect command classifying 3 project types and recommending capture tiers"). The caller decides how to format the URL(s) into the PR description.
+`Description` 為自步驟零之擷取假說推導之一行摘要（如 "CLI detect command classifying 3 project types and recommending capture tiers"）。呼叫方決定如何將 URL 格式化至 PR 描述。
 
-- `Tier: skipped` or `URL: "none"` means no evidence was captured.
+- `Tier: skipped` 或 `URL: "none"` 表示未擷取證據。
 
-**Label convention:**
-- Browser reel, terminal recording, screenshot reel: label as "Demo"
-- Static screenshots: label as "Screenshots"
-- The caller applies the label when formatting. ce-demo-reel does not generate markdown.
-- Test output is never labeled "Demo" or "Screenshots"
+**標籤慣例：**
+- Browser reel、terminal recording、screenshot reel：標記為 "Demo"
+- Static screenshots：標記為 "Screenshots"
+- 呼叫方於格式化時套用標籤。ce-demo-reel 不生成 markdown。
+- 測試輸出永不標記為 "Demo" 或 "Screenshots"

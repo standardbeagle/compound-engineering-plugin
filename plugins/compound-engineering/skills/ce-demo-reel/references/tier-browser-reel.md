@@ -1,71 +1,71 @@
-# Tier: Browser Reel
+# 層：瀏覽器影卷
 
-Capture 3-5 browser screenshots at key UI states and stitch into an animated GIF.
+擷取3-5幅瀏覽器截圖於關鍵 UI 狀態，縫合為動畫 GIF。
 
-**Best for:** Web apps, desktop apps accessible via localhost or CDP.
-**Output:** GIF (PNG screenshots stitched via ffmpeg two-pass palette)
-**Label:** "Demo"
-**Required tools:** agent-browser, ffmpeg
+**適用：** Web應用、可透過 localhost 或 CDP 存取之桌面應用。
+**產出：** GIF（PNG截圖經 ffmpeg 兩遍調色盤縫合）
+**標籤：** "Demo"
+**所需工具：** agent-browser, ffmpeg
 
-If `agent-browser` is not installed, inform the user: "`agent-browser` is not installed. Run `/ce-setup` to install required dependencies." Then fall back to a lower tier (static screenshots or skip).
+若 `agent-browser` 未安裝，告使用者：「`agent-browser` is not installed. Run `/ce-setup` to install required dependencies.」然後退至低層（靜態截圖或跳過）。
 
-## Step 1: Connect to the Application
+## 步驟一：連接應用
 
-**For web apps** -- verify the dev server is accessible:
+**Web應用**——驗證開發伺服器可達：
 
-- Read `package.json` `scripts` for `dev`, `start`, `serve` commands
-- Check `Procfile`, `Procfile.dev`, or `bin/dev` if they exist
-- Check `Gemfile` for Rails (`bin/rails server`) or Sinatra
-- Check for running processes on common ports (3000, 5000, 8080)
+- 讀 `package.json` `scripts` 之 `dev`, `start`, `serve` 命令
+- 查 `Procfile`, `Procfile.dev`, 或 `bin/dev`（若存在）
+- 查 `Gemfile` 是否有 Rails（`bin/rails server`）或 Sinatra
+- 查常見埠（3000, 5000, 8080）上之運行進程
 
-If the server is not running, tell the user what start command was detected and ask them to start it. Do not start it automatically (it may require environment variables, database setup, etc.).
+伺服器未運行時，告使用者偵測到之啟動命令並請其啟動。勿自動啟動（可能需環境變數、資料庫設定等）。
 
-If the server cannot be reached after the user confirms it should be running, fall back to static screenshots tier.
+使用者確認應已運行但仍不可達時，退至靜態截圖層。
 
-Once accessible, note the base URL (e.g., `http://localhost:3000`).
+可達後，記基準 URL（如 `http://localhost:3000`）。
 
-**For Electron/desktop apps** -- connect via Chrome DevTools Protocol (CDP):
+**Electron/桌面應用**——透過 Chrome DevTools Protocol (CDP) 連接：
 
-1. Check if the app is already running with CDP enabled by probing common ports:
+1. 檢查應用是否已啟用 CDP 運行，探測常用埠：
    ```bash
    curl -s http://localhost:9222/json/version
    ```
-   If that returns a JSON response, the app is ready -- connect agent-browser to it:
+   若回傳 JSON，應用已備——連接：
    ```bash
    agent-browser connect 9222
    ```
 
-2. If not running, the app needs to be launched with `--remote-debugging-port`. Detect the entry point from `package.json` (look for the `main` field or `electron` in scripts), then ask the user to launch it with:
+2. 未運行時，需以 `--remote-debugging-port` 啟動。從 `package.json` 偵測入口（查 `main` 欄或腳本中之 `electron`），請使用者以如下方式啟動：
    ```
    your-electron-app --remote-debugging-port=9222
    ```
-   If port 9222 is busy, try 9223-9230.
+   埠 9222 佔用時試 9223-9230。
 
-3. Poll until CDP is ready (timeout after 30 seconds):
+3. 輪詢至 CDP 就緒（逾時30秒）：
    ```bash
    curl -s http://localhost:9222/json/version
    ```
 
-4. Connect agent-browser:
+4. 連接 agent-browser：
    ```bash
    agent-browser connect 9222
    ```
 
-**CDP advantages:** Screenshots come from the renderer's frame buffer, not macOS screen capture -- no Accessibility or Screen Recording permissions needed.
+**CDP之利：** 截圖取自渲染器之幀緩衝，非 macOS 螢幕截取——無需輔助使用或螢幕錄製權限。
 
-**If CDP connection fails:** Fall back to static screenshots tier. Tell the user: "Could not connect to the app via CDP. Falling back to static screenshots."
+**CDP連接失敗時：** 退至靜態截圖層。告使用者：「Could not connect to the app via CDP. Falling back to static screenshots.」
 
-## Step 2: Capture Screenshots
+## 步驟二：擷取截圖
 
-Navigate to the relevant pages and capture 3-5 screenshots at key UI states:
+導航至相關頁面，於關鍵 UI 狀態擷取3-5幅截圖：
 
-1. **Initial/empty state** -- Before the feature is used
-2. **Navigation** -- How the user reaches the feature (if not the landing page)
-3. **Feature in action** -- The hero shot showing the feature working
-4. **Result state** -- After interaction (data present, items created, success message)
-5. **Detail view** (optional) -- Expanded item, settings panel, modal
+1. **初始/空白態**——功能使用前
+2. **導航**——使用者如何到達功能（若非首頁）
+3. **功能運作**——展示功能之主角畫面
+4. **結果態**——互動後（資料呈現、項目已建、成功訊息）
+5. **詳情檢視**（選填）——展開項目、設定面板、對話框
 
-For each screenshot, write to the concrete `RUN_DIR` created by the parent skill:
+每幅截圖寫入父技能所建之 `RUN_DIR`：
 
 ```bash
 agent-browser open [URL]
@@ -79,29 +79,29 @@ agent-browser wait 2000
 agent-browser screenshot [RUN_DIR]/frame-01-initial.png
 ```
 
-**Capture tips:**
-- Use URL navigation (`agent-browser open URL`) rather than clicking SPA elements (clicks often fail on React/Vue/Svelte SPAs)
-- Wait 2-3 seconds after navigation for the page to settle
-- Capture the full viewport (sidebar, header give reviewers context)
+**擷取要訣：**
+- 用 URL 導航（`agent-browser open URL`）而非點擊 SPA 元素（點擊常於 React/Vue/Svelte SPA 失敗）
+- 導航後等2-3秒讓頁面穩定
+- 擷取完整視口（側邊欄、頁首予審查者上下文）
 
-## Step 3: Stitch into GIF
+## 步驟三：縫合為 GIF
 
-Use the capture pipeline script to normalize frame dimensions, stitch with two-pass palette, and auto-reduce if over 10 MB:
+以擷取管線腳本正規化幀尺寸、兩遍調色盤縫合，超10 MB時自動縮減：
 
 ```bash
 python3 scripts/capture-demo.py stitch [RUN_DIR]/demo.gif [RUN_DIR]/frame-*.png
 ```
 
-The script handles dimension normalization (via ffprobe + ffmpeg padding), concat demuxer stitching, palette generation, and automatic frame reduction if the GIF exceeds GitHub's 10 MB inline limit. Default is 3 seconds per frame. To adjust:
+腳本處理尺寸正規化（ffprobe + ffmpeg 填充）、concat demuxer 縫合、調色盤生成、超 GitHub 10 MB 行內限制時自動縮減幀。預設每幀3秒。調整：
 
 ```bash
 python3 scripts/capture-demo.py stitch --duration 2.0 [RUN_DIR]/demo.gif [RUN_DIR]/frame-*.png
 ```
 
-**If stitching fails:** Fall back to static screenshots tier using the individual PNGs already captured. If no PNGs were captured, report the failure.
+**縫合失敗時：** 以已擷取之個別 PNG 退至靜態截圖層。若無 PNG，報告失敗。
 
-## Step 4: Cleanup
+## 步驟四：清理
 
-After successful GIF creation, remove individual PNG frames. Keep only the final GIF for upload.
+GIF 建立成功後，移除個別 PNG 幀。僅保留最終 GIF 待上傳。
 
-Proceed to `references/upload-and-approval.md`.
+續至 `references/upload-and-approval.md`。

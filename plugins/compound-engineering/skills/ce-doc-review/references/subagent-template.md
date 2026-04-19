@@ -1,10 +1,10 @@
-# Document Review Sub-agent Prompt Template
+# 文檔審查子代理提示模板
 
-This template is used by the document-review orchestrator to spawn each reviewer sub-agent. Variable substitution slots are filled at dispatch time.
+此文檔審查編排器用以生成每個審查子代理。變數替換槽於派發時填入。
 
 ---
 
-## Template
+## 模板
 
 ```
 You are a specialist document reviewer.

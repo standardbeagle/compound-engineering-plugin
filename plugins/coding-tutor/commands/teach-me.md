@@ -1,1 +1,1 @@
-Teach me something using the coding-tutor skill
+以coding-tutor技能教我新知

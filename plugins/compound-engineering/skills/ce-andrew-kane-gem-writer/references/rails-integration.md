@@ -1,50 +1,50 @@
-# Rails Integration Patterns
+# Rails 整合範式
 
-## The Golden Rule
+## 金律
 
-**Never require Rails gems directly.** This causes loading order issues.
+**勿直接引入 Rails gem。** → 載入順序生患。
 
 ```ruby
-# WRONG - causes premature loading
+# 誤 — 提前載入
 require "active_record"
 ActiveRecord::Base.include(MyGem::Model)
 
-# CORRECT - lazy loading
+# 正 — 延遲載入
 ActiveSupport.on_load(:active_record) do
   extend MyGem::Model
 end
 ```
 
-## ActiveSupport.on_load Hooks
+## ActiveSupport.on_load 鉤子
 
-Common hooks and their uses:
+常用鉤子及其用途：
 
 ```ruby
-# Models
+# 模型
 ActiveSupport.on_load(:active_record) do
-  extend GemName::Model        # Add class methods (searchkick, has_encrypted)
-  include GemName::Callbacks   # Add instance methods
+  extend GemName::Model        # 增類方法（searchkick, has_encrypted）
+  include GemName::Callbacks   # 增實例方法
 end
 
-# Controllers
+# 控制器
 ActiveSupport.on_load(:action_controller) do
   include Ahoy::Controller
 end
 
-# Jobs
+# 任務
 ActiveSupport.on_load(:active_job) do
   include GemName::JobExtensions
 end
 
-# Mailers
+# 郵件器
 ActiveSupport.on_load(:action_mailer) do
   include GemName::MailerExtensions
 end
 ```
 
-## Prepend for Behavior Modification
+## Preload 改寫行為
 
-When overriding existing Rails methods:
+覆寫既有 Rails 方法時：
 
 ```ruby
 ActiveSupport.on_load(:active_record) do
@@ -53,9 +53,9 @@ ActiveSupport.on_load(:active_record) do
 end
 ```
 
-## Railtie Pattern
+## Railtie 範式
 
-Minimal Railtie for non-mountable gems:
+非掛載型 gem 之極簡 Railtie：
 
 ```ruby
 # lib/gemname/railtie.rb
@@ -67,7 +67,7 @@ module GemName
       end
     end
 
-    # Optional: Add to controller runtime logging
+    # 可選：增控制器運行時日誌
     initializer "gemname.log_runtime" do
       require_relative "controller_runtime"
       ActiveSupport.on_load(:action_controller) do
@@ -75,7 +75,7 @@ module GemName
       end
     end
 
-    # Optional: Rake tasks
+    # 可選：Rake 任務
     rake_tasks do
       load "tasks/gemname.rake"
     end
@@ -83,9 +83,9 @@ module GemName
 end
 ```
 
-## Engine Pattern (Mountable Gems)
+## Engine 範式（可掛載 Gem）
 
-For gems with web interfaces (PgHero, Blazer, Ahoy):
+具 Web 界面之 gem（PgHero、Blazer、Ahoy）：
 
 ```ruby
 # lib/pghero/engine.rb
@@ -107,26 +107,26 @@ module PgHero
 end
 ```
 
-## Routes for Engines
+## Engine 路由
 
 ```ruby
-# config/routes.rb (in engine)
+# config/routes.rb（engine 內）
 PgHero::Engine.routes.draw do
   root to: "home#index"
   resources :databases, only: [:show]
 end
 ```
 
-Mount in app:
+應用中掛載：
 
 ```ruby
-# config/routes.rb (in app)
+# config/routes.rb（應用中）
 mount PgHero::Engine, at: "pghero"
 ```
 
-## YAML Configuration with ERB
+## YAML 配置含 ERB
 
-For complex gems needing config files:
+複雜 gem 需配置檔時：
 
 ```ruby
 def self.settings
@@ -141,7 +141,7 @@ def self.settings
 end
 ```
 
-## Generator Pattern
+## 生成器範式
 
 ```ruby
 # lib/generators/gemname/install_generator.rb
@@ -162,15 +162,15 @@ module GemName
 end
 ```
 
-## Conditional Feature Detection
+## 條件功能偵測
 
 ```ruby
-# Check for specific Rails versions
+# 檢特定 Rails 版本
 if ActiveRecord.version >= Gem::Version.new("7.0")
-  # Rails 7+ specific code
+  # Rails 7+ 專用碼
 end
 
-# Check for optional dependencies
+# 檢可選依賴
 def self.client
   @client ||= if defined?(OpenSearch::Client)
     OpenSearch::Client.new

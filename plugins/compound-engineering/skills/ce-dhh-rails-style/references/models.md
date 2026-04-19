@@ -1,9 +1,9 @@
-# Models - DHH Rails Style
+# Model — DHH Rails風
 
 <model_concerns>
-## Concerns for Horizontal Behavior
+## 關切供橫切行為
 
-Models heavily use concerns. A typical Card model includes 14+ concerns:
+Model廣用concerns。典型Card model含14+concerns：
 
 ```ruby
 class Card < ApplicationRecord
@@ -25,15 +25,15 @@ class Card < ApplicationRecord
 end
 ```
 
-Each concern is self-contained with associations, scopes, and methods.
+每concern自含關聯、scope與方法。
 
-**Naming:** Adjectives describing capability (`Closeable`, `Publishable`, `Watchable`)
+**命名：** 形容詞描述能力（`Closeable`、`Publishable`、`Watchable`）
 </model_concerns>
 
 <state_records>
-## State as Records, Not Booleans
+## 狀態即記錄，非布林值
 
-Instead of boolean columns, create separate records:
+布林欄改為獨立記錄：
 
 ```ruby
 # Instead of:
@@ -58,13 +58,13 @@ class Card::NotNow < ApplicationRecord
 end
 ```
 
-**Benefits:**
-- Automatic timestamps (when it happened)
-- Track who made changes
-- Easy filtering via joins and `where.missing`
-- Enables rich UI showing when/who
+**益處：**
+- 自動時間戳（何時發生）
+- 追蹤誰做更改
+- 以join與`where.missing`輕鬆篩選
+- 利於富UI顯示何時/誰
 
-**In the model:**
+**於model中：**
 ```ruby
 module Closeable
   extend ActiveSupport::Concern
@@ -87,7 +87,7 @@ module Closeable
 end
 ```
 
-**Querying:**
+**查詢：**
 ```ruby
 Card.joins(:closure)         # closed cards
 Card.where.missing(:closure) # open cards
@@ -95,19 +95,19 @@ Card.where.missing(:closure) # open cards
 </state_records>
 
 <callbacks>
-## Callbacks - Used Sparingly
+## 回呼 — 審慎使用
 
-Only 38 callback occurrences across 30 files in Fizzy. Guidelines:
+Fizzy中30檔僅38處回呼。準則：
 
-**Use for:**
-- `after_commit` for async work
-- `before_save` for derived data
-- `after_create_commit` for side effects
+**用於：**
+- `after_commit` 供非同步工作
+- `before_save` 供衍生資料
+- `after_create_commit` 供副作用
 
-**Avoid:**
-- Complex callback chains
-- Business logic in callbacks
-- Synchronous external calls
+**避免：**
+- 複雜回呼鏈
+- 回呼中置業務邏輯
+- 同步外部呼叫
 
 ```ruby
 class Card < ApplicationRecord
@@ -123,9 +123,9 @@ end
 </callbacks>
 
 <scopes>
-## Scope Naming
+## Scope命名
 
-Standard scope names:
+標準scope名稱：
 
 ```ruby
 class Card < ApplicationRecord
@@ -145,9 +145,9 @@ end
 </scopes>
 
 <poros>
-## Plain Old Ruby Objects
+## 純Ruby物件
 
-POROs namespaced under parent models:
+POROs置於父model命名空間下：
 
 ```ruby
 # app/models/event/description.rb
@@ -178,13 +178,13 @@ class User::Filtering
 end
 ```
 
-**NOT used for service objects.** Business logic stays in models.
+**非服務物件。** 業務邏輯留於model。
 </poros>
 
 <verbs_predicates>
-## Method Naming
+## 方法命名
 
-**Verbs** - Actions that change state:
+**動詞** — 改變狀態之動作：
 ```ruby
 card.close
 card.reopen
@@ -194,14 +194,14 @@ board.publish
 board.archive
 ```
 
-**Predicates** - Queries derived from state:
+**述詞** — 由狀態衍生之查詢：
 ```ruby
 card.closed?    # closure.present?
 card.golden?    # goldness.present?
 board.published?
 ```
 
-**Avoid** generic setters:
+**避免** 泛用setter：
 ```ruby
 # Bad
 card.set_closed(true)
@@ -214,9 +214,9 @@ card.ungild
 </verbs_predicates>
 
 <validation_philosophy>
-## Validation Philosophy
+## 驗證哲學
 
-Minimal validations on models. Use contextual validations on form/operation objects:
+Model上最少驗證。情境驗證放表單/操作物件：
 
 ```ruby
 # Model - minimal
@@ -240,7 +240,7 @@ class Signup
 end
 ```
 
-**Prefer database constraints** over model validations for data integrity:
+**偏好資料庫約束** 勝model驗證以保資料完整性：
 ```ruby
 # migration
 add_index :users, :email, unique: true
@@ -249,9 +249,9 @@ add_foreign_key :cards, :boards
 </validation_philosophy>
 
 <error_handling>
-## Let It Crash Philosophy
+## 任其崩潰哲學
 
-Use bang methods that raise exceptions on failure:
+用bang方法，失敗時拋異常：
 
 ```ruby
 # Preferred - raises on failure
@@ -266,13 +266,13 @@ if @card.save
 end
 ```
 
-Let errors propagate naturally. Rails handles ActiveRecord::RecordInvalid with 422 responses.
+任錯誤自然傳播。Rails以422回應處理ActiveRecord::RecordInvalid。
 </error_handling>
 
 <default_values>
-## Default Values with Lambdas
+## Lambda預設值
 
-Use lambda defaults for associations with Current:
+以lambda預設值搭配Current關聯：
 
 ```ruby
 class Card < ApplicationRecord
@@ -285,13 +285,13 @@ class Comment < ApplicationRecord
 end
 ```
 
-Lambdas ensure dynamic resolution at creation time.
+Lambda確保建立時動態解析。
 </default_values>
 
 <rails_71_patterns>
-## Rails 7.1+ Model Patterns
+## Rails 7.1+ Model模式
 
-**Normalizes** - clean data before validation:
+**Normalizes** — 驗證前淨化資料：
 ```ruby
 class User < ApplicationRecord
   normalizes :email, with: ->(email) { email.strip.downcase }
@@ -299,7 +299,7 @@ class User < ApplicationRecord
 end
 ```
 
-**Delegated Types** - replace polymorphic associations:
+**Delegated Types** — 取代多型關聯：
 ```ruby
 class Message < ApplicationRecord
   delegated_type :messageable, types: %w[Comment Reply Announcement]
@@ -311,7 +311,7 @@ message.comment         # returns the Comment
 Message.comments        # scope for Comment messages
 ```
 
-**Store Accessor** - structured JSON storage:
+**Store Accessor** — 結構化JSON儲存：
 ```ruby
 class User < ApplicationRecord
   store :settings, accessors: [:theme, :notifications_enabled], coder: JSON
@@ -323,15 +323,15 @@ user.notifications_enabled = true
 </rails_71_patterns>
 
 <concern_guidelines>
-## Concern Guidelines
+## Concern準則
 
-- **50-150 lines** per concern (most are ~100)
-- **Cohesive** - related functionality only
-- **Named for capabilities** - `Closeable`, `Watchable`, not `CardHelpers`
-- **Self-contained** - associations, scopes, methods together
-- **Not for mere organization** - create when genuine reuse needed
+- **50-150行** 每concern（多數~100）
+- **內聚** — 僅含相關功能
+- **以能力命名** — `Closeable`、`Watchable`，非`CardHelpers`
+- **自含** — 關聯、scope、方法同處
+- **非僅為組織** — 真有複用需求時方建
 
-**Touch chains** for cache invalidation:
+**Touch鏈** 供快取失效：
 ```ruby
 class Comment < ApplicationRecord
   belongs_to :card, touch: true
@@ -342,9 +342,9 @@ class Card < ApplicationRecord
 end
 ```
 
-When comment updates, card's `updated_at` changes, which cascades to board.
+comment更新→card之`updated_at`變→傳播至board。
 
-**Transaction wrapping** for related updates:
+**事務包裹** 供相關更新：
 ```ruby
 class Card < ApplicationRecord
   def close(creator: Current.user)

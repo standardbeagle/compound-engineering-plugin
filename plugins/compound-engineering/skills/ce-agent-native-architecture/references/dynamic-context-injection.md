@@ -1,32 +1,32 @@
 <overview>
-How to inject dynamic runtime context into agent system prompts. The agent needs to know what exists in the app to know what it can work with. Static prompts aren't enough—the agent needs to see the same context the user sees.
+如何將動態執行時上下文注入代理系統提示。代理需知應用中存在何物方能運作。靜態提示不足——代理需看到與使用者相同之上下文。
 
-**Core principle:** The user's context IS the agent's context.
+**核心原則：** 使用者之上下文即代理之上下文。
 </overview>
 
 <why_context_matters>
-## Why Dynamic Context Injection?
+## 何以動態上下文注入
 
-A static system prompt tells the agent what it CAN do. Dynamic context tells it what it can do RIGHT NOW with the user's actual data.
+靜態系統提示告知代理能做什麼。動態上下文告知以使用者實際資料**此刻**能做什麼。
 
-**The failure case:**
+**失敗之例：**
 ```
 User: "Write a little thing about Catherine the Great in my reading feed"
 Agent: "What system are you referring to? I'm not sure what reading feed means."
 ```
 
-The agent failed because it didn't know:
-- What books exist in the user's library
-- What the "reading feed" is
-- What tools it has to publish there
+代理失敗因其不知：
+- 使用者圖書館中有何書
+- "reading feed"為何
+- 有何工具可發佈至此
 
-**The fix:** Inject runtime context about app state into the system prompt.
+**修復：** 注入關於應用狀態之執行時上下文至系統提示。
 </why_context_matters>
 
 <pattern name="context-injection">
-## The Context Injection Pattern
+## 上下文注入模式
 
-Build your system prompt dynamically, including current app state:
+動態建構系統提示，包含當前應用狀態：
 
 ```swift
 func buildSystemPrompt() -> String {
@@ -63,10 +63,10 @@ func buildSystemPrompt() -> String {
 </pattern>
 
 <what_to_inject>
-## What Context to Inject
+## 注入何種上下文
 
-### 1. Available Resources
-What data/files exist that the agent can access?
+### 1. 可用資源
+代理可存取之資料/檔案？
 
 ```swift
 ## Available in User's Library
@@ -80,19 +80,19 @@ Research folders:
 - Documents/Research/book_456/ (1 file)
 ```
 
-### 2. Current State
-What has the user done recently? What's the current context?
+### 2. 當前狀態
+使用者最近做了什麼？當前上下文為何？
 
 ```swift
 ## Recent Activity
 
 - 2 hours ago: Highlighted passage in "1984" about surveillance
 - Yesterday: Completed research on "Moby Dick" whale symbolism
-- This week: Added 3 new books to library
+- this week: Added 3 new books to library
 ```
 
-### 3. Capabilities Mapping
-What tool maps to what UI feature? Use the user's language.
+### 3. 能力映射
+工具對應何UI功能？用使用者語言。
 
 ```swift
 ## What You Can Do
@@ -105,8 +105,8 @@ What tool maps to what UI feature? Use the user's language.
 | "my profile" | `read_file("profile.md")` | Shows reading profile |
 ```
 
-### 4. Domain Vocabulary
-Explain app-specific terms the user might use.
+### 4. 領域詞彙
+解釋使用者可能使用之應用特定術語。
 
 ```swift
 ## Vocabulary
@@ -119,9 +119,9 @@ Explain app-specific terms the user might use.
 </what_to_inject>
 
 <implementation_patterns>
-## Implementation Patterns
+## 實作模式
 
-### Pattern 1: Service-Based Injection (Swift/iOS)
+### 模式一：基於服務之注入（Swift/iOS）
 
 ```swift
 class AgentContextBuilder {
@@ -161,7 +161,7 @@ let context = AgentContextBuilder(
 let systemPrompt = basePrompt + "\n\n" + context
 ```
 
-### Pattern 2: Hook-Based Injection (TypeScript)
+### 模式二：基於Hook之注入（TypeScript）
 
 ```typescript
 interface ContextProvider {
@@ -190,7 +190,7 @@ async function buildSystemPrompt(providers: ContextProvider[]): Promise<string> 
 }
 ```
 
-### Pattern 3: Template-Based Injection
+### 模式三：基於模板之注入
 
 ```markdown
 # System Prompt Template (system-prompt.template.md)
@@ -227,11 +227,11 @@ const prompt = Handlebars.compile(template)({
 </implementation_patterns>
 
 <context_freshness>
-## Context Freshness
+## 上下文新鮮度
 
-Context should be injected at agent initialization, and optionally refreshed during long sessions.
+上下文應於代理初始化時注入，長會話中可選重新整理。
 
-**At initialization:**
+**初始化時：**
 ```swift
 // Always inject fresh context when starting an agent
 func startChatAgent() async -> AgentSession {
@@ -243,7 +243,7 @@ func startChatAgent() async -> AgentSession {
 }
 ```
 
-**During long sessions (optional):**
+**長會話中（可選）：**
 ```swift
 // For long-running agents, provide a refresh tool
 tool("refresh_context", "Get current app state") { _ in
@@ -256,7 +256,7 @@ tool("refresh_context", "Get current app state") { _ in
 }
 ```
 
-**What NOT to do:**
+**不應做：**
 ```swift
 // DON'T: Use stale context from app launch
 let cachedContext = appLaunchContext  // Stale!
@@ -265,9 +265,9 @@ let cachedContext = appLaunchContext  // Stale!
 </context_freshness>
 
 <examples>
-## Real-World Example: Every Reader
+## 實例：Every Reader
 
-The Every Reader app injects context for its chat agent:
+Every Reader應用為其chat代理注入上下文：
 
 ```swift
 func getChatAgentSystemPrompt() -> String {
@@ -315,24 +315,24 @@ func getChatAgentSystemPrompt() -> String {
 }
 ```
 
-**Result:** When user says "write a little thing about Catherine the Great in my reading feed", the agent:
-1. Sees "reading feed" → knows to use `publish_to_feed`
-2. Sees available books → finds the relevant book ID
-3. Creates appropriate content for the Feed tab
+**結果：** 當使用者說"write a little thing about Catherine the Great in my reading feed"，代理：
+1. 見"reading feed" → 知使用`publish_to_feed`
+2. 見可用書籍 → 找到相關book ID
+3. 為Feed tab建立適當內容
 </examples>
 
 <checklist>
-## Context Injection Checklist
+## 上下文注入清單
 
-Before launching an agent:
-- [ ] System prompt includes current resources (books, files, data)
-- [ ] Recent activity is visible to the agent
-- [ ] Capabilities are mapped to user vocabulary
-- [ ] Domain-specific terms are explained
-- [ ] Context is fresh (gathered at agent start, not cached)
+啟動代理前：
+- [ ] 系統提示含當前資源（books、files、data）
+- [ ] 最近活動對代理可見
+- [ ] 能力映射至使用者詞彙
+- [ ] 領域特定術語已解釋
+- [ ] 上下文新鮮（代理啟動時收集，非快取）
 
-When adding new features:
-- [ ] New resources are included in context injection
-- [ ] New capabilities are documented in system prompt
-- [ ] User vocabulary for the feature is mapped
+新增功能時：
+- [ ] 新資源含於上下文注入
+- [ ] 新能力載入系統提示
+- [ ] 功能之使用者詞彙已映射
 </checklist>

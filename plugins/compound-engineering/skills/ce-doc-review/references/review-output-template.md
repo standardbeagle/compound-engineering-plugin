@@ -1,10 +1,10 @@
-# Document Review Output Template
+# 文檔審查輸出模板
 
-Use this **exact format** when presenting synthesized review findings. Findings are grouped by severity, not by reviewer.
+以**此確切格式**呈現整合審查結果。結果依嚴重度分組，非依審查者。
 
-**IMPORTANT:** Use pipe-delimited markdown tables (`| col | col |`). Do NOT use ASCII box-drawing characters.
+**重要：** 用管線分隔markdown表格（`| col | col |`）。勿用ASCII盒繪字元。
 
-## Example
+## 範例
 
 ```markdown
 ## Document Review Results
@@ -79,11 +79,11 @@ Applied 5 auto-fixes. 4 findings to consider (2 errors, 2 omissions).
 | design-lens | not activated | -- | -- | -- | -- |
 ```
 
-## Section Rules
+## 段落規則
 
-- **Summary line**: Always present after the reviewer list. Format: "Applied N auto-fixes. K findings to consider (X errors, Y omissions)." Omit any zero clause.
-- **Auto-fixes Applied**: List all fixes that were applied automatically (auto class). Include enough detail per fix to convey the substance -- especially for fixes that add content or touch document meaning. Omit section if none.
-- **P0-P3 sections**: Only include sections that have findings. Omit empty severity levels. Within each severity, separate into **Errors** and **Omissions** sub-headers. Omit a sub-header if that severity has none of that type.
-- **Residual Concerns**: Findings below confidence threshold that were promoted by cross-persona corroboration, plus unpromoted residual risks. Omit if none.
-- **Deferred Questions**: Questions for later workflow stages. Omit if none.
-- **Coverage**: Always include. All counts are **post-synthesis**. **Findings** must equal Auto + Present exactly -- if deduplication merged a finding across personas, attribute it to the persona with the highest confidence and reduce the other persona's count. **Residual** = count of `residual_risks` from this persona's raw output (not the promoted subset in the Residual Concerns section).
+- **摘要行**：審查者列表後必有。格式：「Applied N auto-fixes. K findings to consider (X errors, Y omissions).」零值子句省略。
+- **Auto-fixes Applied**：列出自動套用之修復。每項附足夠細節以傳達實質——尤其添加內容或觸及文檔含義之修復。無則省略此段。
+- **P0-P3段落**：僅含結果之嚴重度等級方納入。空等級省略。每等級內分**Errors**與**Omissions**子標題。該等級無該類型則子標題省略。
+- **Residual Concerns**：信心門檻以下但經跨persona佐證提升之結果，及未提升之殘餘風險。無則省略。
+- **Deferred Questions**：供後續工作流階段之問題。無則省略。
+- **Coverage**：必有。所有計數為**整合後**。**Findings**須等於Auto + Present——若去重合併跨persona之結果，歸屬最高信心之persona並扣減另一方之計數。**Residual** = 此persona原始輸出中之`residual_risks`數（非Residual Concerns段中已提升之子集）。

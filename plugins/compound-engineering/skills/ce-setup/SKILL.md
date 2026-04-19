@@ -1,59 +1,59 @@
 ---
 name: ce-setup
-description: "Diagnose and configure compound-engineering environment. Checks CLI dependencies, plugin version, and repo-local config. Offers guided installation for missing tools. Use when troubleshooting missing tools, verifying setup, or before onboarding."
+description: "診斷並配置 compound-engineering 環境。檢查 CLI 依賴、插件版本及倉庫本地配置。為缺失工具提供引導式安裝。適用於排除缺失工具、驗證設定或入門前。"
 disable-model-invocation: true
 ---
 
-# Compound Engineering Setup
+# Compound Engineering 設定
 
-## Interaction Method
+## 互動方式
 
-Ask the user each question below using the platform's blocking question tool (e.g., `AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no structured question tool is available, present each question as a numbered list and wait for a reply before proceeding. For multiSelect questions, accept comma-separated numbers (e.g. `1, 3`). Never skip or auto-configure.
+以下每個問題使用平台之阻塞式提問工具詢問用戶（如 Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`）。若無結構化提問工具，以編號列表呈現各問題並等候回覆後方續。多選題接受逗號分隔之編號（如 `1, 3`）。勿跳過或自動配置。
 
-Interactive setup for compound-engineering — diagnoses environment health, cleans obsolete repo-local CE config, and helps configure required tools. Review agent selection is handled automatically by `ce-code-review`; project-specific review guidance belongs in `CLAUDE.md` or `AGENTS.md`.
+compound-engineering 之互動式設定——診斷環境健康狀態、清理過時之倉庫本地 CE 配置，並協助配置所需工具。審查代理之選擇由 `ce-code-review` 自動處理；專案特定之審查指引應置於 `CLAUDE.md` 或 `AGENTS.md`。
 
-## Phase 1: Diagnose
+## 階段一：診斷
 
-### Step 1: Determine Plugin Version
+### 步驟一：判斷插件版本
 
-Detect the installed compound-engineering plugin version by reading the plugin metadata or manifest. This is platform-specific -- use whatever mechanism is available (e.g., reading `plugin.json` from the plugin root or cache directory). If the version cannot be determined, skip this step.
+讀取插件元資料或清單以偵測已安裝之 compound-engineering 插件版本。此為平台特定——使用可用之任何機制（如自插件根目錄或快取目錄讀取 `plugin.json`）。若版本無法判定，跳過此步。
 
-If a version is found, pass it to the check script via `--version`. Otherwise omit the flag.
+若找到版本，透過 `--version` 傳予檢查腳本。否則省略該旗標。
 
-### Step 2: Run the Health Check Script
+### 步驟二：執行健康檢查腳本
 
-Before running the script, display: "Compound Engineering -- checking your environment..."
+執行腳本前，顯示：「Compound Engineering -- checking your environment...」
 
-Run the bundled check script. Do not perform manual dependency checks -- the script handles all CLI tools, repo-local CE file checks, and `.gitignore` guidance in one pass.
+執行內附之檢查腳本。勿手動檢查依賴——腳本一次處理所有 CLI 工具、倉庫本地 CE 檔案檢查及 `.gitignore` 指引。
 
 ```bash
 bash scripts/check-health --version VERSION
 ```
 
-Or without version if Step 1 could not determine it:
+或步驟一無法判定版本時：
 
 ```bash
 bash scripts/check-health
 ```
 
-Script reference: `scripts/check-health`
+腳本參照：`scripts/check-health`
 
-Display the script's output to the user.
+將腳本輸出顯示予用戶。
 
-### Step 3: Evaluate Results
+### 步驟三：評估結果
 
-**Platform detection (pre-resolved):** !`[ -n "${CLAUDE_PLUGIN_ROOT}" ] && echo "CLAUDE_CODE" || echo "OTHER"`
+**平台偵測（預解析）：** !`[ -n "${CLAUDE_PLUGIN_ROOT}" ] && echo "CLAUDE_CODE" || echo "OTHER"`
 
-If the line above resolved to `CLAUDE_CODE`, this is a Claude Code session and `/ce-update` is available. Otherwise, omit any `/ce-update` references from output.
+若上行解析為 `CLAUDE_CODE`，此為 Claude Code 對話，`/ce-update` 可用。否則，輸出中省略 `/ce-update` 參照。
 
-After the diagnostic report, check whether:
+診斷報告後，檢查是否：
 
-- any dependencies are missing (reported as yellow in the script output)
-- `compound-engineering.local.md` is present and needs cleanup
-- `.compound-engineering/config.local.yaml` does not exist or is not safely gitignored
-- `.compound-engineering/config.local.example.yaml` is missing or outdated
+- 有依賴缺失（腳本輸出中以黃色標示）
+- `compound-engineering.local.md` 存在且需清理
+- `.compound-engineering/config.local.yaml` 不存在或未安全 gitignore
+- `.compound-engineering/config.local.example.yaml` 缺失或過時
 
-If everything is installed, no repo-local cleanup is needed, and `.compound-engineering/config.local.yaml` already exists and is gitignored, display the tool list and completion message. Parse the tool names from the script output and list each with a green circle:
+若一切已安裝、無需倉庫本地清理、且 `.compound-engineering/config.local.yaml` 已存在並已 gitignore，顯示工具列表及完成訊息。自腳本輸出解析工具名稱，各附綠圈：
 
 ```
  ✅ Compound Engineering setup complete
@@ -64,25 +64,25 @@ If everything is installed, no repo-local cleanup is needed, and `.compound-engi
     Run /ce-setup anytime to re-check.
 ```
 
-If this is a Claude Code session, append to the message: "Run /ce-update to grab the latest plugin version."
+若為 Claude Code 對話，附上：「Run /ce-update to grab the latest plugin version.」
 
-Stop here.
+至此停止。
 
-Otherwise proceed to Phase 2 to resolve any issues. Handle repo-local cleanup (Step 4) first, then config bootstrapping (Step 5), then missing dependencies (Step 6).
+否則進入階段二解決問題。先處理倉庫本地清理（步驟四），再配置啟動（步驟五），最後缺失依賴（步驟六）。
 
-## Phase 2: Fix
+## 階段二：修復
 
-### Step 4: Resolve Repo-Local CE Issues
+### 步驟四：解決倉庫本地 CE 問題
 
-Resolve the repository root (`git rev-parse --show-toplevel`). If `compound-engineering.local.md` exists at the repo root, explain that it is obsolete because review-agent selection is automatic and CE now uses `.compound-engineering/config.local.yaml` for any surviving machine-local state. Ask whether to delete it now. Use the repo-root path when deleting.
+解析倉庫根目錄（`git rev-parse --show-toplevel`）。若 `compound-engineering.local.md` 存在於倉庫根目錄，解釋其已過時——審查代理選擇已自動化，CE 現以 `.compound-engineering/config.local.yaml` 存放機器本地狀態。詢問是否立即刪除。刪除時使用倉庫根路徑。
 
-### Step 5: Bootstrap Project Config
+### 步驟五：啟動專案配置
 
-Resolve the repository root (`git rev-parse --show-toplevel`). All paths below are relative to the repo root, not the current working directory.
+解析倉庫根目錄（`git rev-parse --show-toplevel`）。以下所有路徑相對於倉庫根目錄，非當前工作目錄。
 
-**Example file (always refresh):** Copy `references/config-template.yaml` to `<repo-root>/.compound-engineering/config.local.example.yaml`, creating the directory if needed. This file is committed to the repo and always overwritten with the latest template so teammates can see available settings.
+**範例檔（一律更新）：** 複製 `references/config-template.yaml` 至 `<repo-root>/.compound-engineering/config.local.example.yaml`，必要時建立目錄。此檔提交至倉庫，一律以最新模板覆寫，俾團隊成員可見可用設定。
 
-**Local config (create once):** If `.compound-engineering/config.local.yaml` does not exist, ask whether to create it:
+**本地配置（建立一次）：** 若 `.compound-engineering/config.local.yaml` 不存在，詢問是否建立：
 
 ```
 Set up a local config file for this project?
@@ -93,17 +93,17 @@ Everything starts commented out -- you only enable what you need.
 2. No thanks
 ```
 
-If the user approves, copy `references/config-template.yaml` to `<repo-root>/.compound-engineering/config.local.yaml`. If `.compound-engineering/config.local.yaml` is not already covered by `.gitignore`, offer to add the entry:
+若用戶同意，複製 `references/config-template.yaml` 至 `<repo-root>/.compound-engineering/config.local.yaml`。若 `.compound-engineering/config.local.yaml` 未被 `.gitignore` 涵蓋，提議加入條目：
 
 ```text
 .compound-engineering/*.local.yaml
 ```
 
-If the local config already exists, check whether it is safely gitignored. If not, offer to add the `.gitignore` entry as above.
+若本地配置已存在，檢查是否已安全 gitignore。若未，提議加入上述 `.gitignore` 條目。
 
-### Step 6: Offer Installation
+### 步驟六：提供安裝
 
-Present the missing dependencies using a multiSelect question with all items pre-selected. Use the install commands and URLs from the script's diagnostic output.
+以多選題呈現缺失依賴，所有項目預選。使用腳本診斷輸出中之安裝指令與 URL。
 
 ```
 The following tools are missing. Select which to install:
@@ -118,13 +118,13 @@ Recommended:
   [x] ffmpeg - Video processing for feature demos
 ```
 
-Only show dependencies that are actually missing. Omit installed ones.
+僅顯示實際缺失之依賴。已安裝者省略。
 
-### Step 7: Install Selected Dependencies
+### 步驟七：安裝所選依賴
 
-For each selected dependency, in order:
+依序安裝每個所選依賴：
 
-1. **Show the install command** (from the diagnostic output) and ask for approval:
+1. **顯示安裝指令**（自診斷輸出）並請求批准：
 
    ```
    Install agent-browser?
@@ -134,15 +134,15 @@ For each selected dependency, in order:
    2. Skip - I'll install it manually
    ```
 
-2. **If approved:** Run the install command using a shell execution tool. After the command completes, verify installation by running the dependency's check command (e.g., `command -v agent-browser`).
+2. **若獲批准：** 以 shell 執行工具執行安裝指令。指令完成後，以依賴之檢查指令（如 `command -v agent-browser`）驗證安裝。
 
-3. **If verification succeeds:** Report success.
+3. **若驗證成功：** 回報成功。
 
-4. **If verification fails or install errors:** Display the project URL as fallback and continue to the next dependency.
+4. **若驗證失敗或安裝出錯：** 顯示專案 URL 作為後備，繼續下一個依賴。
 
-### Step 8: Summary
+### 步驟八：摘要
 
-Display a brief summary:
+顯示簡要摘要：
 
 ```
  ✅ Compound Engineering setup complete
@@ -153,4 +153,4 @@ Display a brief summary:
     Run /ce-setup anytime to re-check.
 ```
 
-If this is a Claude Code session (per platform detection in Step 3), append: "Run /ce-update to grab the latest plugin version."
+若為 Claude Code 對話（依步驟三之平台偵測），附上：「Run /ce-update to grab the latest plugin version.」

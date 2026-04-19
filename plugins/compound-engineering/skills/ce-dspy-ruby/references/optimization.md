@@ -1,10 +1,10 @@
-# DSPy.rb Optimization
+# DSPy.rb 最佳化
 
 ## MIPROv2
 
-MIPROv2 (Multi-prompt Instruction Proposal with Retrieval Optimization) is the primary instruction tuner in DSPy.rb. It proposes new instructions and few-shot demonstrations per predictor, evaluates them on mini-batches, and retains candidates that improve the metric. It ships as a separate gem to keep the Gaussian Process dependency tree out of apps that do not need it.
+MIPROv2（Multi-prompt Instruction Proposal with Retrieval Optimization）為DSPy.rb主要指令調校器。為每predictor提案新指令與few-shot範例，於mini-batch上評估，保留改善指標之候選。以獨立gem發布以避免不需要之高斯過程依賴樹。
 
-### Installation
+### 安裝
 
 ```ruby
 # Gemfile
@@ -12,11 +12,11 @@ gem "dspy"
 gem "dspy-miprov2"
 ```
 
-Bundler auto-requires `dspy/miprov2`. No additional `require` statement is needed.
+Bundler自動require`dspy/miprov2`。無需額外`require`。
 
-### AutoMode presets
+### AutoMode預設
 
-Use `DSPy::Teleprompt::MIPROv2::AutoMode` for preconfigured optimizers:
+以`DSPy::Teleprompt::MIPROv2::AutoMode`使用預配置最佳化器：
 
 ```ruby
 light  = DSPy::Teleprompt::MIPROv2::AutoMode.light(metric: metric)   # 6 trials, greedy
@@ -24,17 +24,17 @@ medium = DSPy::Teleprompt::MIPROv2::AutoMode.medium(metric: metric)  # 12 trials
 heavy  = DSPy::Teleprompt::MIPROv2::AutoMode.heavy(metric: metric)   # 18 trials, Bayesian
 ```
 
-| Preset   | Trials | Strategy   | Use case                                            |
-|----------|--------|------------|-----------------------------------------------------|
-| `light`  | 6      | `:greedy`  | Quick wins on small datasets or during prototyping. |
-| `medium` | 12     | `:adaptive`| Balanced exploration vs. runtime for most pilots.   |
-| `heavy`  | 18     | `:bayesian`| Highest accuracy targets or multi-stage programs.   |
+| 預設 | 試驗數 | 策略 | 適用情境 |
+|------|--------|------|----------|
+| `light` | 6 | `:greedy` | 小資料集或原型開發之快速增益 |
+| `medium` | 12 | `:adaptive` | 大多數試驗之平衡探索與運行時 |
+| `heavy` | 18 | `:bayesian` | 最高準確度目標或多階段程式 |
 
-### Manual configuration with dry-configurable
+### 以dry-configurable手動配置
 
-`DSPy::Teleprompt::MIPROv2` includes `Dry::Configurable`. Configure at the class level (defaults for all instances) or instance level (overrides class defaults).
+`DSPy::Teleprompt::MIPROv2`含`Dry::Configurable`。於類別層級（所有實例預設）或實例層級（覆寫類別預設）配置。
 
-**Class-level defaults:**
+**類別層級預設：**
 
 ```ruby
 DSPy::Teleprompt::MIPROv2.configure do |config|
@@ -44,7 +44,7 @@ DSPy::Teleprompt::MIPROv2.configure do |config|
 end
 ```
 
-**Instance-level overrides:**
+**實例層級覆寫：**
 
 ```ruby
 optimizer = DSPy::Teleprompt::MIPROv2.new(metric: metric)
@@ -54,22 +54,20 @@ optimizer.configure do |config|
   config.bootstrap_sets = 5
   config.max_bootstrapped_examples = 4
   config.max_labeled_examples = 16
-  config.optimization_strategy = :adaptive       # :greedy, :adaptive, :bayesian
+  config.optimization_strategy = :adaptive
   config.early_stopping_patience = 3
   config.init_temperature = 1.0
   config.final_temperature = 0.1
-  config.minibatch_size = nil                     # nil = auto
+  config.minibatch_size = nil
   config.auto_seed = 42
 end
 ```
 
-The `optimization_strategy` setting accepts symbols (`:greedy`, `:adaptive`, `:bayesian`) and coerces them internally to `DSPy::Teleprompt::OptimizationStrategy` T::Enum values.
+`optimization_strategy`接受符號（`:greedy`、`:adaptive`、`:bayesian`），內部強制轉為`DSPy::Teleprompt::OptimizationStrategy` T::Enum值。
 
-The old `config:` constructor parameter is removed. Passing `config:` raises `ArgumentError`.
+舊`config:`建構子參數已移除。傳`config:`拋`ArgumentError`。
 
-### Auto presets via configure
-
-Instead of `AutoMode`, set the preset through the configure block:
+### 經configure設自動預設
 
 ```ruby
 optimizer = DSPy::Teleprompt::MIPROv2.new(metric: metric)
@@ -78,7 +76,7 @@ optimizer.configure do |config|
 end
 ```
 
-### Compile and inspect
+### 編譯與檢查
 
 ```ruby
 program = DSPy::Predict.new(MySignature)
@@ -93,36 +91,36 @@ optimized_program = result.optimized_program
 puts "Best score: #{result.best_score_value}"
 ```
 
-The `result` object exposes:
-- `optimized_program` -- ready-to-use predictor with updated instruction and demos.
-- `optimization_trace[:trial_logs]` -- per-trial record of instructions, demos, and scores.
-- `metadata[:optimizer]` -- `"MIPROv2"`, useful when persisting experiments from multiple optimizers.
+`result`物件暴露：
+- `optimized_program` — 可用之predictor，含更新指令與範例
+- `optimization_trace[:trial_logs]` — 每試驗之指令、範例與分數紀錄
+- `metadata[:optimizer]` — `"MIPROv2"`
 
-### Multi-stage programs
+### 多階段程式
 
-MIPROv2 generates dataset summaries for each predictor and proposes per-stage instructions. For a ReAct agent with `thought_generator` and `observation_processor` predictors, the optimizer handles credit assignment internally. The metric only needs to evaluate the final output.
+MIPROv2為每predictor生成資料集摘要並提出各階段指令。對含`thought_generator`與`observation_processor` predictor之ReAct代理，最佳化器內部處理功勞歸屬。指標僅需評估最終輸出。
 
-### Bootstrap sampling
+### Bootstrap抽樣
 
-During the bootstrap phase MIPROv2:
-1. Generates dataset summaries from the training set.
-2. Bootstraps few-shot demonstrations by running the baseline program.
-3. Proposes candidate instructions grounded in the summaries and bootstrapped examples.
-4. Evaluates each candidate on mini-batches drawn from the validation set.
+Bootstrap階段MIPROv2：
+1. 自訓練集生成資料集摘要
+2. 運行基線程式bootstrap few-shot範例
+3. 依摘要與bootstrap範例提出候選指令
+4. 於驗證集之mini-batch上評估每候選
 
-Control the bootstrap phase with `bootstrap_sets`, `max_bootstrapped_examples`, and `max_labeled_examples`.
+以`bootstrap_sets`、`max_bootstrapped_examples`與`max_labeled_examples`控制bootstrap階段。
 
-### Bayesian optimization
+### 貝氏最佳化
 
-When `optimization_strategy` is `:bayesian` (or when using the `heavy` preset), MIPROv2 fits a Gaussian Process surrogate over past trial scores to select the next candidate. This replaces random search with informed exploration, reducing the number of trials needed to find high-scoring instructions.
+`optimization_strategy`為`:bayesian`（或用`heavy`預設）時，MIPROv2以高斯過程代理模型擬合歷史試驗分數以選擇下一候選。以有據探索取代隨機搜尋，減少找到高分指令所需試驗數。
 
 ---
 
 ## GEPA
 
-GEPA (Genetic-Pareto Reflective Prompt Evolution) is a feedback-driven optimizer. It runs the program on a small batch, collects scores and textual feedback, and asks a reflection LM to rewrite the instruction. Improved candidates are retained on a Pareto frontier.
+GEPA（Genetic-Pareto Reflective Prompt Evolution）為反饋驅動最佳化器。於小批次運行程式、收集分數與文字反饋、請求反思LM重寫指令。改善候選保留於Pareto前沿。
 
-### Installation
+### 安裝
 
 ```ruby
 # Gemfile
@@ -130,11 +128,11 @@ gem "dspy"
 gem "dspy-gepa"
 ```
 
-The `dspy-gepa` gem depends on the `gepa` core optimizer gem automatically.
+`dspy-gepa` gem自動依賴`gepa`核心最佳化器gem。
 
-### Metric contract
+### 指標合約
 
-GEPA metrics return `DSPy::Prediction` with both a numeric score and a feedback string. Do not return a plain boolean.
+GEPA指標回傳`DSPy::Prediction`含數值分數與反饋字串。勿回傳純布林值。
 
 ```ruby
 metric = lambda do |example, prediction|
@@ -152,11 +150,11 @@ metric = lambda do |example, prediction|
 end
 ```
 
-Keep the score in `[0, 1]`. Always include a short feedback message explaining what happened -- GEPA hands this text to the reflection model so it can reason about failures.
+分數保持在`[0, 1]`。恆附簡短反饋訊息說明所生 — GEPA將此文字傳予反思模型以推理失敗。
 
-### Feedback maps
+### 反饋映射
 
-`feedback_map` targets individual predictors inside a composite module. Each entry receives keyword arguments and returns a `DSPy::Prediction`:
+`feedback_map`定位組合module內之個別predictor。每項接收關鍵字引數並回傳`DSPy::Prediction`：
 
 ```ruby
 feedback_map = {
@@ -172,9 +170,9 @@ feedback_map = {
 }
 ```
 
-For single-predictor programs, key the map with `'self'`. For multi-predictor chains, add entries per component so the reflection LM sees localized context at each step. Omit `feedback_map` entirely if the top-level metric already covers the basics.
+單predictor程式以`'self'`為鍵。多predictor鏈加各組件項使反思LM見各步之在地上下文。頂層指標已涵蓋基礎時可完全省略`feedback_map`。
 
-### Configuring the teleprompter
+### 配置teleprompter
 
 ```ruby
 teleprompter = DSPy::Teleprompt::GEPA.new(
@@ -189,23 +187,23 @@ teleprompter = DSPy::Teleprompt::GEPA.new(
 )
 ```
 
-Key configuration knobs:
+關鍵配置旋鈕：
 
-| Knob                 | Purpose                                                                                   |
-|----------------------|-------------------------------------------------------------------------------------------|
-| `max_metric_calls`   | Hard budget on evaluation calls. Set to at least the validation set size plus a few minibatches. |
-| `minibatch_size`     | Examples per reflective replay batch. Smaller = cheaper iterations, noisier scores.       |
-| `skip_perfect_score` | Set `true` to stop early when a candidate reaches score `1.0`.                            |
+| 旋鈕 | 用途 |
+|------|------|
+| `max_metric_calls` | 評估呼叫硬預算。至少設驗證集大小加幾個minibatch |
+| `minibatch_size` | 每反思重放批次之範例數。更小=更便宜迭代、更吵分數 |
+| `skip_perfect_score` | 設`true`候選達分數`1.0`時提前停止 |
 
-### Minibatch sizing
+### Minibatch大小選擇
 
-| Goal                                            | Suggested size | Rationale                                                  |
-|-------------------------------------------------|----------------|------------------------------------------------------------|
-| Explore many candidates within a tight budget   | 3--6           | Cheap iterations, more prompt variants, noisier metrics.   |
-| Stable metrics when each rollout is costly      | 8--12          | Smoother scores, fewer candidates unless budget is raised. |
-| Investigate specific failure modes              | 3--4 then 8+   | Start with breadth, increase once patterns emerge.         |
+| 目標 | 建議大小 | 理由 |
+|------|----------|------|
+| 緊預算內探索多候選 | 3--6 | 便宜迭代、更多prompt變體、較吵指標 |
+| 每次rollout昂貴時穩定指標 | 8--12 | 更平滑分數、更少候選（除非提高預算） |
+| 調查特定失敗模式 | 先3--4再8+ | 先廣後深 |
 
-### Compile and evaluate
+### 編譯與評估
 
 ```ruby
 program = DSPy::Predict.new(MySignature)
@@ -216,18 +214,18 @@ optimized_program = result.optimized_program
 test_metrics = evaluate(optimized_program, test)
 ```
 
-The `result` object exposes:
-- `optimized_program` -- predictor with updated instruction and few-shot examples.
-- `best_score_value` -- validation score for the best candidate.
-- `metadata` -- candidate counts, trace hashes, and telemetry IDs.
+`result`物件暴露：
+- `optimized_program` — 含更新指令與few-shot範例之predictor
+- `best_score_value` — 最佳候選之驗證分數
+- `metadata` — 候選計數、追蹤hash與遙測ID
 
-### Reflection LM
+### 反思LM
 
-Swap `DSPy::ReflectionLM` for any callable object that accepts the reflection prompt hash and returns a string. The default reflection signature extracts the new instruction from triple backticks in the response.
+以任何接受反思prompt hash並回傳字串之可呼叫物件替換`DSPy::ReflectionLM`。預設反思signature自回應中三反引號間提取新指令。
 
-### Experiment tracking
+### 實驗追蹤
 
-Plug `GEPA::Logging::ExperimentTracker` into a persistence layer:
+插`GEPA::Logging::ExperimentTracker`至持久層：
 
 ```ruby
 tracker = GEPA::Logging::ExperimentTracker.new
@@ -241,13 +239,13 @@ teleprompter = DSPy::Teleprompt::GEPA.new(
 )
 ```
 
-The tracker emits Pareto update events, merge decisions, and candidate evolution records as JSONL.
+追蹤器以JSONL發射Pareto更新事件、合併決策與候選演化紀錄。
 
-### Pareto frontier
+### Pareto前沿
 
-GEPA maintains a diverse candidate pool and samples from the Pareto frontier instead of mutating only the top-scoring program. This balances exploration and prevents the search from collapsing onto a single lineage.
+GEPA維護多樣候選池並自Pareto前沿取樣而非僅變異最高分程式。平衡探索並防搜尋坍縮至單一譜系。
 
-Enable the merge proposer after multiple strong lineages emerge:
+多個強譜系浮現後啟用合併提案者：
 
 ```ruby
 config: {
@@ -256,20 +254,20 @@ config: {
 }
 ```
 
-Premature merges eat budget without meaningful gains. Gate merge on having several validated candidates first.
+過早合併耗預算而無實質增益。先有數個驗證候選後再開啟。
 
-### Advanced options
+### 進階選項
 
-- `acceptance_strategy:` -- plug in bespoke Pareto filters or early-stop heuristics.
-- Telemetry spans emit via `GEPA::Telemetry`. Enable global observability with `DSPy.configure { |c| c.observability = true }` to stream spans to an OpenTelemetry exporter.
+- `acceptance_strategy:` — 插入客製Pareto篩選或提前停止啟發式。
+- 遙測span經`GEPA::Telemetry`發射。以`DSPy.configure { |c| c.observability = true }`啟用全域可觀察性以串流span至OpenTelemetry匯出器。
 
 ---
 
-## Evaluation Framework
+## 評估框架
 
-`DSPy::Evals` provides batch evaluation of predictors against test datasets with built-in and custom metrics.
+`DSPy::Evals`以內建與自訂指標對predictor做批次評估。
 
-### Basic usage
+### 基本用法
 
 ```ruby
 metric = proc do |example, prediction|
@@ -290,7 +288,7 @@ puts "Passed: #{result.passed_examples}/#{result.total_examples}"
 
 ### DSPy::Example
 
-Convert raw data into `DSPy::Example` instances before passing to optimizers or evaluators. Each example carries `input_values` and `expected_values`:
+先將原始資料轉為`DSPy::Example`實例再傳予最佳化器或評估器。每範例含`input_values`與`expected_values`：
 
 ```ruby
 examples = rows.map do |row|
@@ -303,28 +301,21 @@ end
 train, val, test = split_examples(examples, train_ratio: 0.6, val_ratio: 0.2, seed: 42)
 ```
 
-Hold back a test set from the optimization loop. Optimizers work on train/val; only the test set proves generalization.
+自最佳化迴圈扣留測試集。最佳化器處理train/val；僅測試集證明泛化。
 
-### Built-in metrics
+### 內建指標
 
 ```ruby
-# Exact match -- prediction must exactly equal expected value
 metric = DSPy::Metrics.exact_match(field: :answer, case_sensitive: true)
-
-# Contains -- prediction must contain expected substring
 metric = DSPy::Metrics.contains(field: :answer, case_sensitive: false)
-
-# Numeric difference -- numeric output within tolerance
 metric = DSPy::Metrics.numeric_difference(field: :answer, tolerance: 0.01)
-
-# Composite AND -- all sub-metrics must pass
 metric = DSPy::Metrics.composite_and(
   DSPy::Metrics.exact_match(field: :answer),
   DSPy::Metrics.contains(field: :reasoning)
 )
 ```
 
-### Custom metrics
+### 自訂指標
 
 ```ruby
 quality_metric = lambda do |example, prediction|
@@ -340,11 +331,11 @@ end
 evaluator = DSPy::Evals.new(predictor, metric: quality_metric)
 ```
 
-Access prediction fields with dot notation (`prediction.answer`), not hash notation.
+以點記法存取預測欄位（`prediction.answer`），非hash記法。
 
-### Observability hooks
+### 可觀察性掛鉤
 
-Register callbacks without editing the evaluator:
+不編輯評估器即可註冊回呼：
 
 ```ruby
 DSPy::Evals.before_example do |payload|
@@ -365,44 +356,43 @@ DSPy::Evals.after_batch do |payload|
 end
 ```
 
-Available hooks: `before_example`, `after_example`, `before_batch`, `after_batch`.
+可用掛鉤：`before_example`、`after_example`、`before_batch`、`after_batch`。
 
-### Langfuse score export
+### Langfuse分數匯出
 
-Enable `export_scores: true` to emit `score.create` events for each evaluated example and a batch score at the end:
+啟用`export_scores: true`以發射`score.create`事件：
 
 ```ruby
 evaluator = DSPy::Evals.new(
   predictor,
   metric: metric,
   export_scores: true,
-  score_name: 'qa_accuracy'   # default: 'evaluation'
+  score_name: 'qa_accuracy'
 )
 
 result = evaluator.evaluate(test_examples)
-# Emits per-example scores + overall batch score via DSPy::Scores::Exporter
 ```
 
-Scores attach to the current trace context automatically and flow to Langfuse asynchronously.
+分數自動附著於當前trace上下文並非同步流向Langfuse。
 
-### Evaluation results
+### 評估結果
 
 ```ruby
 result = evaluator.evaluate(test_examples)
 
-result.score            # Overall score (0.0 to 1.0)
-result.passed_count     # Examples that passed
-result.failed_count     # Examples that failed
-result.error_count      # Examples that errored
+result.score
+result.passed_count
+result.failed_count
+result.error_count
 
 result.results.each do |r|
-  r.passed              # Boolean
-  r.score               # Numeric score
-  r.error               # Error message if the example errored
+  r.passed
+  r.score
+  r.error
 end
 ```
 
-### Integration with optimizers
+### 與最佳化器整合
 
 ```ruby
 metric = proc do |example, prediction|
@@ -426,16 +416,15 @@ puts "Test accuracy: #{(test_result.pass_rate * 100).round(2)}%"
 
 ---
 
-## Storage System
+## 儲存系統
 
-`DSPy::Storage` persists optimization results, tracks history, and manages multiple versions of optimized programs.
+`DSPy::Storage`持久化最佳化結果、追蹤歷史並管理多版最佳化程式。
 
-### ProgramStorage (low-level)
+### ProgramStorage（低階）
 
 ```ruby
 storage = DSPy::Storage::ProgramStorage.new(storage_path: "./dspy_storage")
 
-# Save
 saved = storage.save_program(
   result.optimized_program,
   result,
@@ -447,30 +436,26 @@ saved = storage.save_program(
 )
 puts "Stored with ID: #{saved.program_id}"
 
-# Load
 saved = storage.load_program(program_id)
 predictor = saved.program
 score = saved.optimization_result[:best_score_value]
 
-# List
 storage.list_programs.each do |p|
   puts "#{p[:program_id]} -- score: #{p[:best_score]} -- saved: #{p[:saved_at]}"
 end
 ```
 
-### StorageManager (recommended)
+### StorageManager（推薦）
 
 ```ruby
 manager = DSPy::Storage::StorageManager.new
 
-# Save with tags
 saved = manager.save_optimization_result(
   result,
   tags: ['production', 'sentiment-analysis'],
   description: 'Optimized sentiment classifier v2'
 )
 
-# Find programs
 programs = manager.find_programs(
   optimizer: 'MIPROv2',
   min_score: 0.85,
@@ -482,12 +467,11 @@ recent = manager.find_programs(
   signature_class: 'ClassifyText'
 )
 
-# Get best program for a signature
 best = manager.get_best_program('ClassifyText')
 predictor = best.program
 ```
 
-Global shorthand:
+全域簡寫：
 
 ```ruby
 DSPy::Storage::StorageManager.save(result, metadata: { version: '2.0' })
@@ -495,44 +479,39 @@ DSPy::Storage::StorageManager.load(program_id)
 DSPy::Storage::StorageManager.best('ClassifyText')
 ```
 
-### Checkpoints
+### 檢查點
 
-Create and restore checkpoints during long-running optimizations:
+於長時間最佳化中建立與恢復檢查點：
 
 ```ruby
-# Save a checkpoint
 manager.create_checkpoint(
   current_result,
   'iteration_50',
   metadata: { iteration: 50, current_score: 0.87 }
 )
 
-# Restore
 restored = manager.restore_checkpoint('iteration_50')
 program = restored.program
 
-# Auto-checkpoint every N iterations
 if iteration % 10 == 0
   manager.create_checkpoint(current_result, "auto_checkpoint_#{iteration}")
 end
 ```
 
-### Import and export
+### 匯入與匯出
 
-Share programs between environments:
+跨環境分享程式：
 
 ```ruby
 storage = DSPy::Storage::ProgramStorage.new
 
-# Export
 storage.export_programs(['abc123', 'def456'], './export_backup.json')
 
-# Import
 imported = storage.import_programs('./export_backup.json')
 puts "Imported #{imported.size} programs"
 ```
 
-### Optimization history
+### 最佳化歷史
 
 ```ruby
 history = manager.get_optimization_history
@@ -547,7 +526,7 @@ end
 history[:trends][:improvement_percentage]
 ```
 
-### Program comparison
+### 程式比較
 
 ```ruby
 comparison = manager.compare_programs(id_a, id_b)
@@ -556,7 +535,7 @@ comparison[:comparison][:better_program]
 comparison[:comparison][:age_difference_hours]
 ```
 
-### Storage configuration
+### 儲存配置
 
 ```ruby
 config = DSPy::Storage::StorageManager::StorageConfig.new
@@ -568,22 +547,22 @@ config.max_stored_programs = 100
 manager = DSPy::Storage::StorageManager.new(config: config)
 ```
 
-### Cleanup
+### 清理
 
-Remove old programs. Cleanup retains the best performing and most recent programs using a weighted score (70% performance, 30% recency):
+移除舊程式。清理以加權分數（70%效能、30%新近度）保留最佳與最新程式：
 
 ```ruby
 deleted_count = manager.cleanup_old_programs
 ```
 
-### Storage events
+### 儲存事件
 
-The storage system emits structured log events for monitoring:
-- `dspy.storage.save_start`, `dspy.storage.save_complete`, `dspy.storage.save_error`
-- `dspy.storage.load_start`, `dspy.storage.load_complete`, `dspy.storage.load_error`
-- `dspy.storage.delete`, `dspy.storage.export`, `dspy.storage.import`, `dspy.storage.cleanup`
+儲存系統發射結構化日誌事件：
+- `dspy.storage.save_start`、`dspy.storage.save_complete`、`dspy.storage.save_error`
+- `dspy.storage.load_start`、`dspy.storage.load_complete`、`dspy.storage.load_error`
+- `dspy.storage.delete`、`dspy.storage.export`、`dspy.storage.import`、`dspy.storage.cleanup`
 
-### File layout
+### 檔案佈局
 
 ```
 dspy_storage/
@@ -595,9 +574,9 @@ dspy_storage/
 
 ---
 
-## API rules
+## API規則
 
-- Call predictors with `.call()`, not `.forward()`.
-- Access prediction fields with dot notation (`result.answer`), not hash notation (`result[:answer]`).
-- GEPA metrics return `DSPy::Prediction.new(score:, feedback:)`, not a boolean.
-- MIPROv2 metrics may return `true`/`false`, a numeric score, or `DSPy::Prediction`.
+- 以`.call()`呼叫predictors，非`.forward()`。
+- 以點記法存取預測欄位（`result.answer`），非hash記法（`result[:answer]`）。
+- GEPA指標回傳`DSPy::Prediction.new(score:, feedback:)`，非布林值。
+- MIPROv2指標可回傳`true`/`false`、數值分數或`DSPy::Prediction`。

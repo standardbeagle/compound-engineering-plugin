@@ -1,278 +1,278 @@
 ---
 name: ce-agent-native-audit
-description: Run comprehensive agent-native architecture review with scored principles
+description: "Run comprehensive agent-native architecture review with scored principles"
 argument-hint: "[optional: specific principle to audit]"
 disable-model-invocation: true
 ---
 
-# Agent-Native Architecture Audit
+# 代理原生架構稽核
 
-Conduct a comprehensive review of the codebase against agent-native architecture principles, launching parallel sub-agents for each principle and producing a scored report.
+對碼庫執行全面之代理原生架構原則審查，為每項原則啟動並行子代理，產出評分報告。
 
-## Core Principles to Audit
+## 待稽核之核心原則
 
-1. **Action Parity** - "Whatever the user can do, the agent can do"
-2. **Tools as Primitives** - "Tools provide capability, not behavior"
-3. **Context Injection** - "System prompt includes dynamic context about app state"
-4. **Shared Workspace** - "Agent and user work in the same data space"
-5. **CRUD Completeness** - "Every entity has full CRUD (Create, Read, Update, Delete)"
-6. **UI Integration** - "Agent actions immediately reflected in UI"
-7. **Capability Discovery** - "Users can discover what the agent can do"
-8. **Prompt-Native Features** - "Features are prompts defining outcomes, not code"
+1. **行動對等** - "用戶能做之事，代理亦能做"
+2. **工具即原語** - "工具提供能力，非行為"
+3. **上下文注入** - "系統提示包含應用狀態之動態上下文"
+4. **共享工作區** - "代理與用戶操作同一資料空間"
+5. **CRUD 完整性** - "每個實體皆有完整 CRUD（建立、讀取、更新、刪除）"
+6. **UI 整合** - "代理操作即時反映於 UI"
+7. **能力發現** - "用戶能發現代理可做之事"
+8. **提示原生特性** - "特性即提示，定義結果，非碼"
 
-## Workflow
+## 工作流
 
-### Step 1: Load the Agent-Native Skill
+### 步驟一：載入代理原生技能
 
-First, invoke the agent-native-architecture skill to understand all principles:
+首先調用 agent-native-architecture 技能以理解所有原則：
 
 ```
 /ce-agent-native-architecture
 ```
 
-Select option 7 (action parity) to load the full reference material.
+選擇選項 7（行動對等）以載入完整參考資料。
 
-### Step 2: Launch Parallel Sub-Agents
+### 步驟二：啟動並行子代理
 
-Launch 8 parallel sub-agents using the Task tool with `subagent_type: Explore`, one for each principle. Each agent should:
+以 Task 工具搭配 `subagent_type: Explore` 啟動 8 個並行子代理，每項原則一個。各代理應：
 
-1. Enumerate ALL instances in the codebase (user actions, tools, contexts, data stores, etc.)
-2. Check compliance against the principle
-3. Provide a SPECIFIC SCORE like "X out of Y (percentage%)"
-4. List specific gaps and recommendations
+1. 列舉碼庫中所有實例（用戶操作、工具、上下文、資料存儲等）
+2. 對照原則檢查合規性
+3. 提供具體評分如 "X 分之 Y（百分比%）"
+4. 列出具體缺口及建議
 
 <sub-agents>
 
-**Agent 1: Action Parity**
+**代理一：行動對等**
 ```
-Audit for ACTION PARITY - "Whatever the user can do, the agent can do."
+稽核行動對等——「用戶能做之事，代理亦能做。」
 
-Tasks:
-1. Enumerate ALL user actions in frontend (API calls, button clicks, form submissions)
-   - Search for API service files, fetch calls, form handlers
-   - Check routes and components for user interactions
-2. Check which have corresponding agent tools
-   - Search for agent tool definitions
-   - Map user actions to agent capabilities
-3. Score: "Agent can do X out of Y user actions"
+任務：
+1. 列舉前端中所有用戶操作（API 呼叫、按鈕點擊、表單提交）
+   - 搜尋 API 服務檔、fetch 呼叫、表單處理器
+   - 檢查路由及元件中的用戶互動
+2. 檢查哪些有對應之代理工具
+   - 搜尋代理工具定義
+   - 將用戶操作映射至代理能力
+3. 評分：「代理能做 Y 項用戶操作中之 X 項」
 
-Format:
-## Action Parity Audit
-### User Actions Found
-| Action | Location | Agent Tool | Status |
-### Score: X/Y (percentage%)
-### Missing Agent Tools
-### Recommendations
-```
-
-**Agent 2: Tools as Primitives**
-```
-Audit for TOOLS AS PRIMITIVES - "Tools provide capability, not behavior."
-
-Tasks:
-1. Find and read ALL agent tool files
-2. Classify each as:
-   - PRIMITIVE (good): read, write, store, list - enables capability without business logic
-   - WORKFLOW (bad): encodes business logic, makes decisions, orchestrates steps
-3. Score: "X out of Y tools are proper primitives"
-
-Format:
-## Tools as Primitives Audit
-### Tool Analysis
-| Tool | File | Type | Reasoning |
-### Score: X/Y (percentage%)
-### Problematic Tools (workflows that should be primitives)
-### Recommendations
+格式：
+## 行動對等稽核
+### 發現之用戶操作
+| 操作 | 位置 | 代理工具 | 狀態 |
+### 評分：X/Y（百分比%）
+### 缺失之代理工具
+### 建議
 ```
 
-**Agent 3: Context Injection**
+**代理二：工具即原語**
 ```
-Audit for CONTEXT INJECTION - "System prompt includes dynamic context about app state"
+稽核工具即原語——「工具提供能力，非行為。」
 
-Tasks:
-1. Find context injection code (search for "context", "system prompt", "inject")
-2. Read agent prompts and system messages
-3. Enumerate what IS injected vs what SHOULD be:
-   - Available resources (files, drafts, documents)
-   - User preferences/settings
-   - Recent activity
-   - Available capabilities listed
-   - Session history
-   - Workspace state
+任務：
+1. 尋找並讀取所有代理工具檔
+2. 各工具分類為：
+   - 原語（佳）：read、write、store、list——提供能力不含業務邏輯
+   - 工作流（劣）：編碼業務邏輯、做決策、編排步驟
+3. 評分：「Y 工具中有 X 為正確原語」
 
-Format:
-## Context Injection Audit
-### Context Types Analysis
-| Context Type | Injected? | Location | Notes |
-### Score: X/Y (percentage%)
-### Missing Context
-### Recommendations
+格式：
+## 工具即原語稽核
+### 工具分析
+| 工具 | 檔案 | 類型 | 理由 |
+### 評分：X/Y（百分比%）
+### 問題工具（應為原語之工作流）
+### 建議
 ```
 
-**Agent 4: Shared Workspace**
+**代理三：上下文注入**
 ```
-Audit for SHARED WORKSPACE - "Agent and user work in the same data space"
+稽核上下文注入——「系統提示包含應用狀態之動態上下文」
 
-Tasks:
-1. Identify all data stores/tables/models
-2. Check if agents read/write to SAME tables or separate ones
-3. Look for sandbox isolation anti-pattern (agent has separate data space)
+任務：
+1. 尋找上下文注入碼（搜尋 "context"、"system prompt"、"inject"）
+2. 讀取代理提示及系統訊息
+3. 列舉已注入與應注入之內容：
+   - 可用資源（檔案、草稿、文檔）
+   - 用戶偏好/設定
+   - 近期活動
+   - 已列可用能力
+   - 會話歷史
+   - 工作區狀態
 
-Format:
-## Shared Workspace Audit
-### Data Store Analysis
-| Data Store | User Access | Agent Access | Shared? |
-### Score: X/Y (percentage%)
-### Isolated Data (anti-pattern)
-### Recommendations
-```
-
-**Agent 5: CRUD Completeness**
-```
-Audit for CRUD COMPLETENESS - "Every entity has full CRUD"
-
-Tasks:
-1. Identify all entities/models in the codebase
-2. For each entity, check if agent tools exist for:
-   - Create
-   - Read
-   - Update
-   - Delete
-3. Score per entity and overall
-
-Format:
-## CRUD Completeness Audit
-### Entity CRUD Analysis
-| Entity | Create | Read | Update | Delete | Score |
-### Overall Score: X/Y entities with full CRUD (percentage%)
-### Incomplete Entities (list missing operations)
-### Recommendations
+格式：
+## 上下文注入稽核
+### 上下文類型分析
+| 上下文類型 | 已注入？ | 位置 | 備註 |
+### 評分：X/Y（百分比%）
+### 缺失上下文
+### 建議
 ```
 
-**Agent 6: UI Integration**
+**代理四：共享工作區**
 ```
-Audit for UI INTEGRATION - "Agent actions immediately reflected in UI"
+稽核共享工作區——「代理與用戶操作同一資料空間」
 
-Tasks:
-1. Check how agent writes/changes propagate to frontend
-2. Look for:
-   - Streaming updates (SSE, WebSocket)
-   - Polling mechanisms
-   - Shared state/services
-   - Event buses
-   - File watching
-3. Identify "silent actions" anti-pattern (agent changes state but UI doesn't update)
+任務：
+1. 識別所有資料存儲/表/模型
+2. 檢查代理是否讀寫相同表或分離表
+3. 尋找沙盒隔離反模式（代理有獨立資料空間）
 
-Format:
-## UI Integration Audit
-### Agent Action → UI Update Analysis
-| Agent Action | UI Mechanism | Immediate? | Notes |
-### Score: X/Y (percentage%)
-### Silent Actions (anti-pattern)
-### Recommendations
+格式：
+## 共享工作區稽核
+### 資料存儲分析
+| 資料存儲 | 用戶存取 | 代理存取 | 共享？ |
+### 評分：X/Y（百分比%）
+### 隔離資料（反模式）
+### 建議
 ```
 
-**Agent 7: Capability Discovery**
+**代理五：CRUD 完整性**
 ```
-Audit for CAPABILITY DISCOVERY - "Users can discover what the agent can do"
+稽核 CRUD 完整性——「每個實體皆有完整 CRUD」
 
-Tasks:
-1. Check for these 7 discovery mechanisms:
-   - Onboarding flow showing agent capabilities
-   - Help documentation
-   - Capability hints in UI
-   - Agent self-describes in responses
-   - Suggested prompts/actions
-   - Empty state guidance
-   - Slash commands (/help, /tools)
-2. Score against 7 mechanisms
+任務：
+1. 識別碼庫中所有實體/模型
+2. 各實體檢查是否存在代理工具：
+   - 建立
+   - 讀取
+   - 更新
+   - 刪除
+3. 各實體及整體評分
 
-Format:
-## Capability Discovery Audit
-### Discovery Mechanism Analysis
-| Mechanism | Exists? | Location | Quality |
-### Score: X/7 (percentage%)
-### Missing Discovery
-### Recommendations
+格式：
+## CRUD 完整性稽核
+### 實體 CRUD 分析
+| 實體 | 建立 | 讀取 | 更新 | 刪除 | 評分 |
+### 整體評分：X/Y 實體具完整 CRUD（百分比%）
+### 不完整實體（列出缺失操作）
+### 建議
 ```
 
-**Agent 8: Prompt-Native Features**
+**代理六：UI 整合**
 ```
-Audit for PROMPT-NATIVE FEATURES - "Features are prompts defining outcomes, not code"
+稽核 UI 整合——「代理操作即時反映於 UI」
 
-Tasks:
-1. Read all agent prompts
-2. Classify each feature/behavior as defined in:
-   - PROMPT (good): outcomes defined in natural language
-   - CODE (bad): business logic hardcoded
-3. Check if behavior changes require prompt edit vs code change
+任務：
+1. 檢查代理寫入/變更如何傳播至前端
+2. 尋找：
+   - 串流更新（SSE、WebSocket）
+   - 輪詢機制
+   - 共享狀態/服務
+   - 事件匯流排
+   - 檔案監控
+3. 識別「靜默操作」反模式（代理變更狀態但 UI 未更新）
 
-Format:
-## Prompt-Native Features Audit
-### Feature Definition Analysis
-| Feature | Defined In | Type | Notes |
-### Score: X/Y (percentage%)
-### Code-Defined Features (anti-pattern)
-### Recommendations
+格式：
+## UI 整合稽核
+### 代理操作 → UI 更新分析
+| 代理操作 | UI 機制 | 即時？ | 備註 |
+### 評分：X/Y（百分比%）
+### 靜默操作（反模式）
+### 建議
+```
+
+**代理七：能力發現**
+```
+稽核能力發現——「用戶能發現代理可做之事」
+
+任務：
+1. 檢查此 7 種發現機制：
+   - 展示代理能力之引導流程
+   - 說明文檔
+   - UI 中之能力提示
+   - 代理於回應中自述
+   - 建議提示/操作
+   - 空狀態指引
+   - 斜線指令（/help、/tools）
+2. 對 7 種機制評分
+
+格式：
+## 能力發現稽核
+### 發現機制分析
+| 機制 | 存在？ | 位置 | 品質 |
+### 評分：X/7（百分比%）
+### 缺失發現
+### 建議
+```
+
+**代理八：提示原生特性**
+```
+稽核提示原生特性——「特性即提示，定義結果，非碼」
+
+任務：
+1. 讀取所有代理提示
+2. 各特性/行為分類為定義於：
+   - 提示（佳）：以自然語言定義結果
+   - 碼（劣）：業務邏輯硬編碼
+3. 檢查行為變更需改提示還是改碼
+
+格式：
+## 提示原生特性稽核
+### 特性定義分析
+| 特性 | 定義於 | 類型 | 備註 |
+### 評分：X/Y（百分比%）
+### 碼定義特性（反模式）
+### 建議
 ```
 
 </sub-agents>
 
-### Step 3: Compile Summary Report
+### 步驟三：彙編摘要報告
 
-After all agents complete, compile a summary with:
+所有代理完成後，彙編摘要：
 
 ```markdown
-## Agent-Native Architecture Review: [Project Name]
+## 代理原生架構審查：[專案名稱]
 
-### Overall Score Summary
+### 整體評分摘要
 
-| Core Principle | Score | Percentage | Status |
+| 核心原則 | 評分 | 百分比 | 狀態 |
 |----------------|-------|------------|--------|
-| Action Parity | X/Y | Z% | ✅/⚠️/❌ |
-| Tools as Primitives | X/Y | Z% | ✅/⚠️/❌ |
-| Context Injection | X/Y | Z% | ✅/⚠️/❌ |
-| Shared Workspace | X/Y | Z% | ✅/⚠️/❌ |
-| CRUD Completeness | X/Y | Z% | ✅/⚠️/❌ |
-| UI Integration | X/Y | Z% | ✅/⚠️/❌ |
-| Capability Discovery | X/Y | Z% | ✅/⚠️/❌ |
-| Prompt-Native Features | X/Y | Z% | ✅/⚠️/❌ |
+| 行動對等 | X/Y | Z% | ✅/⚠️/❌ |
+| 工具即原語 | X/Y | Z% | ✅/⚠️/❌ |
+| 上下文注入 | X/Y | Z% | ✅/⚠️/❌ |
+| 共享工作區 | X/Y | Z% | ✅/⚠️/❌ |
+| CRUD 完整性 | X/Y | Z% | ✅/⚠️/❌ |
+| UI 整合 | X/Y | Z% | ✅/⚠️/❌ |
+| 能力發現 | X/Y | Z% | ✅/⚠️/❌ |
+| 提示原生特性 | X/Y | Z% | ✅/⚠️/❌ |
 
-**Overall Agent-Native Score: X%**
+**代理原生總分：X%**
 
-### Status Legend
-- ✅ Excellent (80%+)
-- ⚠️ Partial (50-79%)
-- ❌ Needs Work (<50%)
+### 狀態圖例
+- ✅ 優秀（80%+）
+- ⚠️ 部分（50-79%）
+- ❌ 需改善（<50%）
 
-### Top 10 Recommendations by Impact
+### 影響力前十大建議
 
-| Priority | Action | Principle | Effort |
+| 優先級 | 行動 | 原則 | 工作量 |
 |----------|--------|-----------|--------|
 
-### What's Working Excellently
+### 運作卓越之處
 
-[List top 5 strengths]
+[列出前五大優勢]
 ```
 
-## Success Criteria
+## 成功準則
 
-- [ ] All 8 sub-agents complete their audits
-- [ ] Each principle has a specific numeric score (X/Y format)
-- [ ] Summary table shows all scores and status indicators
-- [ ] Top 10 recommendations are prioritized by impact
-- [ ] Report identifies both strengths and gaps
+- [ ] 所有 8 個子代理完成其稽核
+- [ ] 每項原則有具體數字評分（X/Y 格式）
+- [ ] 摘要表顯示所有評分及狀態指標
+- [ ] 影響力前十大建議按影響力排序
+- [ ] 報告識別優勢及缺口
 
-## Optional: Single Principle Audit
+## 可選：單一原則稽核
 
-If $ARGUMENTS specifies a single principle (e.g., "action parity"), only run that sub-agent and provide detailed findings for that principle alone.
+若 $ARGUMENTS 指定單一原則（如 "action parity"），僅執行該子代理並提供該原則之詳細發現。
 
-Valid arguments:
-- `action parity` or `1`
-- `tools` or `primitives` or `2`
-- `context` or `injection` or `3`
-- `shared` or `workspace` or `4`
-- `crud` or `5`
-- `ui` or `integration` or `6`
-- `discovery` or `7`
-- `prompt` or `features` or `8`
+有效參數：
+- `action parity` 或 `1`
+- `tools` 或 `primitives` 或 `2`
+- `context` 或 `injection` 或 `3`
+- `shared` 或 `workspace` 或 `4`
+- `crud` 或 `5`
+- `ui` 或 `integration` 或 `6`
+- `discovery` 或 `7`
+- `prompt` 或 `features` 或 `8`

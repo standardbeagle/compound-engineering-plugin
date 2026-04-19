@@ -1,32 +1,32 @@
-# Per-finding Walk-through
+# 逐發現逐步
 
-This reference defines Interactive mode's per-finding walk-through — the path the user enters by picking option A (`Review each finding one by one — accept the recommendation or choose another action`) from the routing question. It also covers the unified completion report that every terminal path (walk-through, LFG, File tickets, zero findings) emits.
+此參考定義互動模式之逐發現逐步 — 用戶選選項 A（`Review each finding one by one — accept the recommendation or choose another action`）所入之路徑。亦涵蓋每個終端路徑（逐步、LFG、建單、零發現）所發出之統一完成報告。
 
-Interactive mode only.
-
----
-
-## Entry
-
-The walk-through receives, from the orchestrator:
-
-- The merged findings list in severity order (P0 → P1 → P2 → P3), filtered to `gated_auto` and `manual` findings that survived the Stage 5 confidence gate. Advisory findings are included when they were surfaced to this phase (advisory findings normally live in the report-only queue, but when the review flow routes them here for acknowledgment they take the advisory variant below).
-- The cached tracker-detection tuple from `tracker-defer.md` (`{ tracker_name, confidence, named_sink_available, any_sink_available }`). `any_sink_available` determines whether the Defer option is offered; `named_sink_available` + `confidence` determine whether the label names the tracker inline.
-- The run id for artifact lookups.
-
-Each finding's recommended action has already been normalized by Stage 5 (step 7b — tie-break on action). The walk-through surfaces that recommendation to the user but does not recompute it.
+僅互動模式。
 
 ---
 
-## Per-finding presentation
+## 入口
 
-Each finding is presented in two parts: a **terminal output block** carrying the explanation, and a **question** via the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini) carrying the decision. Never merge the two — the terminal block uses markdown; the question uses plain text.
+逐步自編排者接收：
 
-In Claude Code the tool should already be loaded from the Interactive-mode pre-load step in `SKILL.md` — if it isn't, call `ToolSearch` with query `select:AskUserQuestion` now. Rendering the per-finding question as narrative text is a bug, not a valid fallback.
+- 按嚴重度排序（P0 → P1 → P2 → P3）之合併發現列表，經 Stage 5 信心門篩選為 `gated_auto` 及 `manual` 發現。建議性發現於被路由至此階段時包含（建議性發現通常居 report-only 佇列，但審閱流程路由至此作確認時取下方建議性變體）。
+- 來自 `tracker-defer.md` 之快取追蹤器偵測 tuple（`{ tracker_name, confidence, named_sink_available, any_sink_available }`）。`any_sink_available` 決定 Defer 選項是否提供；`named_sink_available` + `confidence` 決定標籤是否內聯命名追蹤器。
+- 供產物查閱之運行 ID。
 
-### Terminal output block (print before firing the question)
+每則發現之建議行動已由 Stage 5（步驟 7b — 行動決勝）正規化。逐步向用戶呈現該建議但不重新計算。
 
-Render as markdown. Labels on their own line, blank lines between sections:
+---
+
+## 逐發現呈現
+
+每則發現分兩部分呈現：**終端輸出塊**載說明，**提問**透過平台阻塞式提問工具（Claude Code 用 `AskUserQuestion`，Codex 用 `request_user_input`，Gemini 用 `ask_user`）載決策。勿合併二者 — 終端塊用 markdown；提問用純文字。
+
+Claude Code 中工具應已由 `SKILL.md` 中互動模式預載步驟載入 — 若未，即以 `ToolSearch` 查詢 `select:AskUserQuestion`。以敘述文字渲染逐發現問題為缺陷，非有效後備。
+
+### 終端輸出塊（觸發提問前印出）
+
+以 markdown 渲染。標籤獨占一行，段落間空行：
 
 ```
 ## Finding {N} of {M} — {severity} {plain-English title}
@@ -39,60 +39,60 @@ Render as markdown. Labels on their own line, blank lines between sections:
 
 **Proposed fix**
 
-{suggested_fix — rendered per the substitution rules below: prose-first, intent-language}
+{suggested_fix — 依下方替換規則渲染：純文字優先、意圖語言}
 
 **Why it works**
 
-{short reasoning, grounded in a codebase pattern when available}
+{簡短理據，可用時基於碼庫範式}
 
-{R15 conflict context line, when applicable}
+{R15 衝突上下文行，適用時}
 ```
 
-Substitutions:
+替換：
 
-- **`{plain-English title}`:** a 3-8 word summary suitable as a heading. Derived from the merged finding's `title` field but rephrased so it reads as observable behavior (e.g., "Path traversal in loadUserFromCache" rather than "Missing userId validation on line 36").
-- **`why_it_matters`:** read the contributing reviewer's artifact file at `.context/compound-engineering/ce-code-review/{run_id}/{reviewer_name}.json` using the same `file + line_bucket(line, +/-3) + normalize(title)` matching that headless mode uses (see `SKILL.md` Stage 6 detail enrichment). When multiple reviewers flagged the merged finding, try them in the order they appear in the merged finding's reviewer list. Use the first match.
-- **`suggested_fix`:** from the merged finding's `suggested_fix` field. Render as prose describing **intent**, not as syntax. The fixer subagent owns the exact code — the walk-through just needs enough for the user to trust or reject the action. Rules:
-  - **Default — one sentence describing the effect.** What does the fix achieve, and where does it live? Prefer intent language over quoted code.
+- **`{plain-English title}`：** 3-8 詞摘要適作標題。取自合併發現之 `title` 欄位但改寫為可觀行為（如 "Path traversal in loadUserFromCache" 而非 "Missing userId validation on line 36"）。
+- **`why_it_matters`：** 讀貢獻審閱者之產物檔 `.context/compound-engineering/ce-code-review/{run_id}/{reviewer_name}.json`，用與 headless 模式相同之 `file + line_bucket(line, +/-3) + normalize(title)` 匹配。多位審閱者標記合併發現時，按合併發現審閱者列表順序嘗試。用首個匹配。
+- **`suggested_fix`：** 取自合併發現之 `suggested_fix` 欄位。渲染為描述**意圖**之純文字，非語法。修復子代理擁有確切碼 — 逐步僅需足供用戶信任或拒絕行動。規則：
+  - **預設 — 一句描述效果。** 修復達成什麼，位於何處？偏好意圖語言而非引用碼。
     - ✅ `Throw on non-2xx response before parsing JSON.`
     - ✅ `` Replace `==` with `===` on line 42. ``
     - ✅ `` Add a `response.ok` check after the fetch and throw on non-2xx. ``
     - ✅ `Extract the request-building logic into a helper and call it from both sites.`
-    - ❌ `` Add `if (!response.ok) throw new Error(`HTTP ${response.status}`);` after the `await fetch(...)` call, before `response.json()`. `` — nested backticks, multiple code spans, full statement quoted; renders broken in terminal.
-  - **Code-span budget: at most 2 inline backtick spans per sentence, each a single identifier, operator, or short phrase** (e.g., `` `response.ok` ``, `` `===` ``, `` `fetchUserById` ``). Never embed full statements, template literals, or code requiring nested backticks. If the intent can't be stated within that budget, the prose is too close to syntax — restate at a higher level, or switch to summary + artifact pointer.
-  - **Always leave a space before and after every backtick span.** Without it, the terminal's markdown renderer eats the delimiters and runs the words together.
-  - **Raw code block — only for short (≤5 line) genuinely additive new code** where no before-state exists (new file, new function, new guard at the top of an empty body). Above 5 lines, switch to summary + pointer.
-  - **Summary + artifact pointer** — when prose can't capture the fix: one-sentence transformation + key symbol/location + `Full fix: .context/compound-engineering/ce-code-review/{run_id}/{reviewer_name}.json → findings[].suggested_fix`.
-  - **No diff blocks.** Modifications to existing code render as prose.
-- **`Why it works`:** grounded reasoning that, where possible, references a similar pattern already used elsewhere in the codebase (e.g., "matches the format-validation pattern already used at src/cli/io.ts:41"). One to three sentences.
-- **R15 conflict context line (when applicable):** when contributing reviewers implied different actions for this finding and Stage 5 step 7b broke the tie, surface that briefly. Example: `Correctness recommends Apply; Testing recommends Skip (low confidence). Agent's recommendation: Skip.` The orchestrator's recommendation — the post-tie-break value — is what the menu labels "recommended."
+    - ❌ `` Add `if (!response.ok) throw new Error(`HTTP ${response.status}`);` after the `await fetch(...)` call, before `response.json()`. `` — 巢狀反引號、多程式碼跨度、完整語句引用；終端中渲染破碎。
+  - **程式碼跨度預算：每句至多 2 個內聯反引號跨度，各為單一識別符、運算符或短詞組**（如 `` `response.ok` ``、`` `===` ``、`` `fetchUserById` ``）。勿嵌入完整語句、模板字面量或需巢狀反引號之碼。意圖無法在此預算內表達時，純文字過近語法 — 改為更高層次重述，或改用摘要 + 產物指標。
+  - **每個反引號跨度前後恆留空格。** 無之則終端 markdown 渲染器吞分隔符並合併文字。
+  - **原始碼塊 — 僅用於簡短（≤5 行）真正新增之新碼**，無前狀態存在時（新檔、新函式、空體頂部之新守衛）。超過 5 行改用摘要 + 指標。
+  - **摘要 + 產物指標** — 純文字無法捕捉修復時：一句轉換 + 關鍵符號/位置 + `Full fix: .context/compound-engineering/ce-code-review/{run_id}/{reviewer_name}.json → findings[].suggested_fix`。
+  - **無 diff 塊。** 既有碼之修改以純文字渲染。
+- **`Why it works`：** 紮實理據，儘可能引用碼庫中已有之類似範式（如「匹配 src/cli/io.ts:41 已用之格式驗證範式」）。一至三句。
+- **R15 衝突上下文行（適用時）：** 貢獻審閱者隱含不同行動且 Stage 5 步驟 7b 決勝時，簡要呈現。如 `Correctness recommends Apply; Testing recommends Skip (low confidence). Agent's recommendation: Skip.` 編排者之建議 — 決勝後之值 — 為選單標記「推薦」者。
 
-When no artifact match exists for the finding (merge-synthesized finding, or the persona's artifact write failed), the terminal block degrades to the heading + `suggested_fix` only (omit the `What's wrong` and `Why it works` sections) and records the gap for the Coverage section of the completion report.
+發現無產物匹配時（合併綜合發現，或角色產物寫入失敗），終端塊降級為僅標題 + `suggested_fix`（省略 `What's wrong` 及 `Why it works` 段）並為完成報告之 Coverage 段記錄缺口。
 
-### Question stem (short, decision-focused)
+### 提問題幹（精簡、聚焦決策）
 
-After the terminal block renders, fire the platform's blocking question tool with a compact two-line stem:
+終端塊渲染後，以平台阻塞式提問工具觸發精簡雙行題幹：
 
 ```
 Finding {N} of {M} — {severity} {short handle}.
 {Action framing in a phrase}?
 ```
 
-Where:
+其中：
 
-- **Short handle:** matches the `{plain-English title}` from the terminal block heading.
-- **Action framing:** one phrase describing what the *single recommended action* does, as a yes/no question. Examples: `Apply the format-validation + path.resolve guard?`, `Skip the fix since the fixture is being deleted?`, `Defer and file a rotation ticket?`.
+- **Short handle：** 匹配終端塊標題之 `{plain-English title}`。
+- **Action framing：** 一詞組描述*單一建議行動*所為，作是非題。如 `Apply the format-validation + path.resolve guard?`、`Skip the fix since the fixture is being deleted?`、`Defer and file a rotation ticket?`。
 
-Never enumerate alternatives in the stem. One recommendation as a yes/no — the option list carries the alternatives. When the recommendation is close, surface the disagreement in the R15 conflict context line, not as a multi-option stem.
+勿於題幹中列舉替代方案。一項建議作是非 — 選項列表載替代。建議接近時，於 R15 衝突上下文行呈現分歧，非多選項題幹。
 
-Example (recommendation = Apply):
+範例（建議 = Apply）：
 
 ```
 Finding 3 of 8 — P1 path traversal in loadUserFromCache.
 Apply the format-validation + path.resolve guard?
 ```
 
-Example (recommendation = Skip because content context overrides default):
+範例（建議 = Skip，因內容上下文覆蓋預設）：
 
 ```
 Finding 1 of 9 — P0 hardcoded admin token.
@@ -100,15 +100,15 @@ Skip the fix since the fixture is being deleted?
 (Security recommends Apply; file context recommends Skip. Agent's recommendation: Skip.)
 ```
 
-Never embed code blocks, diff syntax, or the full fix/reasoning in the stem.
+勿嵌入碼塊、diff 語法或完整修復/理據於題幹。
 
-### Confirmation between findings
+### 發現間確認
 
-After the user answers and before printing the next finding's terminal block, emit a one-line confirmation of the action taken. Examples: `→ Applied. Fix staged at src/utils/api-client.ts:36-37.`, `→ Deferred. Ticket filed: <url>.`, `→ Skipped.`, `→ Acknowledged.`
+用戶回答後、印下則發現之終端塊前，發出一行確認。如 `→ Applied. Fix staged at src/utils/api-client.ts:36-37.`、`→ Deferred. Ticket filed: <url>.`、`→ Skipped.`、`→ Acknowledged.`
 
-### Options (four, or adapted as noted)
+### 選項（四項，或如註調整）
 
-Fixed order. Never reorder:
+固定順序。勿重排：
 
 ```
 1. Apply the proposed fix
@@ -117,9 +117,9 @@ Fixed order. Never reorder:
 4. LFG the rest — apply the agent's best judgment to this and remaining findings
 ```
 
-Render the `[TRACKER]` label per `tracker-defer.md`: when `confidence = high` AND `named_sink_available = true`, replace `[TRACKER]` with the concrete tracker name (e.g., `Defer — file a Linear ticket`). When `any_sink_available = true` but either `confidence = low` or `named_sink_available = false`, use the generic whole label `Defer — file a ticket` — whole-label substitution, not a `[TRACKER]` token swap.
+按 `tracker-defer.md` 渲染 `[TRACKER]` 標籤：`confidence = high` 且 `named_sink_available = true` 時，`[TRACKER]` 替換為具體追蹤器名（如 `Defer — file a Linear ticket`）。`any_sink_available = true` 但 `confidence = low` 或 `named_sink_available = false` 時，用通用全標籤 `Defer — file a ticket` — 全標籤替換，非 `[TRACKER]` 代幣交換。
 
-**Mark the post-tie-break recommendation with `(recommended)` on its option label.** Required, not optional. Any of the four options can carry it:
+**於決勝後建議之選項標記 `(recommended)`。** 必要，非可選。四選項中任一皆可標：
 
 ```
 1. Apply the proposed fix  (recommended)
@@ -135,95 +135,95 @@ Render the `[TRACKER]` label per `tracker-defer.md`: when `confidence = high` AN
 4. LFG the rest
 ```
 
-When reviewers disagreed or content context cuts against the default, still mark one option — whichever Stage 5 step 7b produced — and surface the disagreement in the R15 conflict context line.
+審閱者分歧或內容上下文不利預設時，仍標一選項 — Stage 5 步驟 7b 所產出者 — 並於 R15 衝突上下文行呈現分歧。
 
-### Adaptations
+### 調整
 
-- **Advisory-only finding:** when the finding's `autofix_class` is `advisory` (no actionable fix), option A is replaced with `Acknowledge — mark as reviewed`. The other three options remain. The advisory variant is the only case where `Acknowledge` appears in the menu.
-- **N=1 (exactly one pending finding):** the terminal block's heading omits `Finding N of M` and renders as `## {severity} {plain-English title}`. The stem's first line drops the position counter, becoming `{severity} {short handle}.` Option D (`LFG the rest`) is suppressed because no subsequent findings exist — the menu shows three options: Apply / Defer / Skip (or Acknowledge, for advisory).
-- **No-sink (Defer option unavailable):** when the tracker-detection tuple reports `any_sink_available: false` (every tier in the fallback chain — named tracker, GitHub Issues, harness primitive — is unreachable), option B (`Defer`) is omitted. The stem appends one line explaining why (e.g., `Defer unavailable on this platform — no tracker or task-tracking primitive detected.`). The menu shows three options: Apply / Skip / LFG the rest (and Acknowledge in place of Apply for advisory-only findings). **Before rendering the options, remap any per-finding `Defer` recommendation produced by Stage 5 step 7b to `Skip`** so the `(recommended)` marker always lands on an option that is actually in the menu. When the remap fires, surface it on the R15 conflict context line (e.g., `Stage 5 recommended Defer; downgraded to Skip — no tracker sink available.`). This is a render-time runtime step mirroring the Defer→Skip downgrade that `bulk-preview.md` performs for LFG previews; Stage 5 step 7b has no knowledge of sink availability and only orders conflicting reviewer recommendations.
-- **Combined N=1 + no-sink:** the menu shows two options: Apply / Skip (or Acknowledge / Skip).
+- **僅建議發現：** 發現 `autofix_class` 為 `advisory`（無可操作修復）時，選項 A 替換為 `Acknowledge — mark as reviewed`。其餘三選項保留。建議性變體為選單中出現 `Acknowledge` 之唯一情形。
+- **N=1（恰一待決發現）：** 終端塊標題省略 `Finding N of M`，渲染為 `## {severity} {plain-English title}`。題幹首行去掉位置計數器，作 `{severity} {short handle}.`。選項 D（`LFG the rest`）因無後續發現而抑制 — 選單顯示三選項：Apply / Defer / Skip（建議性則為 Acknowledge）。
+- **無 sink（Defer 選項不可用）：** 追蹤器偵測 tuple 報 `any_sink_available: false`（後備鏈每層 — 指定追蹤器、GitHub Issues、Harness 原語 — 皆不可達）時，選項 B（`Defer`）省略。題幹附一行解釋（如 `Defer unavailable on this platform — no tracker or task-tracking primitive detected.`）。選單顯示三選項：Apply / Skip / LFG the rest（僅建議發現以 Acknowledge 代 Apply）。**渲染選項前，將 Stage 5 步驟 7b 產生之任何逐發現 `Defer` 建議重映射為 `Skip`** 以使 `(recommended)` 標記恆落於選單中實際存在之選項。重映射觸發時，於 R15 衝突上下文行呈現（如 `Stage 5 recommended Defer; downgraded to Skip — no tracker sink available.`）。此為渲染時運行時步驟，映射 `bulk-preview.md` 對 LFG 預覽所做之 Defer→Skip 降級；Stage 5 步驟 7b 不悉 sink 可用性，僅排序衝突審閱者建議。
+- **N=1 + 無 sink 組合：** 選單顯示二選項：Apply / Skip（或 Acknowledge / Skip）。
 
-Only when `ToolSearch` explicitly returns no match or the tool call errors — or on a platform with no blocking question tool — fall back to presenting the options as a numbered list and waiting for the user's next reply.
-
----
-
-## Per-finding routing
-
-For each finding's answer:
-
-- **Apply the proposed fix** — add the finding's id to an in-memory Apply set. Advance to the next finding. Do not dispatch the fixer inline — Apply accumulates for end-of-walk-through batch dispatch.
-- **Acknowledge — mark as reviewed** (advisory variant) — record Acknowledge in the in-memory decision list. Advance to the next finding. No side effects.
-- **Defer — file a [TRACKER] ticket** — invoke the tracker-defer flow from `tracker-defer.md`. The walk-through's position indicator stays on the current finding during any failure-path sub-question (Retry / Fall back / Convert to Skip). On success, record the tracker URL / reference in the in-memory decision list and advance. On conversion-to-Skip from the failure path, advance with the failure noted in the completion report.
-- **Skip — don't apply, don't track** — record Skip in the in-memory decision list. Advance. No side effects.
-- **LFG the rest — apply the agent's best judgment to this and remaining findings** — exit the walk-through loop. Dispatch the bulk preview from `bulk-preview.md`, scoped to the current finding and everything not yet decided. The preview header reports the count of already-decided findings ("K already decided"). If the user picks `Cancel` from the preview, return to the current finding's per-finding question (not to the routing question). If the user picks `Proceed`, execute the plan per `bulk-preview.md` — Apply findings join the in-memory Apply set with the ones the user already picked, Defer findings route through `tracker-defer.md`, Skip / Acknowledge no-op — then proceed to end-of-walk-through dispatch.
+僅當 `ToolSearch` 明確返回無匹配或工具呼叫出錯 — 或於無阻塞式提問工具之平台 — 方回退至編號列表並等候用戶下次回覆。
 
 ---
 
-## Override rule
+## 逐發現路由
 
-"Override" means the user picks a different preset action (Defer or Skip in place of Apply, or Apply in place of the agent's recommendation). No inline freeform custom-fix authoring — the walk-through is a decision loop, not a pair-programming surface. A user who wants a variant of the proposed fix picks Skip and hand-edits outside the flow; if they also want the finding tracked, they file a ticket manually. This trade is explicit in v1's scope boundaries.
+每則發現之回答：
 
----
-
-## State
-
-Walk-through state is **in-memory only**. The orchestrator maintains:
-
-- An Apply set (finding ids the user picked Apply on)
-- A decision list (every answered finding with its action and any metadata like `tracker_url` for Deferred or `reason` for Skipped)
-- The current position in the findings list
-
-Nothing is written to disk per-decision. An interrupted walk-through (user cancels the prompt, session compacts, network dies) discards all in-memory state. Defer actions that already executed remain in the tracker — those are external side effects and cannot be rolled back. Apply decisions have not been dispatched yet (they batch at end-of-walk-through), so they are cleanly lost with no code changes.
-
-Formal cross-session resumption is out of scope for v1.
+- **Apply the proposed fix** — 加入記憶體 Apply 集。推進至下則發現。勿內聯分派修復器 — Apply 累積至逐步結束批次分派。
+- **Acknowledge — mark as reviewed**（建議性變體）— 於記憶體決策列表記錄 Acknowledge。推進。無副作用。
+- **Defer — file a [TRACKER] ticket** — 調用 `tracker-defer.md` 之 tracker-defer 流程。逐步位置指示器於任何失敗路徑子問題（Retry / Fall back / Convert to Skip）期間停留於當前發現。成功時，於記憶體決策列表記錄追蹤器 URL/引用並推進。從失敗路徑轉為 Skip 時，附失敗記錄於完成報告中推進。
+- **Skip — don't apply, don't track** — 於記憶體決策列表記錄 Skip。推進。無副作用。
+- **LFG the rest — apply the agent's best judgment to this and remaining findings** — 退出逐步迴圈。分派 `bulk-preview.md` 之批量預覽，範圍為當前發現及所有未決者。預覽標頭報告已決發現計數（"K already decided"）。用戶自預覽選 `Cancel` 時，返當前發現之逐發現問題（非路徑問題）。選 `Proceed` 時，依 `bulk-preview.md` 執行計劃 — Apply 發現與用戶逐步中已選者合併入記憶體 Apply 集，Defer 發現經 `tracker-defer.md` 路由，Skip / Acknowledge 無操作 — 然後進入逐步結束分派。
 
 ---
 
-## End-of-walk-through dispatch
+## 覆蓋規則
 
-After the loop terminates — either every finding has been answered, or the user took `LFG the rest → Proceed` — the walk-through hands off to the dispatch phase:
-
-1. **Apply set:** spawn one fixer subagent for the full accumulated Apply set. The fixer receives the set as its input queue and applies all changes in one pass against the current working tree. This preserves the existing "one fixer, consistent tree" mechanic and gives the fixer the full set at once to handle inter-fix dependencies (two Applies touching overlapping regions). The existing Step 3 fixer prompt needs a small update to acknowledge this queue may be heterogeneous (`gated_auto` and `manual` mix, not just `safe_auto`) — authored alongside this reference.
-2. **Defer set:** already executed inline during the walk-through. Nothing to dispatch here.
-3. **Skip / Acknowledge:** no-op.
-
-After dispatch completes (or after `LFG the rest → Cancel` followed by the user working through remaining findings one at a time, or after the loop runs to completion), emit the unified completion report described below.
+「覆蓋」意為用戶選不同預設行動（Defer 或 Skip 代 Apply，或 Apply 代代理建議）。無內聯自由形式自訂修復撰寫 — 逐步為決策迴圈，非結對程式介面。欲修復變體者選 Skip 並於流程外手動編輯；若亦欲追蹤該發現，自行建單。此取捨為 v1 範圍邊界之明確設計。
 
 ---
 
-## Unified completion report
+## 狀態
 
-Every terminal path of Interactive mode emits the same completion report structure. This covers:
+逐步狀態**僅存記憶體**。編排者維護：
 
-- Walk-through completed (all findings answered)
-- Walk-through bailed via `LFG the rest → Proceed`
-- Top-level LFG (routing option B) completed
-- Top-level File tickets (routing option C) completed
-- Zero findings after `safe_auto` (routing question was skipped — the completion summary is a one-line degenerate case of this structure)
+- Apply 集（用戶選 Apply 之發現 ID）
+- 決策列表（每則已回答發現及其行動及元資料如 Deferred 之 `tracker_url` 或 Skipped 之 `reason`）
+- 發現列表中當前位置
 
-### Minimum required fields (per R12)
+無逐決策寫入磁碟。中斷之逐步（用戶取消提示、會話壓縮、網路斷裂）丟棄所有記憶體狀態。已執行之 Defer 動作留於追蹤器 — 此為外部副作用不可回滾。Apply 決策尚未分派（逐步結束批次分派），故隨碼不變而淨失。
 
-- **Per-finding entries:** for every finding the flow touched, a line with — at minimum — title, severity, the action taken (Applied / Deferred / Skipped / Acknowledged), the tracker URL or in-session task reference for Deferred entries, and a one-line reason for Skipped entries (grounded in the finding's confidence or the one-line `why_it_matters` snippet).
-- **Summary counts by action:** totals per bucket (e.g., `4 applied, 2 deferred, 2 skipped`).
-- **Failures called out explicitly:** any fix application that failed, any ticket creation that failed (with the reason returned by the tracker). Failures are surfaced above the per-finding list so they are not missed.
-- **End-of-review verdict:** the existing Stage 6 verdict (Ready to merge / Ready with fixes / Not ready), computed from the residual state after all actions complete.
+正式跨會話恢復超出 v1 範圍。
 
-### Coverage section
+---
 
-Carry forward the existing Coverage data (suppressed-finding count, residual risks, testing gaps, failed reviewers) and add one new element:
+## 逐步結束分派
 
-- **Framing-enrichment gaps:** count of findings where artifact lookup returned no match (merge-synthesized findings, or failed persona artifact writes). Name the personas contributing those gaps so the data feeds any future persona-upgrade decision. A trail of gaps per run tells the team which persona agents still need attention.
+迴圈終止後 — 每則發現已回答，或用戶取 `LFG the rest → Proceed` — 逐步交至分派階段：
 
-### Report ordering
+1. **Apply 集：** 為完整累積 Apply 集生成一修復子代理。修復器以之作輸入佇列，一次遍歷對當前工作樹施所有變更。此保留既有「一修復器、一致樹」機制並使修復器一次得全集以處理跨修復依賴（兩 Apply 觸及重疊區域）。既有步驟 3 修復器提示需小幅更新以承認此佇列可能為異質（`gated_auto` 及 `manual` 混合，非僅 `safe_auto`） — 隨此參考一起撰寫。
+2. **Defer 集：** 已於逐步中內聯執行。無需分派。
+3. **Skip / Acknowledge：** 無操作。
 
-The report appears after all execution completes. Ordering inside the report: failures first (above the per-finding list), then per-finding entries grouped by action bucket in the order `Applied / Deferred / Skipped / Acknowledged`, then summary counts, then Coverage, then the verdict.
+分派完成後（或 `LFG the rest → Cancel` 後用戶逐一處理剩餘發現，或迴圈跑至完成），發出下方描述之統一完成報告。
 
-### Zero-findings degenerate case
+---
 
-When the routing question was skipped because no `gated_auto` / `manual` findings remained after `safe_auto`, the completion report collapses to its summary-counts + verdict form with one added line — the count of `safe_auto` fixes applied. The summary wording mirrors `SKILL.md` Step 2 Interactive mode's zero-remaining case: the unqualified `All findings resolved` form is only accurate when no advisory or pre-existing findings remain. When advisory and/or pre-existing findings remain in the report, use the qualified form that names what was cleared and names what still remains. Examples:
+## 統一完成報告
 
-No remaining advisory or pre-existing findings:
+互動模式每個終端路徑發出相同完成報告結構。涵蓋：
+
+- 逐步完成（所有發現已回答）
+- 逐步經 `LFG the rest → Proceed` 退出
+- 頂層 LFG（路徑 B）完成
+- 頂層建單（路徑 C）完成
+- `safe_auto` 後零發現（路徑問題被跳過 — 完成摘要為此結構之一行退化情況）
+
+### 最低必含欄位（依 R12）
+
+- **逐發現條目：** 流程觸及之每則發現，一行含 — 至少 — 標題、嚴重度、所採行動（Applied / Deferred / Skipped / Acknowledged）、Deferred 條目之追蹤器 URL 或會話內任務引用、及 Skipped 條目之一行原因（基於發現信心或一行 `why_it_matters` 摘要）。
+- **按行動之摘要計數：** 各桶總數（如 `4 applied, 2 deferred, 2 skipped`）。
+- **失敗明確標出：** 修復施用失敗、單據建立失敗（附追蹤器返回之原因）。失敗呈現於逐發現列表之上方以免遺漏。
+- **審閱結束判定：** 既有 Stage 6 判定（Ready to merge / Ready with fixes / Not ready），由所有行動完成後之殘餘狀態計算。
+
+### Coverage 段
+
+延用既有 Coverage 資料（抑制發現計數、殘餘風險、測試缺口、失敗審閱者）並加一項：
+
+- **框架增強缺口：** 產物查閱無匹配之發現數量（合併綜合發現或角色產物寫入失敗）。命名貢獻缺口之角色以供資料驅動未來角色升級決策。每次運行之缺口軌跡告知團隊哪些角色代理仍需關注。
+
+### 報告順序
+
+報告於所有執行完成後出現。報告內順序：失敗優先（逐發現列表上方），然後逐發現條目按行動桶排序為 `Applied / Deferred / Skipped / Acknowledged`，然後摘要計數，然後 Coverage，然後判定。
+
+### 零發現退化情況
+
+路徑問題因 `safe_auto` 後無 `gated_auto` / `manual` 發現而被跳過時，完成報告折疊為摘要計數 + 判定形式並加一行 — `safe_auto` 修復之計數。摘要用語映射 `SKILL.md` 步驟 2 互動模式零剩餘情況：無限制 `All findings resolved` 形式僅於無建議性或預存發現殘留時準確。報告中有建議性及/或預存發現殘留時，用限定形式指名已清除者及仍殘留者。範例：
+
+無剩餘建議性或預存發現：
 
 ```
 All findings resolved — 3 safe_auto fixes applied.
@@ -231,7 +231,7 @@ All findings resolved — 3 safe_auto fixes applied.
 Verdict: Ready with fixes.
 ```
 
-Advisory and/or pre-existing findings remain in the report:
+報告中有建議性及/或預存發現殘留：
 
 ```
 All actionable findings resolved — 3 safe_auto fixes applied. (2 advisory, 1 pre-existing findings remain in the report.)
@@ -241,6 +241,6 @@ Verdict: Ready with fixes.
 
 ---
 
-## Execution posture
+## 執行姿態
 
-The walk-through is operationally read-only except for two permitted writes: the in-memory Apply set / decision list (managed by the orchestrator) and the tracker-defer dispatch (external ticket creation, described in `tracker-defer.md`). Persona agents remain strictly read-only. The end-of-walk-through fixer dispatch is the single point where file modifications happen — governed by the existing Step 3 fixer contract in `SKILL.md`.
+逐步運作上為唯讀，除兩處允許寫入：記憶體 Apply 集/決策列表（由編排者管理）及 tracker-defer 分派（外部單據建立，見 `tracker-defer.md`）。角色代理保持嚴格唯讀。逐步結束修復器分派為檔案修改之唯一點 — 由 `SKILL.md` 既有步驟 3 修復器合約治理。

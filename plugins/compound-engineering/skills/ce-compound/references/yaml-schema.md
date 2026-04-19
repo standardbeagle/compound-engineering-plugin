@@ -1,64 +1,64 @@
-# YAML Frontmatter Schema
+# YAML前揭綱目
 
-`schema.yaml` in this directory is the canonical contract for `docs/solutions/` frontmatter written by `ce-compound`.
+此目錄之 `schema.yaml` 乃 `docs/solutions/` 前揭之正典契約，亦為 `ce-compound` 所遵。
 
-Use this file as the quick reference for:
-- required fields
-- enum values
-- validation expectations
-- category mapping
-- track classification (bug vs knowledge)
+速查：
+- 必填欄
+- 枚舉值
+- 驗證規範
+- 類目映射
+- 軌道分類（缺陷 vs 知識）
 
-## Tracks
+## 軌道
 
-The `problem_type` determines which **track** applies. Each track has different required and optional fields.
+`problem_type` 定其軌。各軌必填/選填不同。
 
-| Track | problem_types | Description |
+| 軌 | problem_types | 述 |
 |-------|--------------|-------------|
-| **Bug** | `build_error`, `test_failure`, `runtime_error`, `performance_issue`, `database_issue`, `security_issue`, `ui_bug`, `integration_issue`, `logic_error` | Defects and failures that were diagnosed and fixed |
-| **Knowledge** | `best_practice`, `documentation_gap`, `workflow_issue`, `developer_experience` | Practices, patterns, workflow improvements, and documentation |
+| **缺陷** | `build_error`, `test_failure`, `runtime_error`, `performance_issue`, `database_issue`, `security_issue`, `ui_bug`, `integration_issue`, `logic_error` | 已診斷修復之缺陷 |
+| **知識** | `best_practice`, `documentation_gap`, `workflow_issue`, `developer_experience` | 實踐、模式、流程改善、文檔 |
 
-## Required Fields (both tracks)
+## 必填欄（雙軌共通）
 
-- **module**: Module or area affected
-- **date**: ISO date in `YYYY-MM-DD`
-- **problem_type**: One of the values listed in the Tracks table above
-- **component**: One of `rails_model`, `rails_controller`, `rails_view`, `service_object`, `background_job`, `database`, `frontend_stimulus`, `hotwire_turbo`, `email_processing`, `brief_system`, `assistant`, `authentication`, `payments`, `development_workflow`, `testing_framework`, `documentation`, `tooling`
-- **severity**: One of `critical`, `high`, `medium`, `low`
+- **module**: 受影響之模組或區域
+- **date**: ISO日期 `YYYY-MM-DD`
+- **problem_type**: 見上表枚舉
+- **component**: `rails_model`, `rails_controller`, `rails_view`, `service_object`, `background_job`, `database`, `frontend_stimulus`, `hotwire_turbo`, `email_processing`, `brief_system`, `assistant`, `authentication`, `payments`, `development_workflow`, `testing_framework`, `documentation`, `tooling` 之一
+- **severity**: `critical`, `high`, `medium`, `low` 之一
 
-## Bug Track Fields
+## 缺陷軌欄
 
-Required:
-- **symptoms**: YAML array with 1-5 observable symptoms (errors, broken behavior)
-- **root_cause**: One of `missing_association`, `missing_include`, `missing_index`, `wrong_api`, `scope_issue`, `thread_violation`, `async_timing`, `memory_leak`, `config_error`, `logic_error`, `test_isolation`, `missing_validation`, `missing_permission`, `missing_workflow_step`, `inadequate_documentation`, `missing_tooling`, `incomplete_setup`
-- **resolution_type**: One of `code_fix`, `migration`, `config_change`, `test_fix`, `dependency_update`, `environment_setup`, `workflow_improvement`, `documentation_update`, `tooling_addition`, `seed_data_update`
+必填：
+- **symptoms**: YAML陣列，1-5可觀症狀
+- **root_cause**: `missing_association`, `missing_include`, `missing_index`, `wrong_api`, `scope_issue`, `thread_violation`, `async_timing`, `memory_leak`, `config_error`, `logic_error`, `test_isolation`, `missing_validation`, `missing_permission`, `missing_workflow_step`, `inadequate_documentation`, `missing_tooling`, `incomplete_setup` 之一
+- **resolution_type**: `code_fix`, `migration`, `config_change`, `test_fix`, `dependency_update`, `environment_setup`, `workflow_improvement`, `documentation_update`, `tooling_addition`, `seed_data_update` 之一
 
-## Knowledge Track Fields
+## 知識軌欄
 
-No additional required fields beyond the shared ones. All fields below are optional:
+共通必填之外無額外必填。下皆選填：
 
-- **applies_when**: Conditions or situations where this guidance applies
-- **symptoms**: Observable gaps or friction that prompted this guidance
-- **root_cause**: Underlying cause, if there is a specific one
-- **resolution_type**: Type of change, if applicable
+- **applies_when**: 適用條件
+- **symptoms**: 可觀缺口或摩擦
+- **root_cause**: 潛在成因（若有）
+- **resolution_type**: 變更類型（若適用）
 
-## Optional Fields (both tracks)
+## 選填欄（雙軌共通）
 
-- **related_components**: Other components involved
-- **tags**: Search keywords, lowercase and hyphen-separated
+- **related_components**: 涉及之他組件
+- **tags**: 搜尋關鍵詞，小寫連字符
 
-## Optional Fields (bug track only)
+## 選填欄（僅缺陷軌）
 
-- **rails_version**: Rails version in `X.Y.Z` format
+- **rails_version**: Rails版本 `X.Y.Z`
 
-## Backward Compatibility
+## 向後相容
 
-Docs created before the track system may have `symptoms`/`root_cause`/`resolution_type` on knowledge-type problem_types. These are valid legacy docs:
+軌道系統之前所作文檔，知識類可有 `symptoms`/`root_cause`/`resolution_type`。此乃合法舊文：
 
-- Bug-track fields present on a knowledge-track doc are harmless. Do not strip them during refresh unless the doc is being rewritten for other reasons.
-- When creating **new** docs, follow the track rules above.
+- 缺陷軌欄出現於知識軌文檔，無害。除非因他故重寫，否則刷新時勿刪。
+- 新建文檔須循上軌道規則。
 
-## Category Mapping
+## 類目映射
 
 - `build_error` -> `docs/solutions/build-errors/`
 - `test_failure` -> `docs/solutions/test-failures/`
@@ -74,14 +74,14 @@ Docs created before the track system may have `symptoms`/`root_cause`/`resolutio
 - `best_practice` -> `docs/solutions/best-practices/`
 - `documentation_gap` -> `docs/solutions/documentation-gaps/`
 
-## Validation Rules
+## 驗證規則
 
-1. Determine the track from `problem_type` using the Tracks table.
-2. All shared required fields must be present.
-3. Bug-track required fields (`symptoms`, `root_cause`, `resolution_type`) must be present on bug-track docs.
-4. Knowledge-track docs have no additional required fields beyond the shared ones.
-5. Bug-track fields on existing knowledge-track docs are harmless (see Backward Compatibility).
-6. Enum fields must match the allowed values exactly.
-7. Array fields must respect min/max item counts.
-8. `date` must match `YYYY-MM-DD`.
-9. `rails_version`, if present, must match `X.Y.Z` and only applies to bug-track docs.
+1. 由 `problem_type` 依上表定軌。
+2. 共通必填欄須齊備。
+3. 缺陷軌必填欄（`symptoms`, `root_cause`, `resolution_type`）須見於缺陷軌文檔。
+4. 知識軌文檔除共通必填外無額外必填。
+5. 缺陷軌欄出現於既有知識軌文檔，無害（見向後相容）。
+6. 枚舉欄須精確匹配。
+7. 陣列欄須守最小/最大項數。
+8. `date` 須合 `YYYY-MM-DD`。
+9. `rails_version` 若有，須合 `X.Y.Z` 且僅適用缺陷軌。

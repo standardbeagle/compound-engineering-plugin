@@ -1,17 +1,17 @@
-# Tier: Static Screenshots
+# 層：靜態截圖
 
-Capture individual PNG screenshots. No animation, no stitching.
+擷取個別 PNG 截圖。無動畫、無縫合。
 
-**Best for:** Fallback when other tools are unavailable, library demos, or features where animation doesn't add value.
-**Output:** PNG files
-**Label:** "Screenshots"
-**Required tools:** Varies (agent-browser for web, silicon for CLI, or native screenshot)
+**適用：** 他工具不可用時之後備、函式庫展示、動畫無增值之功能。
+**產出：** PNG 檔案
+**標籤：** "Screenshots"
+**所需工具：** 視情而定（web 用 agent-browser，CLI 用 silicon，或原生截圖）
 
-## Capture by Project Type
+## 依專案類型擷取
 
-### Web app or desktop app (agent-browser available)
+### Web應用或桌面應用（agent-browser 可用）
 
-If `agent-browser` is not installed, inform the user: "`agent-browser` is not installed. Run `/ce-setup` to install required dependencies." Then skip to the CLI or fallback sections below.
+若 `agent-browser` 未安裝，告使用者：「`agent-browser` is not installed. Run `/ce-setup` to install required dependencies.」然後跳至下方 CLI 或後備段落。
 
 ```bash
 agent-browser open [URL]
@@ -25,29 +25,29 @@ agent-browser wait 2000
 agent-browser screenshot [RUN_DIR]/screenshot-01.png
 ```
 
-Capture 1-3 screenshots: before state, feature in action, result state.
+擷取1-3幅截圖：前態、功能運作、結果態。
 
-### CLI tool (silicon available)
+### CLI 工具（silicon 可用）
 
-Run the command, capture its output to a text file, then render with silicon:
+執行命令，將輸出捕至文字檔，以 silicon 渲染：
 
 ```bash
 silicon [RUN_DIR]/output.txt -o [RUN_DIR]/screenshot-01.png --theme Dracula -l bash --pad-horiz 20 --pad-vert 20
 ```
 
-### CLI tool (no silicon)
+### CLI 工具（無 silicon）
 
-Run the command and capture the raw terminal output. Include the output as a code block in the PR description instead of an image. Label it as "Terminal output", never "Screenshot".
+執行命令並捕獲原始終端輸出。以程式碼區塊置於 PR 說明中代替圖片。標籤為 "Terminal output"，永不為 "Screenshot"。
 
-### Library
+### 函式庫
 
-Run example code that exercises the new API. Capture the output as above (silicon if available, code block if not).
+執行演練新 API 之範例代碼。依上法捕獲輸出（有 silicon 用 silicon，無則用程式碼區塊）。
 
-## Upload
+## 上傳
 
-Each PNG is uploaded individually. Proceed to `references/upload-and-approval.md` for each file, or upload all and present them together for approval.
+每幅 PNG 個別上傳。續至 `references/upload-and-approval.md` 逐檔處理，或全部上傳後一併呈請核准。
 
-For multiple screenshots, the markdown embed uses multiple image lines:
+多幅截圖之 markdown 嵌入用多行圖片：
 
 ```markdown
 ## Screenshots

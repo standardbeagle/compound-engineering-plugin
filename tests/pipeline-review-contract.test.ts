@@ -18,16 +18,16 @@ describe("ce-work review contract", () => {
     expect(content).not.toContain("Code Review** (Optional)")
 
     // Phase 3 has a mandatory code review step in the reference file
-    expect(shipping).toContain("2. **Code Review**")
+    expect(shipping).toContain("2. **程式碼審閱**")
 
     // Two-tier rubric in reference file
-    expect(shipping).toContain("**Tier 1: Inline self-review**")
-    expect(shipping).toContain("**Tier 2: Full review (default)**")
+    expect(shipping).toContain("**第一級：行內自審**")
+    expect(shipping).toContain("**第二級：完整審閱（預設）**")
     expect(shipping).toContain("ce-code-review")
     expect(shipping).toContain("mode:autofix")
 
     // Quality checklist includes review
-    expect(shipping).toContain("Code review completed (inline self-review or full `ce-code-review`)")
+    expect(shipping).toContain("程式碼審閱已完成（行內自審或完整 `ce-code-review`）")
   })
 
   test("delegates commit and PR to dedicated skills", async () => {
@@ -35,8 +35,8 @@ describe("ce-work review contract", () => {
     // Commit/PR delegation content extracted to references/shipping-workflow.md
     const shipping = await readRepoFile("plugins/compound-engineering/skills/ce-work/references/shipping-workflow.md")
 
-    expect(shipping).toContain("`ce-commit-push-pr` skill")
-    expect(shipping).toContain("`ce-commit` skill")
+    expect(shipping).toContain("`ce-commit-push-pr` 技能")
+    expect(shipping).toContain("`ce-commit` 技能")
 
     // Should not contain inline PR templates or attribution placeholders
     expect(content).not.toContain("gh pr create")
@@ -49,9 +49,9 @@ describe("ce-work review contract", () => {
     const shipping = await readRepoFile("plugins/compound-engineering/skills/ce-work-beta/references/shipping-workflow.md")
 
     // Extracted content in reference file
-    expect(shipping).toContain("2. **Code Review**")
-    expect(shipping).toContain("`ce-commit-push-pr` skill")
-    expect(shipping).toContain("`ce-commit` skill")
+    expect(shipping).toContain("2. **程式碼審閱**")
+    expect(shipping).toContain("`ce-commit-push-pr` 技能")
+    expect(shipping).toContain("`ce-commit` 技能")
 
     // Negative assertions stay on SKILL.md
     expect(beta).not.toContain("Consider Code Review")
@@ -62,12 +62,12 @@ describe("ce-work review contract", () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-work/SKILL.md")
 
     // Testing deliberation exists in the execution loop
-    expect(content).toContain("Assess testing coverage")
+    expect(content).toContain("評估測試覆蓋")
 
     // Deliberation is between "Run tests after changes" and "Mark task as completed"
-    const runTestsIdx = content.indexOf("Run tests after changes")
-    const assessIdx = content.indexOf("Assess testing coverage")
-    const markDoneIdx = content.indexOf("Mark task as completed")
+    const runTestsIdx = content.indexOf("變更後執行測試")
+    const assessIdx = content.indexOf("評估測試覆蓋")
+    const markDoneIdx = content.indexOf("標記任務為已完成")
     expect(runTestsIdx).toBeLessThan(assessIdx)
     expect(assessIdx).toBeLessThan(markDoneIdx)
   })
@@ -78,7 +78,7 @@ describe("ce-work review contract", () => {
     const shipping = await readRepoFile("plugins/compound-engineering/skills/ce-work/references/shipping-workflow.md")
 
     // New language present in reference file
-    expect(shipping).toContain("Testing addressed")
+    expect(shipping).toContain("測試已處理")
 
     // Old language fully removed from both
     expect(content).not.toContain("Tests pass (run project's test command)")
@@ -92,10 +92,10 @@ describe("ce-work review contract", () => {
     const shipping = await readRepoFile("plugins/compound-engineering/skills/ce-work-beta/references/shipping-workflow.md")
 
     // Testing deliberation stays in SKILL.md (Phase 2 content)
-    expect(beta).toContain("Assess testing coverage")
+    expect(beta).toContain("評估測試覆蓋")
 
     // New checklist language in reference file
-    expect(shipping).toContain("Testing addressed")
+    expect(shipping).toContain("測試已處理")
 
     // Old language removed from both
     expect(beta).not.toContain("Tests pass (run project's test command)")
@@ -197,25 +197,25 @@ describe("ce:work-beta codex delegation contract", () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-work-beta/references/codex-delegation-workflow.md")
 
     // Pre-delegation checks
-    expect(content).toContain("## Pre-Delegation Checks")
-    expect(content).toContain("Platform Gate")
+    expect(content).toContain("## 預委託檢查")
+    expect(content).toContain("平台閘門")
     expect(content).toContain("CODEX_SANDBOX")
     expect(content).toContain("command -v codex")
-    expect(content).toContain("Consent Flow")
+    expect(content).toContain("同意流程")
 
     // Batching
-    expect(content).toContain("## Batching")
+    expect(content).toContain("## 批次處理")
 
     // Prompt template
-    expect(content).toContain("## Prompt Template")
+    expect(content).toContain("## 提示模板")
     expect(content).toContain("<task>")
     expect(content).toContain("<constraints>")
     expect(content).toContain("<output_contract>")
     expect(content).toContain("the orchestrator will not re-run verification independently")
 
     // Result schema and execution loop
-    expect(content).toContain("## Result Schema")
-    expect(content).toContain("## Execution Loop")
+    expect(content).toContain("## 結果 Schema")
+    expect(content).toContain("## 執行循環")
     expect(content).toContain("codex exec")
 
     // Circuit breaker
@@ -225,16 +225,16 @@ describe("ce:work-beta codex delegation contract", () => {
     // Rollback safety
     expect(content).toContain("git diff --quiet HEAD")
     expect(content).toContain("git checkout -- .")
-    expect(content).toContain("Do NOT use bare `git clean -fd` without path arguments")
+    expect(content).toContain("勿使用無路徑引數之裸 `git clean -fd`")
 
     // Mixed-model attribution
-    expect(content).toContain("## Mixed-Model Attribution")
+    expect(content).toContain("## 混合模型歸因")
   })
 
   test("delegation reference has decision prompts for ask mode", async () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-work-beta/references/codex-delegation-workflow.md")
 
-    expect(content).toContain("## Delegation Decision")
+    expect(content).toContain("## 委託決策")
     expect(content).toContain("work_delegate_decision")
     expect(content).toContain("Execute with Claude Code instead")
     expect(content).toContain("Delegate to Codex anyway")
@@ -277,8 +277,8 @@ describe("ce-brainstorm review contract", () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-brainstorm/SKILL.md")
 
     // Phase 3.5 exists and runs document-review
-    expect(content).toContain("### Phase 3.5: Document Review")
-    expect(content).toContain("`ce-doc-review` skill")
+    expect(content).toContain("### 階段 3.5：文檔審查")
+    expect(content).toContain("`ce-doc-review` 技能")
 
     // Phase 3 and Phase 4 are extracted to references for token optimization
     expect(content).toContain("`references/requirements-capture.md`")
@@ -287,8 +287,7 @@ describe("ce-brainstorm review contract", () => {
     // Additional review passes are surfaced contextually (not as a menu fixture) and still
     // route through the ce-doc-review skill when requested
     const handoff = await readRepoFile("plugins/compound-engineering/skills/ce-brainstorm/references/handoff.md")
-    expect(handoff).toContain("Surface additional document review contextually")
-    expect(handoff).toContain("Load the `ce-doc-review` skill")
+    expect(handoff).toContain("載入 `ce-doc-review` 技能")
     expect(handoff).not.toContain("**Review and refine**")
   })
 })
@@ -298,7 +297,7 @@ describe("ce-plan testing contract", () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-plan/SKILL.md")
 
     // Phase 5.1 review checklist addresses blank test scenarios
-    expect(content).toContain("blank or missing test scenarios")
+    expect(content).toContain("空白或缺失測試場景")
     expect(content).toContain("Test expectation: none")
 
     // Template comment mentions the annotation convention
@@ -312,12 +311,12 @@ describe("ce-plan review contract", () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-plan/references/plan-handoff.md")
 
     // Phase 5.3.8 runs document-review before final checks (5.3.9)
-    expect(content).toContain("## 5.3.8 Document Review")
-    expect(content).toContain("`ce-doc-review` skill")
+    expect(content).toContain("## 5.3.8 文檔審閱")
+    expect(content).toContain("`ce-doc-review` 技能")
 
     // Document review must come before final checks so auto-applied edits are validated
-    const docReviewIdx = content.indexOf("5.3.8 Document Review")
-    const finalChecksIdx = content.indexOf("5.3.9 Final Checks")
+    const docReviewIdx = content.indexOf("5.3.8 文檔審閱")
+    const finalChecksIdx = content.indexOf("5.3.9 最終檢查")
     expect(docReviewIdx).toBeLessThan(finalChecksIdx)
   })
 
@@ -333,7 +332,7 @@ describe("ce-plan review contract", () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-plan/references/plan-handoff.md")
 
     // Pipeline mode runs document-review headlessly, not skipping it
-    expect(content).toContain("ce-doc-review` with `mode:headless`")
+    expect(content).toContain("mode:headless")
     expect(content).not.toContain("skip document-review and return control")
   })
 
@@ -341,12 +340,11 @@ describe("ce-plan review contract", () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-plan/references/plan-handoff.md")
 
     // ce-work is recommended (review already happened)
-    expect(content).toContain("**Start `/ce-work`** (recommended) - Begin implementing this plan in the current session")
+    expect(content).toContain("**開始 `/ce-work`**（推薦）")
 
     // Additional review passes are surfaced contextually (not as a menu fixture) and still
     // route through the ce-doc-review skill when requested
-    expect(content).toContain("Surface additional document review contextually")
-    expect(content).toContain("Load the `ce-doc-review` skill")
+    expect(content).toContain("載入 `ce-doc-review` 技能")
 
     // No conditional ordering based on plan depth (review already ran)
     expect(content).not.toContain("**Options when ce-doc-review is recommended:**")

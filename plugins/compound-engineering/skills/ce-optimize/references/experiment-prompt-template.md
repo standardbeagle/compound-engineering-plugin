@@ -1,10 +1,10 @@
-# Experiment Worker Prompt Template
+# 實驗工作者提示模板
 
-This template is used by the orchestrator to dispatch each experiment to a subagent or Codex. Variable substitution slots are filled at spawn time.
+編排器使用此模板將各實驗分派至子代理或 Codex。變數替換槽於生成時填入。
 
 ---
 
-## Template
+## 模板
 
 ```
 You are an optimization experiment worker.
@@ -64,26 +64,26 @@ Focus on implementing the hypothesis well. The orchestrator will measure and eva
 </instructions>
 ```
 
-## Variable Reference
+## 變數參考
 
-| Variable | Source | Description |
-|----------|--------|-------------|
-| `{iteration}` | Experiment counter | Sequential experiment number |
-| `{spec_name}` | Spec file `name` field | Optimization target identifier |
-| `{hypothesis_description}` | Hypothesis backlog | What this experiment should try |
-| `{hypothesis_category}` | Hypothesis backlog | Category (signal-extraction, algorithm, etc.) |
-| `{current_best_metrics}` | Experiment log `best` section | Current best metric values (compact YAML or key: value pairs) |
-| `{baseline_metrics}` | Experiment log `baseline` section | Original baseline before any optimization |
-| `{scope_mutable}` | Spec `scope.mutable` | List of files/dirs the worker may modify |
-| `{scope_immutable}` | Spec `scope.immutable` | List of files/dirs the worker must not touch |
-| `{constraints}` | Spec `constraints` | Free-text constraints to follow |
-| `{approved_dependencies}` | Spec `dependencies.approved` | Dependencies approved for use |
-| `{recent_experiment_summaries}` | Rolling window (last 10) from experiment log | Compact summaries: hypothesis, outcome, learnings |
+| 變數 | 來源 | 描述 |
+|------|------|------|
+| `{iteration}` | 實驗計數器 | 順序實驗編號 |
+| `{spec_name}` | 規格檔 `name` 欄位 | 優化目標識別符 |
+| `{hypothesis_description}` | 假設待辦 | 此實驗應嘗試者 |
+| `{hypothesis_category}` | 假設待辦 | 類別（signal-extraction, algorithm 等） |
+| `{current_best_metrics}` | 實驗日誌 `best` 段 | 當前最佳指標值（精簡 YAML 或 key: value 對） |
+| `{baseline_metrics}` | 實驗日誌 `baseline` 段 | 優化前之原始基線 |
+| `{scope_mutable}` | 規格 `scope.mutable` | 工作者可修改之檔案/目錄列表 |
+| `{scope_immutable}` | 規格 `scope.immutable` | 工作者不得觸碰之檔案/目錄列表 |
+| `{constraints}` | 規格 `constraints` | 遵循之自由文字約束 |
+| `{approved_dependencies}` | 規格 `dependencies.approved` | 核准使用之依賴 |
+| `{recent_experiment_summaries}` | 實驗日誌滑動窗口（最近 10 筆） | 精簡摘要：假設、結果、心得 |
 
-## Notes
+## 備註
 
-- This template works for both subagent and Codex dispatch. No platform-specific assumptions.
-- For Codex dispatch: write the filled template to a temp file and pipe via stdin (`cat /tmp/optimize-exp-XXXXX.txt | codex exec --skip-git-repo-check - 2>&1`).
-- For subagent dispatch: pass the filled template as the subagent prompt.
-- Keep `{recent_experiment_summaries}` concise -- 2-3 lines per experiment, last 10 only. Do not include the full experiment log.
-- The worker should NOT read the full experiment log or strategy digest. It receives only what the orchestrator provides.
+- 此模板適用於子代理及 Codex 分派。無平台特定假設。
+- Codex 分派：將填充後之模板寫入臨時檔案並透過 stdin 管道傳入（`cat /tmp/optimize-exp-XXXXX.txt | codex exec --skip-git-repo-check - 2>&1`）。
+- 子代理分派：將填充後之模板作為子代理提示傳入。
+- 保持 `{recent_experiment_summaries}` 精簡——每實驗 2-3 行，僅最近 10 筆。不包含完整實驗日誌。
+- 工作者不應讀取完整實驗日誌或策略摘要。其僅接收編排器所提供者。

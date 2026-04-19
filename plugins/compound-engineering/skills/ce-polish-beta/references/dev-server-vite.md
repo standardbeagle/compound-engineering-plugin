@@ -1,32 +1,32 @@
-# Vite dev-server recipe (auto-detect fallback)
+# Vite 開發伺服器配方（自動偵測後備）
 
-Loaded when `detect-project-type.sh` returns `vite` and there is no `.claude/launch.json` to consult.
+當 `detect-project-type.sh` 回傳 `vite` 且無 `.claude/launch.json` 可查時載入。
 
-## Signature
+## 簽名
 
-- `vite.config.js`, `vite.config.ts`, `vite.config.mjs`, or `vite.config.cjs` exists
+- `vite.config.js`、`vite.config.ts`、`vite.config.mjs` 或 `vite.config.cjs` 存在
 
-## Start command
+## 啟動命令
 
-Standard:
+標準：
 
 ```bash
 npm run dev
 ```
 
-The `dev` script in `package.json` typically wraps `vite` directly. Prefer the package manager indicated by the lockfile (see the Next.js recipe for the lockfile → command mapping).
+`package.json` 中之 `dev` 腳本通常直接包裹 `vite`。依 lockfile 指示之套件管理器偏好（見 Next.js 配方之 lockfile → 命令映射）。
 
-## Port
+## 埠號
 
-Default: `5173`. Vite respects `--port <n>` and the `VITE_PORT` env var. The cascade in `references/dev-server-detection.md` picks up `--port` from `package.json` scripts and `PORT` from `.env*`.
+預設：`5173`。Vite 接受 `--port <n>` 及 `VITE_PORT` 環境變數。`references/dev-server-detection.md` 中之層疊從 `package.json` 腳本拾取 `--port` 及從 `.env*` 拾取 `PORT`。
 
-Vite's `--strictPort` flag causes the dev server to fail rather than increment to the next available port when the requested port is in use. Polish's kill-by-port step will reclaim the port before starting, so `strictPort` is not a problem in practice — but users who disable port reclamation and run multiple Vite instances will see the port auto-increment unless `strictPort: true` is set in `vite.config.ts`.
+Vite 之 `--strictPort` 旗標使開發伺服器在請求埠號被佔用時失敗而非遞增至下一可用埠。Polish 之 kill-by-port 步驟於啟動前回收埠號，故 `strictPort` 實際上不造成問題——但禁用埠號回收且運行多個 Vite 實例之用戶會看到埠號自動遞增，除非 `vite.config.ts` 中設 `strictPort: true`。
 
-## Host binding
+## 主機綁定
 
-Vite binds to `127.0.0.1` by default. For polish running inside a devcontainer or WSL, users may need `--host 0.0.0.0` in `runtimeArgs`. The checklist can note this if relevant to the diff.
+Vite 預設綁定 `127.0.0.1`。Polish 運行於 devcontainer 或 WSL 內時，用戶可能需 `--host 0.0.0.0` 於 `runtimeArgs`。若與差異相關，檢查清單可注明。
 
-## Stub generation
+## 存根生成
 
 ```json
 {
@@ -42,7 +42,7 @@ Vite binds to `127.0.0.1` by default. For polish running inside a devcontainer o
 }
 ```
 
-## Common gotchas
+## 常見陷阱
 
-- **HMR websocket port:** Vite's HMR uses a separate websocket that inherits the dev-server port by default. If the project pins `server.hmr.port` in `vite.config.ts`, the polish reachability probe against the dev-server port still works, but the embedded browser may need additional configuration to reach HMR.
-- **Framework on top of Vite:** SvelteKit, SolidStart, Qwik City, and Astro all use Vite but add their own dev scripts. The `vite` signature catches them, and `npm run dev` is the right command for all of them. Different default ports apply (SvelteKit: 5173, Astro: 4321, Qwik: 5173) — rely on the cascade to pick up the actual port from `package.json` or `.env`.
+- **HMR websocket 埠號：** Vite 之 HMR 使用獨立 websocket，預設繼承開發伺服器埠號。若專案於 `vite.config.ts` 中固定 `server.hmr.port`，polish 對開發伺服器埠號之可達性探測仍有效，但嵌入式瀏覽器可能需額外配置以到達 HMR。
+- **Vite 上之框架：** SvelteKit、SolidStart、Qwik City 及 Astro 皆使用 Vite 但添加自身開發腳本。`vite` 簽名捕獲之，`npm run dev` 對全部皆為正確命令。不同預設埠號適用（SvelteKit: 5173, Astro: 4321, Qwik: 5173）——依賴層疊從 `package.json` 或 `.env` 拾取實際埠號。

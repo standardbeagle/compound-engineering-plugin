@@ -1,6 +1,6 @@
-# Database Adapter Patterns
+# 資料庫配接器範式
 
-## Abstract Base Class Pattern
+## 抽象基類
 
 ```ruby
 # lib/strong_migrations/adapters/abstract_adapter.rb
@@ -37,7 +37,7 @@ module StrongMigrations
 end
 ```
 
-## PostgreSQL Adapter
+## PostgreSQL 配接器
 
 ```ruby
 # lib/strong_migrations/adapters/postgresql_adapter.rb
@@ -77,7 +77,7 @@ module StrongMigrations
 end
 ```
 
-## MySQL Adapter
+## MySQL 配接器
 
 ```ruby
 # lib/strong_migrations/adapters/mysql_adapter.rb
@@ -101,7 +101,7 @@ module StrongMigrations
 end
 ```
 
-## MariaDB Adapter (MySQL variant)
+## MariaDB 配接器（MySQL 變體）
 
 ```ruby
 # lib/strong_migrations/adapters/mariadb_adapter.rb
@@ -121,9 +121,9 @@ module StrongMigrations
 end
 ```
 
-## Adapter Detection Pattern
+## 配接器偵測範式
 
-Use regex matching on adapter name:
+以正則匹配配接器名：
 
 ```ruby
 def adapter
@@ -144,7 +144,7 @@ def adapter
 end
 ```
 
-## Multi-Database Support (PgHero pattern)
+## 多資料庫支援（PgHero 範式）
 
 ```ruby
 module PgHero
@@ -188,7 +188,7 @@ module PgHero
 end
 ```
 
-## Connection Switching
+## 連線切換
 
 ```ruby
 def with_connection(database_name)
@@ -204,7 +204,7 @@ PgHero.with_connection(:replica) do |conn|
 end
 ```
 
-## SQL Dialect Handling
+## SQL 方言處理
 
 ```ruby
 def quote_column(column)

@@ -1,55 +1,55 @@
-# Web Research Cache (V15)
+# 網路研究快取（V15）
 
-Read this when checking the V15 cache before dispatching `web-researcher`, or when appending fresh research to the cache after dispatch. The behavior here is conditional — most invocations either hit the cache or write to it once and move on.
+分派 `web-researcher` 前檢查 V15 快取時，或分派後將新研究附加至快取時讀取此文。此處行為為條件式——多數調用命中快取或寫入一次後繼續。
 
-## Cache file shape
+## 快取檔案結構
 
 ```json
 [
   {
     "key": {
       "mode": "repo|elsewhere-software|elsewhere-non-software",
-      "focus_hint_normalized": "<lowercase, whitespace-collapsed focus hint or empty string>",
-      "topic_surface_hash": "<short hash of the user-supplied topic surface>"
+      "focus_hint_normalized": "<小寫、空白摺疊之焦點提示或空字串>",
+      "topic_surface_hash": "<用戶提供主題表面之短雜湊>"
     },
-    "result": "<web-researcher output as plain text>",
+    "result": "<web-researcher 輸出之純文字>",
     "ts": "<iso8601>"
   }
 ]
 ```
 
-Files live under `<scratch-dir>/web-research-cache.json`, where `<scratch-dir>` is the absolute OS-temp path resolved once in SKILL.md Phase 1 (`"${TMPDIR:-/tmp}/compound-engineering/ce-ideate/<run-id>"`). Do not pass the unresolved `${TMPDIR:-/tmp}` string to non-shell tools; always use the absolute path captured in Phase 1.
+檔案位於 `<scratch-dir>/web-research-cache.json`，其中 `<scratch-dir>` 為 SKILL.md 第一階段中一次解析之絕對 OS 臨時路徑（`"${TMPDIR:-/tmp}/compound-engineering/ce-ideate/<run-id>"`）。勿將未解析之 `${TMPDIR:-/tmp}` 字串傳遞至非 shell 工具；恆用第一階段捕獲之絕對路徑。
 
-## Reuse check
+## 複用檢查
 
-Before dispatching `web-researcher`, resolve the scratch root (the parent of `<scratch-dir>`) in bash and list sibling run-id directories — refinement loops within a session may legitimately reuse another run's cache by topic, not run-id:
+分派 `web-researcher` 前，以 bash 解析臨時根目錄（`<scratch-dir>` 之父目錄）並列出同層 run-id 目錄——會話內之精煉循環可能合理複用另一運行之按主題快取，非按 run-id：
 
 ```bash
 SCRATCH_ROOT="${TMPDIR:-/tmp}/compound-engineering/ce-ideate"
 find "$SCRATCH_ROOT" -maxdepth 2 -name 'web-research-cache.json' -type f 2>/dev/null
 ```
 
-`find` exits 0 with empty output when no cache files exist, so the first-run case does not abort the reuse-check step.
+無快取檔案時 `find` 以退出碼 0 且輸出為空，故首次運行不會中止複用檢查步驟。
 
-Read each matching file. If any entry's `key` matches the current dispatch (same full mode variant — `repo`, `elsewhere-software`, or `elsewhere-non-software` — plus same case-insensitive normalized focus hint plus same topic surface hash), skip the dispatch and pass the cached `result` to the consolidated grounding summary. Mode variants must match exactly: `elsewhere-software` and `elsewhere-non-software` are distinct domains and must not cross-reuse. Note in the summary: "Reusing prior web research from this session — say 're-research' to refresh."
+讀取各匹配檔案。若任何條目之 `key` 匹配當前分派（完整模式變體相同——`repo`、`elsewhere-software` 或 `elsewhere-non-software`——加上相同之不區分大小寫正規化焦點提示加上相同之主題表面雜湊），跳過分派並將快取之 `result` 傳遞至合併立基摘要。模式變體須精確匹配：`elsewhere-software` 及 `elsewhere-non-software` 為不同領域，不得跨複用。摘要中註明：「複用本次會話之先前網路研究——說 're-research' 以刷新。」
 
-On `re-research` override, delete the matching entry and dispatch fresh.
+`re-research` 覆寫時，刪除匹配條目並重新分派。
 
-## Append after fresh dispatch
+## 新鮮分派後附加
 
-After a fresh dispatch, append the new result to the current run's cache file at `<scratch-dir>/web-research-cache.json` using the absolute path from Phase 1 (create directory and file if needed). The next invocation in the session can reuse it via the `find` listing above.
+新鮮分派後，使用第一階段之絕對路徑將新結果附加至當前運行之快取檔案 `<scratch-dir>/web-research-cache.json`（按需建立目錄及檔案）。會話中之下次調用可透過上述 `find` 列表複用之。
 
-## Topic surface hash
+## 主題表面雜湊
 
-The topic surface is the user-supplied content the web research is grounded on:
-- **Elsewhere modes (`elsewhere-software`, `elsewhere-non-software`):** the user's topic prompt plus any Phase 0.4 intake answers (the actual subject the agent is researching). The two sub-modes are keyed separately — a reclassification between software and non-software for the same topic hash must force a fresh dispatch, since the research domain differs.
-- **Repo mode:** the focus hint plus a stable repo discriminator. This keeps the cache key meaningful when focus is empty — two bare-prompt invocations in the same repo legitimately share research, but the key still differentiates repos. Since cache files from every repo's runs now live under the shared OS-temp root, a bare basename like `app` or `frontend` would collide across unrelated repos. Resolve the discriminator with this fallback chain and hash the result (first 8 hex chars of sha256 is sufficient):
-    1. `git remote get-url origin` — stable across machines, correct for collaborators on the same remote.
-    2. `git rev-parse --show-toplevel` — absolute repo path; machine-local but always available in a git checkout.
-    3. The current working directory's absolute path — last resort when not in a git repo.
+主題表面為網路研究所立基之用戶提供內容：
+- **其他模式（`elsewhere-software`、`elsewhere-non-software`）：** 用戶之主題提示加任何階段 0.4 詢問答案（代理實際研究之主體）。兩個子模式分別鍵值——相同主題雜湊在軟體與非軟體間之重新分類必須觸發新鮮分派，因研究領域不同。
+- **倉庫模式：** 焦點提示加穩定倉庫鑑別器。此保持快取鍵在焦點為空時仍有意義——同一倉庫中兩次裸提示調用合理共享研究，但鍵仍區分不同倉庫。由於各倉庫運行之快取檔案現存於共享 OS 臨時根目錄下，裸基本名如 `app` 或 `frontend` 將在不相關倉庫間衝突。以下列回退鏈解析鑑別器並雜湊結果（sha256 前 8 個十六進制字元即足）：
+    1. `git remote get-url origin` —— 跨機器穩定，對同一遠端之協作者正確。
+    2. `git rev-parse --show-toplevel` —— 絕對倉庫路徑；機器本地但 git checkout 中恆可用。
+    3. 當前工作目錄之絕對路徑 —— 不在 git 倉庫中時之最後手段。
 
-Normalize before hashing: lowercase, collapse whitespace. (The repo discriminator hash is computed from the raw command output; only the focus hint and topic text are normalized.)
+雜湊前正規化：小寫、摺疊空白。（倉庫鑑別器雜湊由原始命令輸出計算；僅焦點提示及主題文字經正規化。）
 
-## Degradation
+## 退化
 
-If the cache file is unreachable across invocations on the current platform (filesystem isolation, sandboxing, ephemeral working directory), degrade to "no reuse, dispatch every time." Surface the limitation in the consolidated grounding summary and proceed without reuse rather than inventing a capability the platform may not have.
+若快取檔案在當前平台上跨調用不可達（檔案系統隔離、沙箱、臨時工作目錄），退化為「不複用，每次分派」。於合併立基摘要中呈現限制並繼續，而非虛構平台可能不具備之能力。

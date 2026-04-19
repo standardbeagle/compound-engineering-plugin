@@ -1,54 +1,54 @@
 ---
 name: ce-test-browser
-description: Run browser tests on pages affected by current PR or branch
+description: 對當前 PR 或分支所影響之頁面執行瀏覽器測試
 argument-hint: "[PR number, branch name, 'current', or --port PORT]"
 ---
 
-# Browser Test Skill
+# 瀏覽器測試技能
 
-Run end-to-end browser tests on pages affected by a PR or branch changes using the `agent-browser` CLI.
+使用 `agent-browser` CLI 對 PR 或分支變更所影響之頁面執行端對端瀏覽器測試。
 
-## Use `agent-browser` Only For Browser Automation
+## 瀏覽器自動化僅使用 `agent-browser`
 
-This workflow uses the `agent-browser` CLI exclusively. Do not use any alternative browser automation system, browser MCP integration, or built-in browser-control tool. If the platform offers multiple ways to control a browser, always choose `agent-browser`.
+此工作流專用 `agent-browser` CLI。勿使用任何替代之瀏覽器自動化系統、瀏覽器 MCP 整合或內建瀏覽器控制工具。若平台提供多種瀏覽器控制方式，一律選擇 `agent-browser`。
 
-Use `agent-browser` for: opening pages, clicking elements, filling forms, taking screenshots, and scraping rendered content.
+使用 `agent-browser` 進行：開啟頁面、點擊元素、填寫表單、截圖及抓取渲染內容。
 
-Platform-specific hints:
-- In Claude Code, do not use Chrome MCP tools (`mcp__claude-in-chrome__*`).
-- In Codex, do not substitute unrelated browsing tools.
+平台特定提示：
+- Claude Code 中勿使用 Chrome MCP 工具（`mcp__claude-in-chrome__*`）。
+- Codex 中勿替代不相關之瀏覽工具。
 
-## Prerequisites
+## 前置條件
 
-- Local development server running (e.g., `bin/dev`, `rails server`, `npm run dev`)
-- `agent-browser` CLI installed (see Setup below)
-- Git repository with changes to test
+- 本地開發伺服器運行中（如 `bin/dev`、`rails server`、`npm run dev`）
+- `agent-browser` CLI 已安裝（見下方設定）
+- Git 倉庫含待測變更
 
-## Setup
+## 設定
 
-Check whether `agent-browser` is installed:
+檢查 `agent-browser` 是否已安裝：
 
 ```bash
 command -v agent-browser >/dev/null 2>&1 && echo "Installed" || echo "NOT INSTALLED"
 ```
 
-If not installed, inform the user: "`agent-browser` is not installed. Run `/ce-setup` to install required dependencies." Then stop — this skill cannot function without agent-browser.
+若未安裝，告知用戶：「`agent-browser` is not installed. Run `/ce-setup` to install required dependencies.」然後停止——此技能無 `agent-browser` 無法運作。
 
-## Workflow
+## 工作流
 
-### 1. Verify Installation
+### 1. 驗證安裝
 
-Before starting, verify `agent-browser` is available:
+開始前驗證 `agent-browser` 可用：
 
 ```bash
 command -v agent-browser >/dev/null 2>&1 && echo "Ready" || echo "NOT INSTALLED"
 ```
 
-If not installed, inform the user: "`agent-browser` is not installed. Run `/ce-setup` to install required dependencies." Then stop.
+若未安裝，告知用戶後停止。
 
-### 2. Ask Browser Mode
+### 2. 詢問瀏覽器模式
 
-Ask the user whether to run headed or headless (using the platform's question tool — e.g., `AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini — or present options and wait for a reply):
+詢問用戶以有頭或無頭模式運行（使用平台之提問工具——如 Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`——或呈現選項並等候回覆）：
 
 ```
 Do you want to watch the browser tests run?
@@ -57,52 +57,52 @@ Do you want to watch the browser tests run?
 2. Headless (faster) - Runs in background, faster but invisible
 ```
 
-Store the choice and use the `--headed` flag when the user selects option 1.
+儲存選擇，用戶選選項 1 時使用 `--headed` 旗標。
 
-### 3. Determine Test Scope
+### 3. 判斷測試範圍
 
-**If PR number provided:**
+**若提供 PR 號碼：**
 ```bash
 gh pr view [number] --json files -q '.files[].path'
 ```
 
-**If 'current' or empty:**
+**若為 'current' 或空白：**
 ```bash
 git diff --name-only main...HEAD
 ```
 
-**If branch name provided:**
+**若提供分支名：**
 ```bash
 git diff --name-only main...[branch]
 ```
 
-### 4. Map Files to Routes
+### 4. 映射檔案至路由
 
-Map changed files to testable routes:
+將變更檔案映射至可測試路由：
 
-| File Pattern | Route(s) |
+| 檔案模式 | 路由 |
 |-------------|----------|
 | `app/views/users/*` | `/users`, `/users/:id`, `/users/new` |
 | `app/controllers/settings_controller.rb` | `/settings` |
-| `app/javascript/controllers/*_controller.js` | Pages using that Stimulus controller |
-| `app/components/*_component.rb` | Pages rendering that component |
-| `app/views/layouts/*` | All pages (test homepage at minimum) |
-| `app/assets/stylesheets/*` | Visual regression on key pages |
-| `app/helpers/*_helper.rb` | Pages using that helper |
-| `src/app/*` (Next.js) | Corresponding routes |
-| `src/components/*` | Pages using those components |
+| `app/javascript/controllers/*_controller.js` | 使用該 Stimulus controller 之頁面 |
+| `app/components/*_component.rb` | 渲染該元件之頁面 |
+| `app/views/layouts/*` | 所有頁面（至少測試首頁） |
+| `app/assets/stylesheets/*` | 關鍵頁面之視覺回歸 |
+| `app/helpers/*_helper.rb` | 使用該 helper 之頁面 |
+| `src/app/*` (Next.js) | 對應路由 |
+| `src/components/*` | 使用這些元件之頁面 |
 
-Build a list of URLs to test based on the mapping.
+依映射建立待測 URL 列表。
 
-### 5. Detect Dev Server Port
+### 5. 偵測開發伺服器埠
 
-Determine the dev server port using this priority:
+依此優先順序判斷開發伺服器埠：
 
-1. **Explicit argument** — if the user passed `--port 5000`, use that directly
-2. **Project instructions** — check `AGENTS.md`, `CLAUDE.md`, or other instruction files for port references
-3. **package.json** — check dev/start scripts for `--port` flags
-4. **Environment files** — check `.env`, `.env.local`, `.env.development` for `PORT=`
-5. **Default** — fall back to `3000`
+1. **明確參數** ——若用戶傳入 `--port 5000`，直接使用
+2. **專案指引** ——檢查 `AGENTS.md`、`CLAUDE.md` 或其他指引檔中之埠參照
+3. **package.json** ——檢查 dev/start 腳本中之 `--port` 旗標
+4. **環境檔案** ——檢查 `.env`、`.env.local`、`.env.development` 中之 `PORT=`
+5. **預設** ——回退為 `3000`
 
 ```bash
 PORT="${EXPLICIT_PORT:-}"
@@ -122,14 +122,14 @@ PORT="${PORT:-3000}"
 echo "Using dev server port: $PORT"
 ```
 
-### 6. Verify Server is Running
+### 6. 驗證伺服器運行中
 
 ```bash
 agent-browser open http://localhost:${PORT}
 agent-browser snapshot -i
 ```
 
-If the server is not running, inform the user:
+若伺服器未運行，告知用戶：
 
 ```
 Server not running on port ${PORT}
@@ -142,54 +142,54 @@ Please start your development server:
 Then re-run this skill.
 ```
 
-### 7. Test Each Affected Page
+### 7. 測試每個受影響頁面
 
-For each affected route:
+每個受影響路由：
 
-**Navigate and capture snapshot:**
+**導航並擷取快照：**
 ```bash
 agent-browser open "http://localhost:${PORT}/[route]"
 agent-browser snapshot -i
 ```
 
-**For headed mode:**
+**有頭模式：**
 ```bash
 agent-browser --headed open "http://localhost:${PORT}/[route]"
 agent-browser --headed snapshot -i
 ```
 
-**Verify key elements:**
-- Use `agent-browser snapshot -i` to get interactive elements with refs
-- Page title/heading present
-- Primary content rendered
-- No error messages visible
-- Forms have expected fields
+**驗證關鍵元素：**
+- 使用 `agent-browser snapshot -i` 取得含參照之互動元素
+- 頁面標題/標題存在
+- 主要內容已渲染
+- 無可見錯誤訊息
+- 表單有預期欄位
 
-**Test critical interactions:**
+**測試關鍵互動：**
 ```bash
 agent-browser click @e1
 agent-browser snapshot -i
 ```
 
-**Take screenshots:**
+**截圖：**
 ```bash
 agent-browser screenshot page-name.png
 agent-browser screenshot --full page-name-full.png
 ```
 
-### 8. Human Verification (When Required)
+### 8. 人工驗證（需要時）
 
-Pause for human input when testing touches flows that require external interaction:
+測試觸及需外部互動之流程時暫停等待人工輸入：
 
-| Flow Type | What to Ask |
+| 流程類型 | 該問什麼 |
 |-----------|-------------|
 | OAuth | "Please sign in with [provider] and confirm it works" |
-| Email | "Check your inbox for the test email and confirm receipt" |
-| Payments | "Complete a test purchase in sandbox mode" |
-| SMS | "Verify you received the SMS code" |
-| External APIs | "Confirm the [service] integration is working" |
+| 電子郵件 | "Check your inbox for the test email and confirm receipt" |
+| 支付 | "Complete a test purchase in sandbox mode" |
+| 簡訊 | "Verify you received the SMS code" |
+| 外部 API | "Confirm the [service] integration is working" |
 
-Ask the user (using the platform's question tool, or present numbered options and wait):
+詢問用戶（使用平台之提問工具，或呈現編號選項並等候）：
 
 ```
 Human Verification Needed
@@ -203,15 +203,15 @@ Did it work correctly?
 2. No - describe the issue
 ```
 
-### 9. Handle Failures
+### 9. 處理失敗
 
-When a test fails:
+測試失敗時：
 
-1. **Document the failure:**
-   - Screenshot the error state: `agent-browser screenshot error.png`
-   - Note the exact reproduction steps
+1. **記錄失敗：**
+   - 截取錯誤狀態截圖：`agent-browser screenshot error.png`
+   - 記錄確切重現步驟
 
-2. **Ask the user how to proceed:**
+2. **詢問用戶如何繼續：**
 
    ```
    Test Failed: [route]
@@ -225,13 +225,13 @@ When a test fails:
    3. Skip - Continue testing other pages
    ```
 
-3. **If "Fix now":** investigate, propose a fix, apply, re-run the failing test
-4. **If "Create todo":** load the `ce-todo-create` skill and create a todo with priority p1 and description `browser-test-{description}`, continue
-5. **If "Skip":** log as skipped, continue
+3. **若 "Fix now"：** 調查、提出修復、套用、重新跑失敗測試
+4. **若 "Create todo"：** 載入 `ce-todo-create` 技能建立優先序 p1、描述 `browser-test-{description}` 之待辦，繼續
+5. **若 "Skip"：** 記錄為已跳過，繼續
 
-### 10. Test Summary
+### 10. 測試摘要
 
-After all tests complete, present a summary:
+所有測試完成後，呈現摘要：
 
 ```markdown
 ## Browser Test Results
@@ -264,7 +264,7 @@ After all tests complete, present a summary:
 ### Result: [PASS / FAIL / PARTIAL]
 ```
 
-## Quick Usage Examples
+## 快速使用範例
 
 ```bash
 # Test current branch changes (auto-detects port)
@@ -280,11 +280,11 @@ After all tests complete, present a summary:
 /ce-test-browser --port 5000
 ```
 
-## agent-browser CLI Reference
+## agent-browser CLI 參照
 
-Run `agent-browser --help` for all commands.
+執行 `agent-browser --help` 查看所有指令。
 
-Key commands:
+關鍵指令：
 
 ```bash
 # Navigation

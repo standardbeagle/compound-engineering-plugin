@@ -1,81 +1,81 @@
-# Handoff
+# 交接
 
-This content is loaded when Phase 4 begins — after the requirements document is written and reviewed.
+此內容於第四階段起始時載入 — 需求文檔已撰就並審畢。
 
 ---
 
-#### 4.1 Present Next-Step Options
+#### 4.1 呈現下一步選項
 
-Present the options using the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the numbered options in chat and wait for the user's reply before proceeding.
+以平台阻塞式提問工具呈現選項（Claude Code 用 `AskUserQuestion`，Codex 用 `request_user_input`，Gemini 用 `ask_user`）。若無提問工具，於對話中呈現編號選項，候用戶回覆方續行。
 
-If `Resolve Before Planning` contains any items:
-- Ask the blocking questions now, one at a time, by default
-- If the user explicitly wants to proceed anyway, first convert each remaining item into an explicit decision, assumption, or `Deferred to Planning` question
-- If the user chooses to pause instead, present the handoff as paused or blocked rather than complete
-- Do not offer `Proceed to planning` or `Proceed directly to work` while `Resolve Before Planning` remains non-empty
+若 `Resolve Before Planning` 尚有項目：
+- 預設逐一阻塞式提問
+- 若用戶明示欲續行，先將各餘項轉為明確決策、假設或 `Deferred to Planning` 問題
+- 若用戶選暫停，呈現交接為暫停或阻塞狀態
+- `Resolve Before Planning` 非空時，勿提供 `Proceed to planning` 或 `Proceed directly to work`
 
-**Question when no blocking questions remain:** "Brainstorm complete. What would you like to do next?"
+**無阻塞問題時之提問：**「腦力激盪完成。下一步何為？」
 
-**Question when blocking questions remain and user wants to pause:** "Brainstorm paused. Planning is blocked until the remaining questions are resolved. What would you like to do next?"
+**有阻塞問題且用戶暫停時之提問：**「腦力激盪暫停。規劃受阻於待決問題。下一步何為？**
 
-Present only the options that apply, keeping the total at 4 or fewer:
+僅呈現適用選項，總數不超四：
 
-- **Proceed to planning (Recommended)** - Move to `/ce-plan` for structured implementation planning. Shown only when `Resolve Before Planning` is empty.
-- **Proceed directly to work** - Skip planning and move to `/ce-work`; suited to lightweight, well-defined changes. Shown only when `Resolve Before Planning` is empty **and** scope is lightweight, success criteria are clear, scope boundaries are clear, and no meaningful technical or research questions remain (the "direct-to-work gate").
-- **Continue the brainstorm** - Answer more clarifying questions to tighten scope, edge cases, and preferences. Always shown.
-- **Open in Proof (web app) — review and comment to iterate with the agent** - Open the doc in Every's Proof editor, iterate with the agent via comments, or copy a link to share with others. Shown only when a requirements document exists **and** the direct-to-work gate is not satisfied (when both conditions collide, `Proceed directly to work` takes priority and Proof becomes reachable via free-form request).
-- **Done for now** - Pause; the requirements doc is saved and can be resumed later. Always shown.
+- **進入規劃（推薦）** — 轉入 `/ce-plan` 作結構化實施規劃。僅於 `Resolve Before Planning` 為空時顯示。
+- **直接開工** — 跳過規劃轉入 `/ce-work`；適於輕量、明確之變更。僅於 `Resolve Before Planning` 為空 **且** 範圍輕量、成功標準清晰、範圍邊界明確、無重大技術或研究問題殘留時顯示（「直接開工門檻」）。
+- **繼續腦力激盪** — 回答更多澄清問題以收緊範圍、邊界案例及偏好。恆顯。
+- **在 Proof 開啟（Web 應用）— 審閱並留言以與代理反覆** — 於 Every 之 Proof 編輯器開啟文檔，以留言與代理反覆，或複製連結分享他人。僅於需求文檔存在 **且** 未達直接開工門檻時顯示（兩條件衝突時，`直接開工` 優先，Proof 可由自由形式請求達）。
+- **暫且結束** — 暫停；需求文檔已存，可續。恆顯。
 
-**Surface additional document review contextually, not as a menu fixture:** When the prior document-review pass surfaced residual P0/P1 findings that the user has not addressed, mention them adjacent to the menu and offer another review pass in prose (e.g., "Document review flagged 2 P1 findings you may want to address — want me to run another pass?"). Do not add it to the option list.
+**文檔審閱按脈絡呈現，非固定選單項：** 當前次文檔審閱發現用戶未處理之 P0/P1 餘項，於選單旁提及並以正文提議再審一輪（如「文檔審閱標記 2 項 P1 發現，或需處理 — 再跑一輪？」）。勿加至選項列表。
 
-#### 4.2 Handle the Selected Option
+#### 4.2 處理所選選項
 
-**If user selects "Proceed to planning (Recommended)":**
+**若選「進入規劃（推薦）」：**
 
-Immediately run `/ce-plan` in the current session. Pass the requirements document path when one exists; otherwise pass a concise summary of the finalized brainstorm decisions. Do not print the closing summary first.
+即於當前會話執行 `/ce-plan`。有需求文檔時傳其路徑；否則傳腦力激盪定案決策之簡要摘要。勿先印結束摘要。
 
-**If user selects "Proceed directly to work":**
+**若選「直接開工」：**
 
-Immediately run `/ce-work` in the current session using the finalized brainstorm output as context. If a compact requirements document exists, pass its path. Do not print the closing summary first.
+即於當前會話以定案腦力激盪產出為上下文執行 `/ce-work`。若有精簡需求文檔，傳其路徑。勿先印結束摘要。
 
-**If user selects "Continue the brainstorm":** Return to Phase 1.3 (Collaborative Dialogue) and continue asking the user clarifying questions one at a time to further refine scope, edge cases, constraints, and preferences. Continue until the user is satisfied, then return to Phase 4. Do not show the closing summary yet.
+**若選「繼續腦力激盪」：** 返第一階段 1.3（協作對話），繼續逐一澄清問題，進一步精煉範圍、邊界案例、約束及偏好。至用戶滿意，返第四階段。勿印結束摘要。
 
-**If user selects "Open in Proof (web app) — review and comment to iterate with the agent":**
+**若選「在 Proof 開啟（Web 應用）— 審閱並留言以與代理反覆」：**
 
-Load the `ce-proof` skill in HITL-review mode with:
+以 HITL 審閱模式載入 `ce-proof` 技能：
 
-- **source file:** `docs/brainstorms/YYYY-MM-DD-<topic>-requirements.md`
-- **doc title:** `Requirements: <topic title>`
-- **identity:** `ai:compound-engineering` / `Compound Engineering`
-- **recommended next step:** `/ce-plan` (shown in the ce-proof skill's final terminal output)
+- **原始檔：** `docs/brainstorms/YYYY-MM-DD-<topic>-requirements.md`
+- **文檔標題：** `Requirements: <topic title>`
+- **身份：** `ai:compound-engineering` / `Compound Engineering`
+- **建議下一步：** `/ce-plan`（顯示於 ce-proof 技能之最終終端輸出）
 
-Follow `references/hitl-review.md` in the ce-proof skill. It uploads the doc, prompts the user for review in Proof's web UI, ingests each thread by reading it fresh and replying in-thread, applies agreed edits as tracked suggestions, and syncs the final markdown back to the source file atomically on proceed.
+遵 ce-proof 技能中 `references/hitl-review.md`。其上傳文檔、提示用戶於 Proof Web UI 審閱、逐串讀取並回覆、以追蹤建議套用約定編輯、於 proceed 時原子化同步最終 markdown 回原始檔。
 
-When the ce-proof skill returns control:
+ce-proof 技能交還控制權時：
 
-- `status: proceeded` with `localSynced: true` → the requirements doc on disk now reflects the review. Return to the Phase 4 options and re-render the menu (the doc may have changed substantially during review, so option eligibility can shift — re-evaluate `Resolve Before Planning`, direct-to-work gate, and residual ce-doc-review findings against the updated doc).
-- `status: proceeded` with `localSynced: false` → the reviewed version lives in Proof at `docUrl` but the local copy is stale. Offer to pull the Proof doc to `localPath` using the ce-proof skill's Pull workflow. Re-render the Phase 4 menu after the pull completes (or is declined). If the pull was declined, include a one-line note above the menu that `<localPath>` is stale vs. Proof — otherwise `Proceed to planning` / `Proceed directly to work` will silently read the pre-review copy.
-- `status: done_for_now` → the doc on disk may be stale if the user edited in Proof before leaving. Offer to pull the Proof doc to `localPath` so the local requirements file stays in sync, then return to the Phase 4 options. If the pull was declined, include the stale-local note above the menu. `done_for_now` means the user stopped the HITL loop without syncing — it does not mean they ended the whole brainstorm; they may still want to proceed to planning or continue the brainstorm.
-- `status: aborted` → fall back to the Phase 4 options without changes.
+- `status: proceeded` 且 `localSynced: true` → 本地需求文檔已反映審閱。返第四階段選項並重繪選單（文檔或已大幅變更 → 重新評估 `Resolve Before Planning`、直接開工門檻、ce-doc-review 餘項）。
+- `status: proceeded` 且 `localSynced: false` → 審閱版存於 Proof `docUrl` 但本地副本過時。提議以 ce-proof 技能之 Pull 工作流拉取 Proof 文檔至 `localPath`。拉取完成（或拒絕）後重繪第四階段選單。若拒絕拉取，於選單上方加註 `<localPath>` 相對 Proof 過時 — 否則 `進入規劃` / `直接開工` 將靜默讀取審閱前副本。
+- `status: done_for_now` → 若用戶離開前曾在 Proof 編輯，本地文檔或已過時。提議拉取 Proof 文檔至 `localPath` 以保持本地需求檔同步，然後返第四階段選項。若拒絕拉取，於選單上方加過時註。`done_for_now` 意為用戶停止 HITL 迴圈而未同步 — 非結束整個腦力激盪；或仍欲進入規劃或繼續腦力激盪。
+- `status: aborted` → 不作變更，返第四階段選項。
 
-If the initial upload fails (network error, Proof API down), retry once after a short wait. If it still fails, tell the user the upload didn't succeed and briefly explain why, then return to the Phase 4 options — don't leave them wondering why the option did nothing.
+若初次上傳失敗（網路錯誤、Proof API 不可用），短暫等待後重試一次。仍敗則告知用戶上傳未成並簡述原因，返第四階段選項 — 勿令其困惑為何選項無效。
 
-**If the user asks to run another document review** (either from the contextual prompt when P0/P1 findings remain, or by free-form request):
+**若用戶要求再作文檔審閱**（來自 P0/P1 餘項之脈絡提示，或自由形式請求）：
 
-Load the `ce-doc-review` skill and apply it to the requirements document for another pass. When ce-doc-review returns "Review complete", return to the normal Phase 4 options and present only the options that still apply. Do not show the closing summary yet.
+載入 `ce-doc-review` 技能對需求文檔再審一輪。ce-doc-review 返「Review complete」後，返第四階段選項並僅呈現仍適用者。勿印結束摘要。
 
-**If user selects "Done for now":** Display the closing summary (see 4.3) and end the turn.
+**若選「暫且結束」：** 顯示結束摘要（見 4.3），結束回合。
 
-#### 4.3 Closing Summary
+#### 4.3 結束摘要
 
-Use the closing summary only when this run of the workflow is ending or handing off, not when returning to the Phase 4 options.
+僅於本次工作流結束或交接時用，返第四階段選項時不用。
 
-When complete and ready for planning, display:
+完成並備規劃時，顯示：
 
 ```text
 Brainstorm complete!
 
-Requirements doc: docs/brainstorms/YYYY-MM-DD-<topic>-requirements.md  # if one was created
+Requirements doc: docs/brainstorms/YYYY-MM-DD-<topic>-requirements.md  # 若已建立
 
 Key decisions:
 - [Decision 1]
@@ -84,12 +84,12 @@ Key decisions:
 Recommended next step: `/ce-plan`
 ```
 
-If the user pauses with `Resolve Before Planning` still populated, display:
+若用戶暫停且 `Resolve Before Planning` 仍有項目，顯示：
 
 ```text
 Brainstorm paused.
 
-Requirements doc: docs/brainstorms/YYYY-MM-DD-<topic>-requirements.md  # if one was created
+Requirements doc: docs/brainstorms/YYYY-MM-DD-<topic>-requirements.md  # 若已建立
 
 Planning is blocked by:
 - [Blocking question 1]

@@ -1,138 +1,138 @@
-# HITL Review Mode
+# HITL 審閱模式
 
-Human-in-the-loop iteration loop for a markdown document shared via Proof. Invoked either by an upstream skill (`ce-brainstorm`, `ce-ideate`, `ce-plan`) handing off a draft it produced, or directly by the user asking to iterate on an existing markdown file they already have on disk ("share this to proof and iterate", "HITL this doc with me"). Mechanics are identical in both cases: upload the local doc, let the user annotate in Proof's web UI, ingest feedback as in-thread replies and tracked edits, and sync the final doc back to disk.
+透過 Proof 分享之 markdown 文檔之人工介入迭代循環。由上游技能（`ce-brainstorm`、`ce-ideate`、`ce-plan`）交接其產出之草稿調用，或由用戶直接要求迭代其已有之本地 markdown 檔案（「分享至 proof 並迭代」、「與我 HITL 此文檔」）。兩種情況下機制相同：上傳本地文檔、讓用戶於 Proof 網頁 UI 標註、以線程內回覆及追蹤編輯吸收反饋、將最終文檔同步回磁碟。
 
-This mode assumes a local markdown file exists. There is no "from scratch" entry — if the user wants a fresh doc, create one with the normal proof create workflow first, then invoke HITL.
+此模式假設本地 markdown 檔案存在。無「從零開始」入口——若用戶需要新文檔，先用正常 proof 建立工作流建立，再調用 HITL。
 
-Load this file when HITL review mode is requested — whether by an upstream caller or directly by the user.
-
----
-
-## Invocation Contract
-
-Inputs:
-
-- **Source file path** (required): absolute or repo-relative path to the local markdown file. When an upstream caller invokes this mode, it passes the path explicitly. When the user invokes directly ("share that doc to proof and let's iterate"), derive the path from conversation context — the file the user just referenced, created, or edited. If ambiguous, ask the user which file.
-- **Doc title** (required): display title for the Proof doc. Upstream callers pass this explicitly; on direct-user invocation, default to the file's H1 heading, falling back to the filename (minus extension) if no H1 exists.
-- **Recommended next step** (optional, caller-specific): short string the caller wants echoed in the final terminal output (e.g., "Recommended next: `/ce-plan`"). Not used on direct-user invocation — the terminal report simply summarizes the iteration and asks what's next.
-
-Agent identity is fixed, not a parameter: every API call uses agent ID `ai:compound-engineering` and display name `Compound Engineering`. Callers do not override this.
-
-Return shape (used by upstream callers to resume their handoff; also shown to the user in the terminal when invoked directly):
-
-- `status`: `proceeded` | `done_for_now` | `aborted`
-- `localPath`: the source file path (same as input)
-- `localSynced`: `true` if Phase 5 wrote the reviewed doc back to `localPath`; `false` if the user declined the sync and local is stale. Only present on `proceeded`.
-- `docUrl`: the tokenUrl for the Proof doc
-- `openThreadCount`: number of unresolved threads still in the doc
-- `revision`: final doc revision after end-sync (only on `proceeded`)
+HITL 審閱模式被要求時載入此文——無論由上游呼叫者或用戶直接。
 
 ---
 
-## Phase 1: Upload and Wait
+## 調用約定
 
-1. Read the local markdown file into memory. Remember this content as `uploadedMarkdown` — Phase 5 compares against it to detect whether anything changed during the session.
-2. `POST https://www.proofeditor.ai/share/markdown` with `{title, markdown}` → capture `slug`, `accessToken`, `tokenUrl`
-3. `POST /api/agent/{slug}/presence` with `X-Agent-Id: ai:compound-engineering`, `x-share-token: <token>`, body `{"name":"Compound Engineering","status":"reading","summary":"Uploaded doc for review"}`
-4. Display prominently in the terminal:
+輸入：
 
-   ```
-   Doc ready for review: <tokenUrl>
-   ```
+- **來源檔案路徑**（必須）：本地 markdown 檔案之絕對或倉庫相對路徑。上游呼叫者調用此模式時顯式傳入路徑。用戶直接調用時（「分享此文檔至 proof 並迭代」），從對話上下文推導路徑——用戶剛引用、建立或編輯之檔案。不明確時詢問用戶哪個檔案。
+- **文檔標題**（必須）：Proof 文檔之顯示標題。上游呼叫者顯式傳入；用戶直接調用時，預設為檔案之 H1 標題，無 H1 時回退至檔名（減去副檔名）。
+- **建議下一步**（可選，呼叫者特定）：呼叫者希望在最終終端輸出中回顯之短字串（如 "Recommended next: `/ce-plan`"）。用戶直接調用時不使用——終端報告僅摘要迭代並詢問下一步。
 
-5. Ask the user with the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the options in chat and wait for the reply.
+代理身份固定，非參數：每個 API 呼叫使用代理 ID `ai:compound-engineering` 及顯示名稱 `Compound Engineering`。呼叫者不覆寫此值。
 
-   **Question:** "Highlight text in Proof to leave a comment. The agent will read each one, reply in-thread or apply the fix, then sync changes back to your local file. What's next?"
+返回形式（上游呼叫者用於恢復交接；用戶直接調用時亦顯示於終端）：
 
-   **Options:**
-   - **I'm done with feedback — read it and apply**
-   - **I have no feedback — proceed**
-
-   If the user is still reviewing, they leave the prompt open — the blocking question waits naturally. A third "still working" option would be a no-op wrapper for that.
-
-   On **I have no feedback — proceed**: skip to Phase 5 (end-sync); return to caller with `status: proceeded`.
-
-   On **I'm done with feedback**: continue to Phase 2.
+- `status`：`proceeded` | `done_for_now` | `aborted`
+- `localPath`：來源檔案路徑（與輸入相同）
+- `localSynced`：`true` 若第五階段將審閱後文檔寫回 `localPath`；`false` 若用戶拒絕同步且本地過時。僅於 `proceeded` 時存在。
+- `docUrl`：Proof 文檔之 tokenUrl
+- `openThreadCount`：文檔中仍未解決之線程數
+- `revision`：結束同步後之最終文檔修訂版（僅於 `proceeded`）
 
 ---
 
-## Phase 2: Ingest Pass
+## 第一階段：上傳並等待
 
-A single pass over the current doc state. Deterministic, idempotent, derivable from marks — no session cache, no sidecar state.
+1. 將本地 markdown 檔案讀入記憶體。記住此內容為 `uploadedMarkdown`——第五階段與之比較以偵測會話期間是否有任何變更。
+2. `POST https://www.proofeditor.ai/share/markdown` 附 `{title, markdown}` → 捕獲 `slug`、`accessToken`、`tokenUrl`
+3. `POST /api/agent/{slug}/presence` 附 `X-Agent-Id: ai:compound-engineering`、`x-share-token: <token>`、body `{"name":"Compound Engineering","status":"reading","summary":"Uploaded doc for review"}`
+4. 於終端顯著展示：
 
-At the start of the pass, update presence to `status: "acting"` with a short summary like `"Reading your feedback"` so anyone watching the Proof tab sees the agent is live on their comments. Update to `status: "waiting"` before the Phase 3 terminal report so the tab signals "ball is in your court" while the terminal asks for the next signal. Same `POST /presence` call as Phase 1 — just different `status`/`summary`.
+    ```
+    Doc ready for review: <tokenUrl>
+    ```
 
-### 2.1 Read fresh state
+5. 以平台之阻斷式提問工具詢問用戶（Claude Code 之 `AskUserQuestion`，Codex 之 `request_user_input`，Gemini 之 `ask_user`）。若無提問工具，於聊天中呈現選項並等候回覆。
+
+    **問題：** "Highlight text in Proof to leave a comment. The agent will read each one, reply in-thread or apply the fix, then sync changes back to your local file. What's next?"
+
+    **選項：**
+    - **I'm done with feedback — read it and apply**
+    - **I have no feedback — proceed**
+
+    若用戶仍在審閱，保持提示開啟——阻斷式提問自然等待。第三個「仍在進行」選項為無操作包裝。
+
+    **I have no feedback — proceed**：跳至第五階段（結束同步）；以 `status: proceeded` 返回呼叫者。
+
+    **I'm done with feedback**：繼續至第二階段。
+
+---
+
+## 第二階段：吸收通過
+
+單次通過當前文檔狀態。確定性、冪等性、可從標記推導——無會話快取、無附帶狀態。
+
+通過開始時，更新在場狀態為 `status: "acting"` 附簡短摘要如 `"Reading your feedback"` 使任何觀看 Proof 標籤者可見代理正在處理其留言。第三階段終端報告前更新為 `status: "waiting"` 使標籤發出「球在你方」之信號，同時終端詢問下一信號。與第一階段相同之 `POST /presence` 呼叫——僅 `status`/`summary` 不同。
+
+### 2.1 讀取新鮮狀態
 
 ```
 GET /api/agent/{slug}/state
 Headers: x-share-token: <token>
 ```
 
-Capture:
-- `markdown` (current body — includes any user direct edits and accepted suggestions)
+捕獲：
+- `markdown`（當前主體——包含任何用戶直接編輯及已接受建議）
 - `revision`
-- `marks` (object keyed by markId)
-- `mutationBase.token` — the baseToken required for this round's mutations
+- `marks`（以 markId 為鍵之物件）
+- `mutationBase.token` —— 此輪變更所需之 baseToken
 
-### 2.2 Identify marks that need attention
+### 2.2 識別需要關注之標記
 
-Filter `marks` to items where **all** of the following hold:
+篩選 `marks` 至**全部**符合以下條件之項目：
 
-- `by` starts with `human:` (authored by a human, not the agent)
-- `resolved` is `false`
-- Either `thread` has no entry authored by any `ai:*` identity, **OR** the latest entry in `thread` is authored by `human:*` with an `at` timestamp newer than the latest `ai:*` entry (user responded to a prior agent reply)
+- `by` 以 `human:` 開頭（由人類撰寫，非代理）
+- `resolved` 為 `false`
+- `thread` 無任何 `ai:*` 身分撰寫之條目，**或** `thread` 中最新條目由 `human:*` 撰寫且 `at` 時間戳晚於最新 `ai:*` 條目（用戶回覆了先前之代理回覆）
 
-Skip everything else. Agent-authored marks, resolved threads, and threads already replied to with no new human response are done.
+跳過其餘。代理撰寫之標記、已解決線程及已回覆且無新人類回應之線程已完成。
 
-### 2.3 Read each mark and decide how to respond
+### 2.3 讀取各標記並決定如何回應
 
-The point of HITL is to give the user a natural way to steer the doc without dragging every decision into the terminal. Most feedback can be auto-applied. Only escalate when the agent genuinely can't make a confident call alone.
+HITL 之意義為給用戶自然方式引導文檔，而無需將每個決策拖入終端。多數反饋可自動套用。僅在代理真正無法自信獨立判斷時升級。
 
-Real feedback blends types — "this is wrong, rename to Y" is both objection and directive; "why X? I'd prefer Z" is both question and suggestion. Don't force a clean classification. Read the comment text, the anchored `quote`, and any prior thread replies, and decide:
+真實反饋混合類型——「這是錯的，改名為 Y」同時為反對及指令；「為何 X？我偏好 Z」同時為問題及建議。勿強制乾淨分類。閱讀留言文字、錨定之 `quote` 及任何先前線程回覆，決定：
 
-**Can the agent apply a fix directly with confidence?** Imperatives ("rename X to Y", "remove this", "add a section about Z") usually qualify. Apply the edit, reply with a one-line summary of what changed, resolve.
+**代理能否自信地直接套用修正？** 祈使句（「將 X 改名為 Y」、「移除這個」、「添加關於 Z 的章節」）通常符合。套用編輯、以一行摘要回覆變更內容、解決。
 
-**Is this a question with a clear answer?** Answer in-thread. Resolve if the answer stands on its own. If answering surfaces a new decision the user should weigh in on, leave open and surface it in the terminal report.
+**這是一個有明確答案之問題？** 線程內回答。若答案自成一體則解決。若回答浮現用戶應權衡之新決策，保持開放並於終端報告中呈現。
 
-**Is this a disagreement?** ("this is wrong", "contradicts §2", "this won't work"). Evaluate the claim against current content. If the agent agrees, fix and reply "Agreed — updated to X". If the agent disagrees, reply with the reasoning and leave open. Don't silently apply an objection without evaluating it — the whole point is that the user flagged it *because* they think the plan is wrong.
+**這是不同意見？**（「這是錯的」、「與 §2 矛盾」、「這行不通」）。依當前內容評估主張。若代理同意，修正並回覆 "Agreed — updated to X"。若代理不同意，以理據回覆並保持開放。勿未經評估即默默套用反對——重點正是用戶因其認為計劃有誤而標記之。
 
-**Is the intent genuinely unclear?** First try: attempt the most reasonable interpretation, apply it, and reply "I read this as X — let me know if I should revert." That's cheaper than a round-trip when stakes are low. Ask for clarification only when the interpretations lead to meaningfully different outcomes. When asking, use the platform's blocking question tool for a quick multiple-choice when the options are discrete, or leave it as an open thread comment when free-form response is more natural. Either way the thread stays open so the next pass picks up the user's reply.
+**意圖是否真正不明確？** 先嘗試：以最合理之詮釋套用，回覆 "I read this as X — let me know if I should revert." 當風險低時這比往返更便宜。僅當詮釋導致實質不同結果時請求澄清。請求時，選項離散時使用平台之阻斷式提問工具快速多選，或自由形式回應更自然時留作開放線程留言。兩者皆保持線程開放使下次通過拾取用戶回覆。
 
-**Invariant:** every attention-needing mark ends the pass with an agent reply in its thread. Unreplied = "still to do" — the next pass re-classifies it. This is what makes the loop idempotent without a sidecar: mark state *is* the state. Even when the agent disagrees or can't decide, reply (with reasoning or a question) rather than silently skip.
+**不變量：** 每個需要關注之標記在通過結束時皆有代理回覆在其線程中。未回覆 =「仍待處理」——下次通過重新分類。此使循環無附帶狀態即冪等：標記狀態*即*狀態。即使代理不同意或無法決定，亦回覆（含理據或問題）而非默默跳過。
 
-### 2.4 Apply edits
+### 2.4 套用編輯
 
-The user is collaborating in the doc, not waiting on approval. Every mutation works with live clients — only whole-doc `rewrite.apply` is gated. Pick the tool that matches intent:
+用戶在文檔中協作，非等待批准。每個變更操作與即時客戶端協作——僅整份文檔 `rewrite.apply` 受閘門控制。選擇匹配意圖之工具：
 
-**Default: `suggestion.add` with `status: "accepted"`** for content changes anchored on a quote (reword, rename, clarify, correct, add a sentence inline). One call creates a tracked suggestion mark *and* commits the change. The user sees committed text (no pending approval needed), and the mark persists as audit trail with per-edit attribution and a one-click reject-to-revert. This is the right primitive for HITL auto-applied edits — it gives the user a reversible trail without asking them to re-review anything.
+**預設：`suggestion.add` 搭配 `status: "accepted"`** 用於基於引用錨定之內容變更（改寫、改名、釐清、修正、行內添加句子）。一次呼叫建立追蹤建議標記*並*提交變更。用戶看到已提交文字（無需待批准），標記作為審計軌跡保留，附逐編輯歸因及一鍵拒絕還原。此為 HITL 自動套用編輯之正確原語——給予用戶可逆軌跡而無需重新審閱。
 
 ```json
 {"type":"suggestion.add","kind":"replace","quote":"<anchor>","content":"<new>","by":"ai:compound-engineering","status":"accepted","baseToken":"<token>"}
 ```
 
-Use `kind: "insert" | "delete" | "replace"` as appropriate; all three support `status: "accepted"`.
+依情況使用 `kind: "insert" | "delete" | "replace"`；三種皆支援 `status: "accepted"`。
 
-**Use `/edit/v2` silently** only when the trail is actively wrong or technically blocked:
+**僅在以下情況靜默使用 `/edit/v2`**：
 
-- **Atomicity is required** — multiple coordinated edits must commit together or not at all (e.g., insert new section + update a reference in another block + delete the obsolete paragraph). `/edit/v2` takes an `operations` array that commits atomically; separate `suggestion.add` calls can partially succeed.
-- **Pre-user self-correction** — the agent is fixing its own output *before* the user has looked at the doc (e.g., spotted a mistake mid-ingest-pass). A tracked mark would imply "there was an old version," which is misleading from the user's perspective.
-- **Pure structural insertion with no quote anchor** — adding an entirely new block/section where no existing text serves as an anchor. `suggestion.add` requires a `quote`; `/edit/v2` has `insert_before` / `insert_after` keyed on block `ref`.
-- **Structural list-item or block removal** — `suggestion.add` with `kind: "delete"` only deletes the text inside a list item; the bullet marker (`*`, `-`, or numeric `1.`) stays behind as an orphan line. Use `/edit/v2 delete_block` to remove an entire block, or `find_replace_in_block` to splice out the item plus its surrounding whitespace cleanly.
+- **需要原子性** —— 多個協調編輯必須全部提交或全部不提交（如插入新章節 + 更新另一區塊之引用 + 刪除過時段落）。`/edit/v2` 接受 `operations` 陣列原子提交；獨立之 `suggestion.add` 呼叫可能部分成功。
+- **用戶前之自我修正** —— 代理在用戶查看文檔*之前*修正自身輸出（如吸收通過中途發現錯誤）。追蹤標記會暗示「曾有舊版本」，從用戶角度具誤導性。
+- **純結構插入無引用錨點** —— 添加全新區塊/章節而無現有文字可作錨點。`suggestion.add` 需要 `quote`；`/edit/v2` 有基於區塊 `ref` 之 `insert_before` / `insert_after`。
+- **結構列表項或區塊移除** —— `suggestion.add` 搭配 `kind: "delete"` 僅刪除列表項內之文字；項目符號（`*`、`-` 或數字 `1.`）作為孤立行保留。使用 `/edit/v2 delete_block` 移除整個區塊，或 `find_replace_in_block` 乾淨地拼出項目及其周圍空白。
 
 ```bash
-# Get snapshot for block refs + baseToken
+# 取得快照以獲取區塊引用 + baseToken
 curl -s "https://www.proofeditor.ai/api/agent/{slug}/snapshot" -H "x-share-token: <token>"
-# Apply
+# 套用
 curl -X POST "https://www.proofeditor.ai/api/agent/{slug}/edit/v2" \
   -H "Content-Type: application/json" -H "x-share-token: <token>" \
   -H "X-Agent-Id: ai:compound-engineering" -H "Idempotency-Key: <uuid>" \
   -d '{"by":"ai:compound-engineering","baseToken":"<token>","operations":[...]}'
 ```
 
-Supported `op` kinds: `replace_block`, `insert_before`, `insert_after`, `delete_block`, `replace_range` (`fromRef`+`toRef`), `find_replace_in_block` (`occurrence: "first"|"all"`).
+支援之 `op` 類型：`replace_block`、`insert_before`、`insert_after`、`delete_block`、`replace_range`（`fromRef`+`toRef`）、`find_replace_in_block`（`occurrence: "first"|"all"`）。
 
-Op body shapes (block content must be wrapped in `block: {markdown}` — the server rejects flat `{op, ref, markdown}` shapes):
+操作主體形狀（區塊內容必須包裹在 `block: {markdown}` 中——伺服器拒絕扁平之 `{op, ref, markdown}` 形狀）：
 
 ```json
 {"op":"replace_block","ref":"b8","block":{"markdown":"new content"}}
@@ -142,140 +142,140 @@ Op body shapes (block content must be wrapped in `block: {markdown}` — the ser
 {"op":"replace_range","fromRef":"b2","toRef":"b5","block":{"markdown":"..."}}
 ```
 
-Block `ref` values drift across revisions — always re-fetch `/snapshot` for fresh refs before each `/edit/v2` call.
+區塊 `ref` 值跨修訂版漂移——各 `/edit/v2` 呼叫前恆重新獲取 `/snapshot` 以取得新鮮引用。
 
-**Use pending `suggestion.add` (no status)** when the change is judgment-sensitive enough that the agent wants explicit user approval before commit — rare in HITL, since the point of auto-applied edits is to reduce round-trips. Most judgment-sensitive cases are better handled by leaving the thread open with a clarifying question.
+**使用待定 `suggestion.add`（無 status）** 當變更之判斷敏感度足夠高至代理希望用戶在提交前明確批准——HITL 中罕見，因自動套用編輯之意義正是減少往返。多數判斷敏感之情況更適合以澄清問題保持線程開放。
 
-**`rewrite.apply` is not needed during a live review.** It's blocked by `LIVE_CLIENTS_PRESENT` anyway.
+**`rewrite.apply` 在即時審閱中不需要。** 其已被 `LIVE_CLIENTS_PRESENT` 阻擋。
 
-**Mutation requirements (every write, including replies and resolves):**
+**變更要求（每次寫入，包含回覆及解決）：**
 
-- Top-level field is `type` on `/ops`; `operations[].op` on `/edit/v2`. Do not mix.
-- Include `baseToken` from `/state.mutationBase.token` (or `/snapshot.mutationBase.token` for `/edit/v2`). On `STALE_BASE` or `BASE_TOKEN_REQUIRED`, re-read and retry once.
-- Set `by: "ai:compound-engineering"` and header `X-Agent-Id: ai:compound-engineering`.
-- Include an `Idempotency-Key` header (fresh UUID per logical write) so retries stay safe.
-- Reply: `{"type":"comment.reply","markId":"<id>","by":"ai:compound-engineering","text":"..."}`. Resolve: `{"type":"comment.resolve","markId":"<id>","by":"ai:compound-engineering"}`. Reopen if needed: `{"type":"comment.unresolve", ...}`.
+- 頂層欄位為 `/ops` 之 `type`；`/edit/v2` 之 `operations[].op`。勿混用。
+- 包含 `/state.mutationBase.token`（或 `/edit/v2` 之 `/snapshot.mutationBase.token`）之 `baseToken`。`STALE_BASE` 或 `BASE_TOKEN_REQUIRED` 時重新讀取並重試一次。
+- 設 `by: "ai:compound-engineering"` 及標頭 `X-Agent-Id: ai:compound-engineering`。
+- 包含 `Idempotency-Key` 標頭（每次邏輯寫入新鮮 UUID）使重試安全。
+- 回覆：`{"type":"comment.reply","markId":"<id>","by":"ai:compound-engineering","text":"..."}`。解決：`{"type":"comment.resolve","markId":"<id>","by":"ai:compound-engineering"}`。需要時重新開啟：`{"type":"comment.unresolve", ...}`。
 
-**When the loop breaks.** If a mutation keeps failing after a fresh read and one retry, or two reads disagree about state, call `POST https://www.proofeditor.ai/api/bridge/report_bug` with the request ID, slug, and raw response body before falling back. Don't silently skip — that loses the audit trail the user is relying on.
-
----
-
-## Phase 3: Terminal Report
-
-Exception-based. Don't replay what the user can already see in the Proof doc — the full reasoning for each thread lives there. The terminal is for the decisions the user needs to make next.
-
-Every report covers three things, phrased naturally for the current state:
-
-- **What got handled** (e.g., how many comments resolved, any edits auto-applied)
-- **What's still open** — if any escalations remain, each one gets one line of anchored quote plus one line of the agent's reply or question. Fuller context stays in the Proof thread
-- **The doc URL** — always include it; the user may have closed the tab
-
-Keep the whole report scannable at a glance. Three common shapes fall out of this naturally:
-
-- A clean pass with everything handled collapses to a single line plus the doc URL
-- An escalation pass lists the open threads compactly after a one-line summary of what was handled
-- A pass with no new feedback just notes that and points to the doc
-
-Phrase them in whatever voice matches the situation rather than matching a template — "handled 4, 1 still needs you" and "all 5 addressed, doc's ready" are both fine.
+**當循環中斷時。** 若變更在新鮮讀取及一次重試後仍持續失敗，或兩次讀取對狀態不同意，先呼叫 `POST https://www.proofeditor.ai/api/bridge/report_bug` 附請求 ID、slug 及原始回應主體，再回退。勿默默跳過——那會丟失用戶依賴之審計軌跡。
 
 ---
 
-## Phase 4: Next-Signal Prompt
+## 第三階段：終端報告
 
-Ask the user with the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the options in chat and wait for the reply.
+基於例外。勿重播用戶已在 Proof 文檔中可見者——各線程之完整理據存於彼處。終端用於用戶需要做之決策。
 
-**Question:** "Proof review pass done. What's next?"
+每份報告涵蓋三件事，針對當前狀態自然措辭：
 
-Offer options that cover these intents — use concrete user-facing labels, not agent-internal jargon (no "end-sync", "ingest pass", etc.). Only include the options that fit the current state. Keep labels imperative and third-person (no "I'll" / "I'm" — it is ambiguous in a tool-mediated menu whether the speaker is the user or the agent) and keep the `[short label] — [description]` shape consistent across every option. A "still working, come back later" option is not offered: the blocking question already waits, so that option would be a no-op wrapper (per the Interactive Question Tool Design rules in `plugins/compound-engineering/AGENTS.md`).
+- **處理了什麼**（如多少留言已解決、任何自動套用之編輯）
+- **仍開放者** —— 若有任何升級殘留，各則一行錨定引用加一行代理回覆或問題。完整上下文保留在 Proof 線程中
+- **文檔 URL** —— 恆包含；用戶可能已關閉標籤
 
-- **Discuss** → `Discuss — walk through the open threads in terminal`
-  Talk through open threads in the terminal; the agent echoes decisions back to Proof threads. Only useful when escalations are open.
-- **Proceed** → `Save — save the reviewed doc back to the local file`
-  Go to Phase 5 end-sync. If escalations are still open, name that in the label (e.g., `Save with 3 threads still open`) so the user is accepting the tradeoff explicitly instead of via a nested confirm.
-- **Another pass** → `Re-check — look for new comments in Proof`
-  Re-read state and re-ingest. Worth offering even after a clean pass, since the user may have added comments while the report rendered.
-- **Done for now** → `Pause — stop without saving`
-  Stop without syncing; return to caller with `status: done_for_now`, no end-sync.
+保持整份報告一目了然。三種常見形態自然產出：
 
-The sync confirmation happens in Phase 5 regardless of whether threads are open — this step only asks what the user wants next, not whether to overwrite the local file.
+- 乾淨通過（一切處理完畢）摺疊為一行加文檔 URL
+- 升級通過在處理摘要後精簡列出開放線程
+- 無新反饋之通過僅註明並指向文檔
 
----
-
-## Phase 5: End-Sync
-
-Runs when the user selects **Proceed**. Before prompting anything, check whether the Proof content actually diverged from what was uploaded — if not, there's nothing to sync and no reason to ask.
-
-1. Fetch current state: `GET /api/agent/{slug}/state` with `x-share-token: <token>`. Save the full response body to a temp file (`$STATE_TMP`) so the markdown bytes can later be streamed to disk without passing through `$(...)` (which would strip trailing newlines). Extract `state.revision` from that file into `$REVISION`. Read `state.markdown` from that file for the comparison in step 2.
-
-2. Compare `state.markdown` to `uploadedMarkdown` (captured in Phase 1).
-
-   **If identical** — no content changes happened during the session. Skip the sync prompt entirely. Display:
-
-   ```
-   No changes to sync. Local file is unchanged.
-   Doc: <tokenUrl>
-   ```
-
-   Set presence `status: completed`, summary `"Review complete, no changes"`. Return to the caller with `status: proceeded`, `localSynced: true` (local matches Proof — no write needed, local is not stale), `revision: <state.revision>`, and the rest of the standard fields.
-
-   **If different** — continue to step 3.
-
-3. Ask with the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the options in chat and wait for the reply.
-
-   **Question:** "Sync the reviewed doc back to `<localPath>`? Proof has your review changes; local still has the pre-review copy."
-
-   **Options:**
-   - **Yes, sync now** (default, recommended)
-   - **Not yet, I'll pull it later** (returns to caller with `localSynced: false`)
-
-   Why the extra prompt: the user may have started review hours ago and lost track of the local file at stake. A brief confirm makes the file write visible rather than a silent side-effect of clicking Proceed earlier. The caller signals via `localSynced` so downstream workflows can warn that local is stale.
-
-4. On **Yes, sync now**, write the fetched markdown to local — see `Workflow: Pull a Proof Doc to Local` in `SKILL.md`:
-
-   ```bash
-   # $STATE_TMP is the temp file holding the /state response from step 1.
-   TMP="${SOURCE}.proof-sync.$$"
-   jq -jr '.markdown' "$STATE_TMP" > "$TMP" && mv "$TMP" "$SOURCE"
-   rm "$STATE_TMP"
-   ```
-
-   Stream `.markdown` bytes directly from the saved state file with `jq -jr` — do not capture the markdown into a shell variable, since `$(...)` would strip trailing newlines and corrupt the write. `$REVISION` (extracted separately in step 1) is safe to keep as a variable; it's an opaque scalar.
-
-   On **Not yet**, skip the write (still clean up `$STATE_TMP`).
-
-5. Set presence `status: completed`, summary `"Review synced to <localPath>"` (or `"Review complete, local not updated"` if sync was declined) so the Proof UI shows the loop has finished.
-
-6. Display one of:
-
-   Synced:
-   ```
-   Doc synced to <localPath> (revision <N>).
-   Doc: <tokenUrl>
-   ```
-
-   Declined:
-   ```
-   Review complete. Local file kept as-is — pull from Proof when ready.
-   Doc: <tokenUrl>
-   ```
-
-7. Return to the caller with:
-   ```
-   status: proceeded
-   localPath: <source>
-   localSynced: true | false
-   docUrl: <tokenUrl>
-   openThreadCount: <K>
-   revision: <N>
-   ```
-
-Do **not** delete the Proof doc. It remains the durable review record; the caller's workflow may want to link back to it.
+以匹配情境之語氣措辭而非匹配模板——"handled 4, 1 still needs you" 及 "all 5 addressed, doc's ready" 皆可。
 
 ---
 
-## Recipes
+## 第四階段：下一信號提示
 
-### BaseToken-aware mutation
+以平台之阻斷式提問工具詢問用戶（Claude Code 之 `AskUserQuestion`，Codex 之 `request_user_input`，Gemini 之 `ask_user`）。若無提問工具，於聊天中呈現選項並等候回覆。
+
+**問題：** "Proof review pass done. What's next?"
+
+提供涵蓋這些意圖之選項——使用具體之用戶面向標籤，非代理內部術語（無 "end-sync"、"ingest pass" 等）。僅包含適合當前狀態之選項。保持標籤祈使式及第三人稱（無 "I'll" / "I'm" ——工具中介選單中發言者為用戶或代理不明確）並保持 `[短標籤] — [描述]` 形狀於每個選項一致。「仍在進行，稍後再回來」選項不提供：阻斷式提問已等待，該選項為無操作包裝（依 `plugins/compound-engineering/AGENTS.md` 中互動式提問工具設計規則）。
+
+- **討論** → `Discuss — walk through the open threads in terminal`
+  於終端討論開放線程；代理將決策回傳至 Proof 線程。僅在有升級開放時有用。
+- **繼續** → `Save — save the reviewed doc back to the local file`
+  進入第五階段結束同步。若仍有升級開放，於標籤中命名（如 `Save with 3 threads still open`）使用戶明確接受取捨而非透過嵌套確認。
+- **再次通過** → `Re-check — look for new comments in Proof`
+  重新讀取狀態並重新吸收。乾淨通過後仍值得提供，因用戶可能於報告渲染期間添加了留言。
+- **暫停** → `Pause — stop without saving`
+  不同步即停止；以 `status: done_for_now` 返回呼叫者，無結束同步。
+
+同步確認於第五階段進行，無論線程是否開放——此步驟僅詢問用戶下一步，非是否覆寫本地檔案。
+
+---
+
+## 第五階段：結束同步
+
+用戶選擇**繼續**時運行。提示任何內容前，先檢查 Proof 內容是否實際偏離上傳者——若無，無需同步亦無需詢問。
+
+1. 獲取當前狀態：`GET /api/agent/{slug}/state` 附 `x-share-token: <token>`。將完整回應主體儲存至臨時檔案（`$STATE_TMP`）使 markdown 位元組隨後可直接串流至磁碟而不經 `$(...)`（會去除尾隨換行）。從該檔案提取 `state.revision` 至 `$REVISION`。從該檔案讀取 `state.markdown` 用於步驟 2 之比較。
+
+2. 比較 `state.markdown` 與 `uploadedMarkdown`（第一階段捕獲）。
+
+    **若相同** —— 會話期間無內容變更。完全跳過同步提示。顯示：
+
+    ```
+    No changes to sync. Local file is unchanged.
+    Doc: <tokenUrl>
+    ```
+
+    設在場狀態 `status: completed`、摘要 `"Review complete, no changes"`。以 `status: proceeded`、`localSynced: true`（本地匹配 Proof——無需寫入，本地不過時）、`revision: <state.revision>` 及其餘標準欄位返回呼叫者。
+
+    **若不同** —— 繼續至步驟 3。
+
+3. 以平台之阻斷式提問工具詢問（Claude Code 之 `AskUserQuestion`，Codex 之 `request_user_input`，Gemini 之 `ask_user`）。若無提問工具，於聊天中呈現選項並等候回覆。
+
+    **問題：** "Sync the reviewed doc back to `<localPath>`? Proof has your review changes; local still has the pre-review copy."
+
+    **選項：**
+    - **Yes, sync now**（預設，推薦）
+    - **Not yet, I'll pull it later**（以 `localSynced: false` 返回呼叫者）
+
+    何以需要額外提示：用戶可能數小時前開始審閱，已忘記本地檔案之重要性。簡短確認使檔案寫入可見而非點擊先前 Proceed 之無聲副作用。呼叫者透過 `localSynced` 發出信號使下游工作流可警告本地過時。
+
+4. **Yes, sync now** 時，將獲取之 markdown 寫入本地——見 SKILL.md 中 `Workflow: Pull a Proof Doc to Local`：
+
+    ```bash
+    # $STATE_TMP 為持有 /state 回應之臨時檔案（步驟 1）。
+    TMP="${SOURCE}.proof-sync.$$"
+    jq -jr '.markdown' "$STATE_TMP" > "$TMP" && mv "$TMP" "$SOURCE"
+    rm "$STATE_TMP"
+    ```
+
+    以 `jq -jr` 直接從保存之狀態檔案串流 `.markdown` 位元組——勿將 markdown 捕獲至 shell 變數，因 `$(...)` 會去除尾隨換行並損壞寫入。`$REVISION`（步驟 1 中分別提取）作為變數安全；其為不透明純量。
+
+    **Not yet** 時，跳過寫入（仍清理 `$STATE_TMP`）。
+
+5. 設在場狀態 `status: completed`、摘要 `"Review synced to <localPath>"`（或同步被拒時 `"Review complete, local not updated"`）使 Proof UI 顯示循環已完成。
+
+6. 顯示以下之一：
+
+    已同步：
+    ```
+    Doc synced to <localPath> (revision <N>).
+    Doc: <tokenUrl>
+    ```
+
+    已拒絕：
+    ```
+    Review complete. Local file kept as-is — pull from Proof when ready.
+    Doc: <tokenUrl>
+    ```
+
+7. 返回呼叫者：
+    ```
+    status: proceeded
+    localPath: <source>
+    localSynced: true | false
+    docUrl: <tokenUrl>
+    openThreadCount: <K>
+    revision: <N>
+    ```
+
+**勿**刪除 Proof 文檔。其保持為持久審閱記錄；呼叫者之工作流可能需要連回。
+
+---
+
+## 配方
+
+### BaseToken 感知之變更
 
 ```bash
 SLUG=<slug>
@@ -283,7 +283,7 @@ TOKEN=<accessToken>
 AGENT_ID=ai:compound-engineering
 
 mutate() {
-  local PAYLOAD="$1"  # jq template without baseToken
+  local PAYLOAD="$1"  # 不含 baseToken 之 jq 模板
   local BASE
   BASE=$(curl -s "https://www.proofeditor.ai/api/agent/$SLUG/state" \
     -H "x-share-token: $TOKEN" | jq -r '.mutationBase.token')
@@ -296,18 +296,18 @@ mutate() {
 }
 ```
 
-Every mutation sends a fresh `Idempotency-Key` so retries on network hiccups do not double-apply the op. This is required when `/state.contract.idempotencyRequired` is true and harmless otherwise.
+每次變更發送新鮮 `Idempotency-Key` 使網路波動之重試不會重複套用操作。當 `/state.contract.idempotencyRequired` 為 true 時此為必要，其他情況無害。
 
-On `STALE_BASE` in the response, re-run — the state read picks up the fresh token automatically.
+回應中 `STALE_BASE` 時，重新運行——狀態讀取自動拾取新鮮 token。
 
-### jq gotcha when inspecting responses
+### 檢查回應時之 jq 陷阱
 
-When extracting fields from API responses with jq's `//` alternative operator, parenthesize inside object constructors — jq parses `{markId: .markId // .result.markId}` as a syntax error. Use `{markId: (.markId // .result.markId)}`, or pull the value outside the object: `jq -r '.markId // .result.markId'`.
+以 jq `//` 替代運算子從 API 回應提取欄位時，物件建構器內加括號——jq 將 `{markId: .markId // .result.markId}` 解析為語法錯誤。使用 `{markId: (.markId // .result.markId)}`，或將值拉出物件外：`jq -r '.markId // .result.markId'`。
 
-### Identity
+### 身份
 
-All ops must include:
-- `by: "ai:compound-engineering"` in the request body
-- `X-Agent-Id: ai:compound-engineering` in headers (required for presence; recommended for ops for consistent attribution)
+所有操作必須包含：
+- 請求主體中之 `by: "ai:compound-engineering"`
+- 標頭中之 `X-Agent-Id: ai:compound-engineering`（presence 必要；ops 建議用於一致歸因）
 
-Display name `Compound Engineering` is bound via `POST /presence` with `{"name":"Compound Engineering", ...}`. Set this once after upload; it carries across subsequent ops.
+顯示名稱 `Compound Engineering` 透過 `POST /presence` 附 `{"name":"Compound Engineering", ...}` 綁定。上傳後設置一次；後續操作沿用。

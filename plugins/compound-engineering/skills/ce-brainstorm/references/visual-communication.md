@@ -1,29 +1,29 @@
-# Visual Communication in Requirements Documents
+# 需求文檔中之視覺溝通
 
-Visual aids are conditional on content patterns, not on depth classification — a Lightweight brainstorm about a complex workflow may warrant a diagram; a Deep brainstorm about a straightforward feature may not.
+視覺輔助取決於內容範式，非深度分類 — 輕量腦力激盪論及複雜工作流或需圖示；深度腦力激盪論及簡明功能或可免。
 
-**When to include:**
+**何時納入：**
 
-| Requirements describe... | Visual aid | Placement |
+| 需求描述… | 視覺輔助 | 放置 |
 |---|---|---|
-| A multi-step user workflow or process | Mermaid flow diagram or ASCII flow with annotations | After Problem Frame, or under its own `## User Flow` heading for substantial flows (>10 nodes) |
-| 3+ behavioral modes, variants, or states | Markdown comparison table | Within the Requirements section |
-| 3+ interacting participants (user roles, system components, external services) | Mermaid or ASCII relationship diagram | After Problem Frame, or under its own `## Architecture` heading |
-| Multiple competing approaches being compared | Comparison table | Within Phase 2 approach exploration |
+| 多步用戶工作流或流程 | Mermaid 流程圖或含註解之 ASCII 流程 | Problem Frame 之後，或大流程（>10 節點）獨立 `## User Flow` 標頭下 |
+| 3+ 行為模式、變體或狀態 | Markdown 比較表 | Requirements 段落內 |
+| 3+ 互動參與者（用戶角色、系統組件、外部服務） | Mermaid 或 ASCII 關係圖 | Problem Frame 之後，或獨立 `## Architecture` 標頭下 |
+| 比較多種競爭方案 | 比較表 | 第二階段方案探索內 |
 
-**When to skip:**
-- Prose already communicates the concept clearly
-- The diagram would just restate the requirements in visual form without adding comprehension value
-- The visual describes implementation architecture, data schemas, state machines, or code structure (that belongs in `ce-plan`)
-- The brainstorm is simple and linear with no multi-step flows, mode comparisons, or multi-participant interactions
+**何時略過：**
+- 純文字已清晰傳達概念
+- 圖示僅以視覺形式重述需求而無增進理解之效
+- 視覺描述實施架構、資料 schema、狀態機或碼結構（屬 `ce-plan`）
+- 腦力激盪簡易且線性，無多步流程、模式比較或多參與者互動
 
-**Format selection:**
-- **Mermaid** (default) for simple flows — 5-15 nodes, no in-box annotations, standard flowchart shapes. Use `TB` (top-to-bottom) direction so diagrams stay narrow in both rendered and source form. Source should be readable as fallback in diff views and terminals.
-- **ASCII/box-drawing diagrams** for annotated flows that need rich in-box content — CLI commands at each step, decision logic branches, file path layouts, multi-column spatial arrangements. More expressive than mermaid when the diagram's value comes from annotations within steps. Follow 80-column max for code blocks, use vertical stacking.
-- **Markdown tables** for mode/variant comparisons and approach comparisons.
-- Keep diagrams proportionate to the content. A simple 5-step workflow gets 5-10 nodes. A complex workflow with decision branches and annotations at each step may need 15-20 nodes — that is fine if every node earns its place.
-- Place inline at the point of relevance, not in a separate section.
-- Conceptual level only — user flows, information flows, mode comparisons, component responsibilities. Not implementation architecture, data schemas, or code structure.
-- Prose is authoritative: when a visual aid and surrounding prose disagree, the prose governs.
+**格式選擇：**
+- **Mermaid**（預設）用簡單流程 — 5-15 節點、無框內註解、標準流程圖形狀。用 `TB`（上至下）方向以保持圖於渲染及原始形式中皆窄。原始碼應可於 diff 視圖及終端中作為後備閱讀。
+- **ASCII/製圖字元**用需豐富框內內容之帶註流程 — 各步 CLI 命令、決策邏輯分支、檔案路徑佈局、多欄空間排列。圖示價值來自步驟內註解時，較 mermaid 更具表現力。遵循 80 欄上限，垂直堆疊。
+- **Markdown 表格**用模式/變體比較及方案比較。
+- 圖示與內容保持比例。簡單 5 步工作流得 5-10 節點。含決策分支及各步註解之複雜工作流或需 15-20 節點 — 每節點皆有所值即可。
+- 置於相關處之內聯位置，非獨立段落。
+- 僅概念層 — 用戶流程、資訊流程、模式比較、組件職責。非實施架構、資料 schema 或碼結構。
+- 純文字為準：視覺輔助與周圍純文字矛盾時，以純文字為準。
 
-After generating a visual aid, verify it accurately represents the prose requirements — correct sequence, no missing branches, no merged steps. Diagrams without code to validate against carry higher inaccuracy risk than code-backed diagrams.
+生成視覺輔助後，驗證其準確反映純文字需求 — 正確順序、無遺漏分支、無合併步驟。無碼可驗之圖示較有碼支持者帶更高不準確風險。

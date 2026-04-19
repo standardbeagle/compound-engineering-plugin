@@ -1,64 +1,64 @@
 ---
 name: ce-every-style-editor
-description: This skill should be used when reviewing or editing copy to ensure adherence to Every's style guide. It provides a systematic line-by-line review process for grammar, punctuation, mechanics, and style guide compliance.
+description: 審查或編輯文稿以確保符合 Every 風格指南時使用。提供系統化之逐行審查流程，涵蓋語法、標點、機械格式及風格合規。
 ---
 
-# Every Style Editor
+# Every 風格編輯器
 
-This skill provides a systematic approach to reviewing copy against Every's comprehensive style guide. It transforms Claude into a meticulous line editor and proofreader specializing in grammar, mechanics, and style guide compliance.
+此技能提供系統化方法，以 Every 綜合風格指南為準審查文稿。將 Claude 轉化為一絲不苟之行編輯與校對者，專精於語法、機械格式及風格合規。
 
-## When to Use This Skill
+## 使用時機
 
-Use this skill when:
-- Reviewing articles, blog posts, newsletters, or any written content
-- Ensuring copy follows Every's specific style conventions
-- Providing feedback on grammar, punctuation, and mechanics
-- Flagging deviations from the Every style guide
-- Preparing clean copy for human editorial review
+用於：
+- 審查文章、部落格文章、電子報或任何書面內容
+- 確保文稿遵循 Every 特定風格慣例
+- 提供語法、標點及機械格式之回饋
+- 標記偏離 Every 風格指南之處
+- 為人工編輯審查準備乾淨文稿
 
-## Skill Overview
+## 技能概述
 
-This skill enables performing a comprehensive review of written content in four phases:
+此技能以四階段進行文稿全面審查：
 
-1. **Initial Assessment** - Understanding context and document type
-2. **Detailed Line Edit** - Checking every sentence for compliance
-3. **Mechanical Review** - Verifying formatting and consistency
-4. **Recommendations** - Providing actionable improvement suggestions
+1. **初始評估** ——理解上下文與文檔類型
+2. **詳細行編輯** ——逐句檢查合規性
+3. **機械格式審查** ——驗證格式與一致性
+4. **建議** ——提供可行之改進建議
 
-## How to Use This Skill
+## 使用方法
 
-### Step 1: Initial Assessment
+### 步驟一：初始評估
 
-Begin by reading the entire piece to understand:
-- Document type (article, knowledge base entry, social post, etc.)
-- Target audience
-- Overall tone and voice
-- Content context
+先通讀全文以理解：
+- 文檔類型（文章、知識庫條目、社群貼文等）
+- 目標受眾
+- 整體語氣與聲調
+- 內容上下文
 
-### Step 2: Detailed Line Edit
+### 步驟二：詳細行編輯
 
-Review each paragraph systematically, checking for:
-- Sentence structure and grammar correctness
-- Punctuation usage (commas, semicolons, em dashes, etc.)
-- Capitalization rules (especially job titles, headlines)
-- Word choice and usage (overused words, passive voice)
-- Adherence to Every style guide rules
+系統化審查每個段落，檢查：
+- 句子結構與語法正確性
+- 標點使用（逗號、分號、破折號等）
+- 大小寫規則（尤其職稱、標題）
+- 用詞選擇與用法（過度使用之詞、被動語態）
+- 遵循 Every 風格指南規則
 
-Reference the complete style guide at `references/EVERY_WRITE_STYLE.md` for specific rules when in doubt.
+有疑慮時參照 `references/EVERY_WRITE_STYLE.md` 之完整風格指南。
 
-### Step 3: Mechanical Review
+### 步驟三：機械格式審查
 
-Verify:
-- Spacing and formatting consistency
-- Style choices applied uniformly throughout
-- Special elements (lists, quotes, citations)
-- Proper use of italics and formatting
-- Number formatting (numerals vs. spelled out)
-- Link formatting and descriptions
+驗證：
+- 間距與格式一致性
+- 風格選擇全文統一套用
+- 特殊元素（列表、引文、引用）
+- 斜體與格式之正確使用
+- 數字格式（數字 vs. 拼寫）
+- 連結格式與描述
 
-### Step 4: Output Results
+### 步驟四：輸出結果
 
-Present findings using this structure:
+以下列結構呈現發現：
 
 ```
 DOCUMENT REVIEW SUMMARY
@@ -97,39 +97,38 @@ FINAL RECOMMENDATIONS
 [2-3 actionable suggestions for improving the draft]
 ```
 
-## Style Guide Reference
+## 風格指南參照
 
-The complete Every style guide is at `references/EVERY_WRITE_STYLE.md`. Key areas to focus on:
+Every 完整風格指南位於 `references/EVERY_WRITE_STYLE.md`。重點關注領域：
 
-- **Quick Rules**: Title case for headlines, sentence case elsewhere
-- **Tone**: Active voice, avoid overused words (actually, very, just), be specific
-- **Numbers**: Spell out one through nine; use numerals for 10+
-- **Punctuation**: Oxford commas, em dashes without spaces, proper quotation mark usage
-- **Capitalization**: Lowercase job titles, company as singular (it), teams as plural (they)
-- **Emphasis**: Italics only (no bold for emphasis)
-- **Links**: 2-4 words, don't say "click here"
+- **快速規則**：標題用 Title case，其餘用 sentence case
+- **語氣**：主動語態，避免過度使用之詞（actually、very、just），具體明確
+- **數字**：一至九拼寫；10 以上用阿拉伯數字
+- **標點**：牛津逗號、em dash 不加空格、正確引號用法
+- **大小寫**：職稱小寫、公司視為單數（it）、團隊視為複數（they）
+- **強調**：僅用斜體（不以粗體強調）
+- **連結**：2-4 詞，勿寫「click here」
 
-## Key Principles
+## 核心原則
 
-- **Be specific**: Always quote the exact text with the error
-- **Reference rules**: Cite the specific style guide rule for each correction
-- **Maintain voice**: Preserve the author's voice while correcting errors
-- **Prioritize clarity**: Focus on changes that improve readability
-- **Be constructive**: Frame feedback to help writers improve
-- **Flag ambiguous cases**: When style guide doesn't address an issue, explain options and recommend the clearest choice
+- **具體明確**：引用含錯誤之確切文字
+- **引用規則**：每項修正引用特定風格指南規則
+- **保持聲調**：修正錯誤時保留作者之聲調
+- **優先清晰**：聚焦提升可讀性之變更
+- **建設性反饋**：以助作者改進之方式呈現
+- **標記模糊案例**：風格指南未涵蓋時，解釋選項並推薦最清晰者
 
-## Common Areas to Focus On
+## 常見關注領域
 
-Based on Every's style guide, pay special attention to:
+依 Every 風格指南，特別注意：
 
-- Punctuation (comma usage, semicolons, apostrophes, quotation marks)
-- Capitalization (proper nouns, titles, sentence starts)
-- Numbers (when to spell out vs. use numerals)
-- Passive voice (replace with active whenever possible)
-- Overused words (actually, very, just)
-- Lists (parallel structure, punctuation, capitalization)
-- Hyphenation (compound adjectives, except adverbs)
-- Word usage (fewer vs. less, they vs. them)
-- Company references (singular "it", teams as plural "they")
-- Job title capitalization
-
+- 標點（逗號用法、分號、撇號、引號）
+- 大小寫（專有名詞、標題、句首）
+- 數字（何時拼寫 vs. 阿拉伯數字）
+- 被動語態（儘可能替換為主動語態）
+- 過度使用之詞（actually、very、just）
+- 列表（平行結構、標點、大小寫）
+- 連字符（複合形容詞，副詞除外）
+- 用詞（fewer vs. less、they vs. them）
+- 公司引用（單數 "it"、團隊複數 "they"）
+- 職稱大小寫

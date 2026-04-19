@@ -1,96 +1,96 @@
-# Phases 3-5: Synthesis, Presentation, and Next Action
+# 階段3-5：整合、呈現與下一步
 
-## Phase 3: Synthesize Findings
+## 階段3：整合結果
 
-Process findings from all agents through this pipeline. **Order matters** -- each step depends on the previous.
+依此管線處理所有代理結果。**順序重要** — 每步依賴前步。
 
-### 3.1 Validate
+### 3.1 驗證
 
-Check each agent's returned JSON against the findings schema:
-- Drop findings missing any required field defined in the schema
-- Drop findings with invalid enum values
-- Note the agent name for any malformed output in the Coverage section
+依findings schema檢查各代理回傳之JSON：
+- 捨棄缺任何必填欄位之結果
+- 捨棄含無效列舉值之結果
+- 於Coverage段中記錄格式異常之代理名
 
-### 3.2 Confidence Gate
+### 3.2 信心門檻
 
-Suppress findings below 0.50 confidence. Store them as residual concerns for potential promotion in step 3.4.
+抑制信心低於0.50之結果。存為殘餘關注，待3.4步可能提升。
 
-### 3.3 Deduplicate
+### 3.3 去重
 
-Fingerprint each finding using `normalize(section) + normalize(title)`. Normalization: lowercase, strip punctuation, collapse whitespace.
+以`normalize(section) + normalize(title)`為指紋。正規化：小寫、去標點、摺疊空白。
 
-When fingerprints match across personas:
-- If the findings recommend **opposing actions** (e.g., one says cut, the other says keep), do not merge -- preserve both for contradiction resolution in 3.5
-- Otherwise merge: keep the highest severity, keep the highest confidence, union all evidence arrays, note all agreeing reviewers (e.g., "coherence, feasibility")
-- **Coverage attribution:** Attribute the merged finding to the persona with the highest confidence. Decrement the losing persona's Findings count *and* the corresponding route bucket (Auto or Present) so `Findings = Auto + Present` stays exact.
+跨persona指紋相符時：
+- 若結果建議**對立行動**（一曰刪一曰留），不合併 — 保留雙方供3.5矛盾解決
+- 否則合併：取最高嚴重度、最高信心、聯集所有證據陣列、註記所有同意審查者
+- **Coverage歸屬：** 歸屬合併結果於最高信心之persona。扣減失利persona之Findings計數及對應路由桶（Auto或Present），使`Findings = Auto + Present`保持精確。
 
-### 3.4 Promote Residual Concerns
+### 3.4 提升殘餘關注
 
-Scan the residual concerns (findings suppressed in 3.2) for:
-- **Cross-persona corroboration**: A residual concern from Persona A overlaps with an above-threshold finding from Persona B. Promote at P2 with confidence 0.55-0.65. Inherit `finding_type` from the corroborating above-threshold finding.
-- **Concrete blocking risks**: A residual concern describes a specific, concrete risk that would block implementation. Promote at P2 with confidence 0.55. Set `finding_type: omission` (blocking risks surfaced as residual concerns are inherently about something the document failed to address).
+掃描殘餘關注（3.2抑制者）尋找：
+- **跨persona佐證**：Persona A之殘餘關注與Persona B之門檻以上結果重疊。以P2提升，信心0.55-0.65。繼承佐證結果之`finding_type`。
+- **具體阻塞風險**：殘餘關注描述具體、明確之風險將阻塞實施。以P2提升，信心0.55。設`finding_type: omission`（以殘餘關注浮現之阻塞風險本質為文檔所未及）。
 
-### 3.5 Resolve Contradictions
+### 3.5 解決矛盾
 
-When personas disagree on the same section:
-- Create a **combined finding** presenting both perspectives
-- Set `autofix_class: present`
-- Set `finding_type: error` (contradictions are by definition about conflicting things the document says, not things it omits)
-- Frame as a tradeoff, not a verdict
+當persona對同段有歧見：
+- 建立**合併結果**呈現雙方觀點
+- 設`autofix_class: present`
+- 設`finding_type: error`（矛盾本質為文檔所言之衝突，非所遺漏）
+- 框架為取捨，非裁決
 
-Specific conflict patterns:
-- Coherence says "keep for consistency" + scope-guardian says "cut for simplicity" -> combined finding, let user decide
-- Feasibility says "this is impossible" + product-lens says "this is essential" -> P1 finding framed as a tradeoff
-- Multiple personas flag the same issue -> merge into single finding, note consensus, increase confidence
+特定衝突模式：
+- Coherence曰「為一致性保留」+ scope-guardian曰「為簡潔刪除」→ 合併結果，讓用戶定奪
+- Feasibility曰「此不可能」+ product-lens曰「此為必要」→ P1結果框架為取捨
+- 多個persona標記同一問題 → 合併為單一結果，註記共識，提高信心
 
-### 3.6 Promote Pattern-Resolved Findings
+### 3.6 提升模式解決結果
 
-Scan `present` findings for codebase-pattern-resolved auto-eligibility. Promote `present` -> `auto` when **all three** conditions are met:
+掃描`present`結果之codebase-pattern-resolved自動資格。**三條件全滿**時提升`present` → `auto`：
 
-1. The finding's `why_it_matters` cites a specific existing codebase pattern -- not just "best practice" or "convention," but a concrete pattern with a file, function, or usage reference
-2. The finding includes a concrete `suggested_fix` that follows that cited pattern
-3. There is no genuine tradeoff -- the codebase context resolves any ambiguity about which approach to use
+1. 結果之`why_it_matters`引用具體既有碼庫模式 — 非僅「最佳實踐」或「慣例」，乃具檔案、函式或使用參考之具體模式
+2. 結果含具體`suggested_fix`遵循所引用模式
+3. 無真正取捨 — 碼庫上下文解決所有歧義
 
-The principle: when a reviewer mentions multiple theoretical approaches but the codebase already has an established pattern that makes one approach clearly correct, the codebase context settles the question. Alternatives mentioned in passing do not create a real tradeoff if the evidence shows the codebase has already chosen.
+原則：審查者提及多個理論方案，但碼庫已有確立模式使一方案明確正確，則碼庫上下文解決問題。順帶提及之替代方案不構成真正取捨。
 
-Additional auto-promotion patterns (promote `present` -> `auto` when):
-- The finding identifies factually incorrect behavior in the document and the suggested fix describes the correct behavior (not a design choice between alternatives)
-- The finding identifies a missing industry-standard security control where the document's own context makes the omission clearly wrong (not a legitimate design choice for the system described), and the suggested fix follows established practice
-- The finding identifies an incomplete technical description and the complete version is directly derivable from the codebase (the reviewer cited specific code showing what the description should say)
+額外自動提升模式（滿足時提升`present` → `auto`）：
+- 結果指出文檔中事實錯誤之行為且建議修復描述正確行為（非設計選擇）
+- 結果指出缺少業界標準安全控制且文檔自身上下文使遺漏明顯錯誤，建議修復遵循既定慣例
+- 結果指出不完整技術描述且完整版本可直接自碼庫推導（審查者引用具體程式碼）
 
-Do not promote if the finding involves scope or priority changes where the document author may have weighed tradeoffs invisible to the reviewer.
+若結果涉及範圍或優先級變更（文檔作者可能權衡了審查者不可見之取捨），勿提升。
 
-### 3.7 Route by Autofix Class
+### 3.7 依autofix_class路由
 
-**Severity and autofix_class are independent.** A P1 finding can be `auto` if the correct fix is obvious. The test is not "how important?" but "is there one clear correct fix, or does this require judgment?"
+**嚴重度與autofix_class獨立。** P1結果可為`auto`若正確修復明顯。測試非「多重要？」乃「有無唯一正確修復，抑或需判斷？」
 
-| Autofix Class | Route |
-|---------------|-------|
-| `auto` | Apply automatically -- one clear correct fix. Includes internal reconciliation (one part authoritative over another), additions mechanically implied by the document's own content, and codebase-pattern-resolved fixes where codebase evidence makes one approach clearly correct. |
-| `present` | Present individually for user judgment |
+| Autofix Class | 路由 |
+|---------------|------|
+| `auto` | 自動套用 — 唯一正確修復。含內部調和（一部分權威於另一部分）、文檔自身內容機械推導之添加、碼庫模式解決之修復。 |
+| `present` | 逐項呈現供用戶判斷 |
 
-Demote any `auto` finding that lacks a `suggested_fix` to `present`.
+缺`suggested_fix`之`auto`結果降為`present`。
 
-**Auto-eligible patterns:** summary/detail mismatch (body is authoritative over overview), wrong counts, missing list entries derivable from elsewhere in the document, stale internal cross-references, terminology drift, prose/diagram contradictions where prose is more detailed, missing steps mechanically implied by other content, unstated thresholds implied by surrounding context, completeness gaps where the correct addition is obvious, codebase-pattern-resolved fixes where the reviewer cites a specific existing pattern and the suggested_fix follows it, factually incorrect behavior where the correct behavior is obvious from context or the codebase, missing standard security controls with known implementations, incomplete technical descriptions where the complete version is derivable from the codebase. If the fix requires judgment about *what* to do (not just *what to write*) and the codebase context does not resolve the ambiguity, it belongs in `present`.
+**自動合格模式：** 摘要/細節不合（正文權威於概覽）、錯誤計數、可自文檔他處推導之缺失列表項、過時內部交叉引用、術語漂移、正文/圖矛盾（正文更詳）、他處內容機械推導之缺失步驟、周圍上下文推導之未述閾值、正確添加明顯之完整性缺口、審查者引用具體既有模式且建議修復隨之之碼庫模式解決修復、上下文或碼庫可明確推導正確行為之事實錯誤行為、已知實作之缺失標準安全控制、可自碼庫推導完整版之不完整技術描述。若修復需判斷*做什麼*（非僅*寫什麼*）且碼庫上下文未解決歧義，屬`present`。
 
-### 3.8 Sort
+### 3.8 排序
 
-Sort findings for presentation: P0 -> P1 -> P2 -> P3, then by finding type (errors before omissions), then by confidence (descending), then by document order (section position).
+依嚴重度排序呈現：P0 → P1 → P2 → P3，繼以類型（errors先於omissions），繼以信心（降序），繼以文檔順序（段節位置）。
 
-## Phase 4: Apply and Present
+## 階段4：套用與呈現
 
-### Apply Auto-fixes
+### 套用自動修復
 
-Apply all `auto` findings to the document in a **single pass**:
-- Edit the document inline using the platform's edit tool
-- Track what was changed for the "Auto-fixes Applied" section
-- Do not ask for approval -- these have one clear correct fix
+以**單次遍歷**套用所有`auto`結果至文檔：
+- 以平台編輯工具行內編輯文檔
+- 追蹤所變更供「Auto-fixes Applied」段
+- 不求核准 — 這些有唯一正確修復
 
-List every auto-fix in the output summary so the user can see what changed. Use enough detail to convey the substance of each fix (section, what was changed, reviewer attribution). This is especially important for fixes that add content or touch document meaning -- the user should not have to diff the document to understand what the review did.
+於輸出摘要列出每項自動修復，使用戶可見所變更。附足夠細節以傳達每項修復實質（段節、所變更、審查者歸屬）。尤以添加內容或觸及文檔含義之修復為要 — 用戶不應需diff文檔以理解審查所為。
 
-### Present Remaining Findings
+### 呈現剩餘結果
 
-**Headless mode:** Do not use interactive question tools. Output all non-auto findings as a structured text summary the caller can parse and act on:
+**無頭模式：** 不用互動式提問工具。以結構化文字摘要輸出所有非auto結果供呼叫者解析處理：
 
 ```
 Document review complete (headless mode).
@@ -116,58 +116,58 @@ Deferred questions:
 - <question> (<source>)
 ```
 
-Omit any section with zero items. Then proceed directly to Phase 5 (which returns immediately in headless mode).
+零項段落省略。然後直接進入階段5（無頭模式下立即回傳）。
 
-**Interactive mode:**
+**互動模式：**
 
-Present `present` findings using the review output template (read `references/review-output-template.md`). Within each severity level, separate findings by type:
-- **Errors** (design tensions, contradictions, incorrect statements) first -- these need resolution
-- **Omissions** (missing steps, absent details, forgotten entries) second -- these need additions
+以審查輸出模板呈現`present`結果（讀`references/review-output-template.md`）。每嚴重度等級內依類型分：
+- **Errors**（設計張力、矛盾、錯誤陳述）在前 — 需解決
+- **Omissions**（缺失步驟、缺漏細節、遺忘條目）在後 — 需添加
 
-Brief summary at the top: "Applied N auto-fixes. K findings to consider (X errors, Y omissions)."
+頂部簡要摘要：「Applied N auto-fixes. K findings to consider (X errors, Y omissions).」
 
-Include the Coverage table, auto-fixes applied, residual concerns, and deferred questions.
+含Coverage表、已套用自動修復、殘餘關注與延遲問題。
 
-### Protected Artifacts
+### 受保護產物
 
-During synthesis, discard any finding that recommends deleting or removing files in:
+整合時，丟棄任何建議刪除以下檔案之結果：
 - `docs/brainstorms/`
 - `docs/plans/`
 - `docs/solutions/`
 
-These are pipeline artifacts and must not be flagged for removal.
+此為管線產物，不得標記移除。
 
-## Phase 5: Next Action
+## 階段5：下一步
 
-**Headless mode:** Return "Review complete" immediately. Do not ask questions. The caller receives the text summary from Phase 4 and handles any remaining findings.
+**無頭模式：** 立即回傳「Review complete」。不問問題。呼叫者接收階段4之文字摘要並處理剩餘結果。
 
-**Interactive mode:**
+**互動模式：**
 
-**Ask using the platform's interactive question tool** -- do not print the question as plain text output:
-- Claude Code: `AskUserQuestion`
-- Codex: `request_user_input`
-- Gemini: `ask_user`
-- Fallback (no question tool available): present numbered options and stop; wait for the user's next message
+**以平台互動式提問工具詢問** — 勿以純文字輸出印出問題：
+- Claude Code：`AskUserQuestion`
+- Codex：`request_user_input`
+- Gemini：`ask_user`
+- 後備（無提問工具可用）：呈現編號選項後停止；等候用戶下次訊息
 
-Offer these two options. Use the document type from Phase 1 to set the "Review complete" description:
+提供二選項。以階段1之文檔類型設「Review complete」描述：
 
-1. **Refine again** -- Address the findings above, then re-review
-2. **Review complete** -- description based on document type:
-   - requirements document: "Create technical plan with ce-plan"
-   - plan document: "Implement with ce-work"
+1. **再次精修** — 處理上述結果，再審查
+2. **審查完成** — 依文檔類型之描述：
+   - 需求文檔：「Create technical plan with ce-plan」
+   - 計劃文檔：「Implement with ce-work」
 
-After 2 refinement passes, recommend completion -- diminishing returns are likely. But if the user wants to continue, allow it.
+2次精修後建議完成 — 邊際效益遞減。但若用戶欲繼續，允許之。
 
-Return "Review complete" as the terminal signal for callers.
+回傳「Review complete」作為呼叫者之終止信號。
 
-## What NOT to Do
+## 禁忌
 
-- Do not rewrite the entire document
-- Do not add new sections or requirements the user didn't discuss
-- Do not over-engineer or add complexity
-- Do not create separate review files or add metadata sections
-- Do not modify caller skills (ce-brainstorm, ce-plan, or external plugin skills that invoke ce-doc-review)
+- 不重寫整份文檔
+- 不添加用戶未討論之新段節或需求
+- 不過度工程或添加複雜度
+- 不建立獨立審查檔或添加元資料段節
+- 不修改呼叫技能（ce-brainstorm、ce-plan或呼叫ce-doc-review之外部插件技能）
 
-## Iteration Guidance
+## 迭代指引
 
-On subsequent passes, re-dispatch personas and re-synthesize. The auto-fix mechanism and confidence gating prevent the same findings from recurring once fixed. If findings are repetitive across passes, recommend completion.
+後續輪次重新派發persona並重新整合。自動修復機制與信心門檻防止已修復結果重現。若結果跨輪次重複，建議完成。

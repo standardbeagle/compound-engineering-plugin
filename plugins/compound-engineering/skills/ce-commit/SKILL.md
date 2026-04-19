@@ -1,38 +1,38 @@
 ---
 name: ce-commit
-description: Create a git commit with a clear, value-communicating message. Use when the user says "commit", "commit this", "save my changes", "create a commit", or wants to commit staged or unstaged work. Produces well-structured commit messages that follow repo conventions when they exist, and defaults to conventional commit format otherwise.
+description: 以清晰、傳達價值之訊息建立 git 提交。適用於用戶說「commit」、「commit this」、「save my changes」、「create a commit」或欲提交已暫存/未暫存之工作。產出結構良好之提交訊息，遵循既有倉庫慣例，無則預設採用慣例提交格式。
 ---
 
-# Git Commit
+# Git 提交
 
-Create a single, well-crafted git commit from the current working tree changes.
+自當前工作樹變更建立單一、精心撰寫之 git 提交。
 
-## Context
+## 上下文
 
-**If you are not Claude Code**, skip to the "Context fallback" section below and run the command there to gather context.
+**若非 Claude Code**，跳至下方「上下文後備」區段並執行其中指令以收集上下文。
 
-**If you are Claude Code**, the five labeled sections below (Git status, Working tree diff, Current branch, Recent commits, Remote default branch) contain pre-populated data. Use them directly throughout this skill -- do not re-run these commands.
+**若為 Claude Code**，下方五段標記區段（Git 狀態、工作樹差異、當前分支、近期提交、遠端預設分支）含預填資料。直接使用——勿重新執行這些指令。
 
-**Git status:**
+**Git 狀態：**
 !`git status`
 
-**Working tree diff:**
+**工作樹差異：**
 !`git diff HEAD`
 
-**Current branch:**
+**當前分支：**
 !`git branch --show-current`
 
-**Recent commits:**
+**近期提交：**
 !`git log --oneline -10`
 
-**Remote default branch:**
+**遠端預設分支：**
 !`git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo '__DEFAULT_BRANCH_UNRESOLVED__'`
 
-### Context fallback
+### 上下文後備
 
-**If you are Claude Code, skip this section — the data above is already available.**
+**若為 Claude Code，跳過此區段——上方資料已可用。**
 
-Run this single command to gather all context:
+執行此單一指令以收集所有上下文：
 
 ```bash
 printf '=== STATUS ===\n'; git status; printf '\n=== DIFF ===\n'; git diff HEAD; printf '\n=== BRANCH ===\n'; git branch --show-current; printf '\n=== LOG ===\n'; git log --oneline -10; printf '\n=== DEFAULT_BRANCH ===\n'; git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo '__DEFAULT_BRANCH_UNRESOLVED__'
@@ -40,53 +40,53 @@ printf '=== STATUS ===\n'; git status; printf '\n=== DIFF ===\n'; git diff HEAD;
 
 ---
 
-## Workflow
+## 工作流
 
-### Step 1: Gather context
+### 步驟一：收集上下文
 
-Use the context above (git status, working tree diff, current branch, recent commits, remote default branch). All data needed for this step is already available -- do not re-run those commands.
+使用上方上下文（git 狀態、工作樹差異、當前分支、近期提交、遠端預設分支）。此步所需之資料皆已備——勿重新執行那些指令。
 
-The remote default branch value returns something like `origin/main`. Strip the `origin/` prefix to get the branch name. If it returned `__DEFAULT_BRANCH_UNRESOLVED__` or a bare `HEAD`, try:
+遠端預設分支值回傳如 `origin/main`。去除 `origin/` 前綴以取分支名。若回傳 `__DEFAULT_BRANCH_UNRESOLVED__` 或純 `HEAD`，嘗試：
 
 ```bash
 gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'
 ```
 
-If both fail, fall back to `main`.
+若兩者皆失敗，回退為 `main`。
 
-If the git status from the context above shows a clean working tree (no staged, modified, or untracked files), report that there is nothing to commit and stop.
+若上方上下文之 git 狀態顯示工作樹乾淨（無暫存、修改或未追蹤檔案），回報無可提交並停止。
 
-If the current branch from the context above is empty, the repository is in detached HEAD state. Explain that a branch is required before committing if the user wants this work attached to a branch. Ask whether to create a feature branch now. Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the options and wait for the user's reply before proceeding.
+若上方上下文之當前分支為空，倉庫處於分離 HEAD 狀態。解釋若用戶欲將工作附著於分支，需先建立分支。詢問是否立即建立功能分支。使用平台之阻塞式提問工具（Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`）。若無提問工具，呈現選項並等候用戶回覆後方續。
 
-- If the user chooses to create a branch, derive the name from the change content, create it with `git checkout -b <branch-name>`, then run `git branch --show-current` again and use that result as the current branch name for the rest of the workflow.
-- If the user declines, continue with the detached HEAD commit.
+- 若用戶選擇建立分支，自變更內容推導名稱，以 `git checkout -b <branch-name>` 建立之，再執行 `git branch --show-current`，以其結果作為後續工作流之當前分支名。
+- 若用戶拒絕，以分離 HEAD 繼續提交。
 
-### Step 2: Determine commit message convention
+### 步驟二：判斷提交訊息慣例
 
-Follow this priority order:
+依此優先順序：
 
-1. **Repo conventions already in context** -- If project instructions (AGENTS.md, CLAUDE.md, or similar) are already loaded and specify commit message conventions, follow those. Do not re-read these files; they are loaded at session start.
-2. **Recent commit history** -- If no explicit convention is documented, examine the 10 most recent commits from Step 1. If a clear pattern emerges (e.g., conventional commits, ticket prefixes, emoji prefixes), match that pattern.
-3. **Default: conventional commits** -- If neither source provides a pattern, use conventional commit format: `type(scope): description` where type is one of `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `ci`, `style`, `build`.
+1. **上下文中已有之倉庫慣例**——若專案指引（AGENTS.md、CLAUDE.md 等）已載入並載明提交訊息慣例，遵循之。勿重新讀取這些檔案；其於對話啟始時已載入。
+2. **近期提交歷史**——若無明確慣例，檢視步驟一之最近 10 筆提交。若浮現清晰模式（如慣例提交、工單前綴、表情符號前綴），匹配之。
+3. **預設：慣例提交**——若皆未提供模式，使用慣例提交格式：`type(scope): description`，其中 type 為 `feat`、`fix`、`docs`、`refactor`、`test`、`chore`、`perf`、`ci`、`style`、`build` 之一。
 
-### Step 3: Consider logical commits
+### 步驟三：考慮邏輯提交
 
-Before staging everything together, scan the changed files for naturally distinct concerns. If modified files clearly group into separate logical changes (e.g., a refactor in one directory and a new feature in another, or test files for a different change than source files), create separate commits for each group.
+暫存所有內容前，掃描變更檔案以辨識自然分離之關注點。若修改之檔案明顯分屬不同邏輯變更（如一目錄中之重構與另一目錄中之新功能，或測試檔案屬於不同於源碼檔案之變更），為各組分別建立提交。
 
-Keep this lightweight:
-- Group at the **file level only** -- do not use `git add -p` or try to split hunks within a file.
-- If the separation is obvious (different features, unrelated fixes), split. If it's ambiguous, one commit is fine.
-- Two or three logical commits is the sweet spot. Do not over-slice into many tiny commits.
+保持輕量：
+- 僅以**檔案層級**分組——勿使用 `git add -p` 或嘗試分割檔案內之 hunk。
+- 若分離顯而易見（不同功能、不相關修復），則拆分。若模糊，一個提交即可。
+- 二至三個邏輯提交為佳。勿過度切割為許多微小提交。
 
-### Step 4: Stage and commit
+### 步驟四：暫存並提交
 
-If the current branch from the context above is `main`, `master`, or the resolved default branch from Step 1, warn the user and ask whether to continue committing here or create a feature branch first. Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the options and wait for the user's reply before proceeding. If the user chooses to create a branch, derive the name from the change content, create it with `git checkout -b <branch-name>`, then continue.
+若上方上下文之當前分支為 `main`、`master` 或步驟一解析之預設分支，警告用戶並詢問是否繼續在此提交或先建立功能分支。使用平台之阻塞式提問工具（Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`）。若無提問工具，呈現選項並等候用戶回覆後方續。若用戶選擇建立分支，自變更內容推導名稱，以 `git checkout -b <branch-name>` 建立之，再繼續。
 
-Write the commit message:
-- **Subject line**: Concise, imperative mood, focused on *why* not *what*. Follow the convention determined in Step 2.
-- **Body** (when needed): Add a body separated by a blank line for non-trivial changes. Explain motivation, trade-offs, or anything a future reader would need. Omit the body for obvious single-purpose changes.
+撰寫提交訊息：
+- **主旨行**：簡潔，祈使語氣，聚焦於*為何*而非*什麼*。遵循步驟二所定之慣例。
+- **正文**（必要時）：對非顯而易見之變更，以空行分隔加入正文，解釋動機、取捨或未來讀者所需之資訊。顯而易見之單一目的變更省略正文。
 
-For each commit group, stage and commit in a single call. Prefer staging specific files by name over `git add -A` or `git add .` to avoid accidentally including sensitive files (.env, credentials) or unrelated changes. Use a heredoc to preserve formatting:
+每個提交群組，以單一呼叫暫存並提交。偏好以檔名指定暫存，避免 `git add -A` 或 `git add .`，以防意外包含敏感檔案（.env、credentials）或無關變更。使用 heredoc 保持格式：
 
 ```bash
 git add file1 file2 file3 && git commit -m "$(cat <<'EOF'
@@ -98,6 +98,6 @@ EOF
 )"
 ```
 
-### Step 5: Confirm
+### 步驟五：確認
 
-Run `git status` after the commit to verify success. Report the commit hash(es) and subject line(s).
+提交後執行 `git status` 以驗證成功。回報提交雜湊值與主旨行。

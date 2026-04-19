@@ -1,6 +1,6 @@
 ---
 name: ce-proof
-description: Create, edit, comment on, share, and run human-in-the-loop iteration loops over markdown documents via Proof's web API. Use when asked to "proof", "share a doc", "create a proof doc", "comment on a document", "suggest edits", "review in proof", "iterate on this doc in proof", "HITL this doc", "sync a Proof doc to local", when a caller needs an HITL review loop over a local markdown file (e.g., ce-brainstorm, ce-ideate, or ce-plan handoff), or when given a proofeditor.ai URL. Prefer this skill for any workflow whose output is a Proof URL or that uses a Proof doc as the review surface, even when not named explicitly.
+description: "Create, edit, comment on, share, and run human-in-the-loop iteration loops over markdown documents via Proof's web API. Use when asked to \"proof\", \"share a doc\", \"create a proof doc\", \"comment on a document\", \"suggest edits\", \"review in proof\", \"iterate on this doc in proof\", \"HITL this doc\", \"sync a Proof doc to local\", when a caller needs an HITL review loop over a local markdown file (e.g., ce-brainstorm, ce-ideate, or ce-plan handoff), or when given a proofeditor.ai URL. Prefer this skill for any workflow whose output is a Proof URL or that uses a Proof doc as the review surface, even when not named explicitly."
 allowed-tools:
   - Bash
   - Read
@@ -8,31 +8,31 @@ allowed-tools:
   - WebFetch
 ---
 
-# Proof - Collaborative Markdown Editor
+# Proof — 協作 Markdown 編輯器
 
-Proof is a collaborative document editor for humans and agents. It supports two modes:
+Proof 為人類與代理共構之協作文檔編輯器。支援兩種模式：
 
-1. **Web API** - Create and edit shared documents via HTTP (no install needed)
-2. **Local Bridge** - Drive the macOS Proof app via localhost:9847
+1. **Web API** - 透過 HTTP 建立及編輯共享文檔（無需安裝）
+2. **本機橋接** - 透過 localhost:9847 驅動 macOS Proof 應用
 
-## Identity and Attribution
+## 身份與屬性
 
-Every write to a Proof doc must be attributed. Two fields carry the agent's identity:
+每次對 Proof 文檔之寫入皆須歸屬。兩個欄位承載代理身份：
 
-- **Machine ID (`by` on every op, `X-Agent-Id` header):** `ai:compound-engineering` — stable, lowercase-hyphenated, machine-parseable. Appears in marks, events, and the API response.
-- **Display name (`name` on `POST /presence`):** `Compound Engineering` — human-readable, shown in Proof's presence chips and comment-author badges.
+- **機器 ID（每次操作之 `by`，`X-Agent-Id` 標頭）：** `ai:compound-engineering`——穩定、小寫連字符、機器可解析。出現於標記、事件及 API 回應。
+- **顯示名稱（`POST /presence` 之 `name`）：** `Compound Engineering`——人類可讀，顯示於 Proof 之出席晶片及評論作者徽章。
 
-Set the display name once per doc session by posting to presence with the `X-Agent-Id` header; Proof binds the name to that agent ID for the session. These values are the defaults for any caller of this skill; callers running HITL review (`references/hitl-review.md`) may pass a different `identity` pair if a distinct sub-agent should own the doc. Do not use `ai:compound` or other ad-hoc variants — identity stays uniform unless a caller explicitly overrides it.
+每次文檔會話以帶 `X-Agent-Id` 標頭之 presence 請求設置顯示名稱一次；Proof 將名稱綁定至該代理 ID。此為本技能所有調用者之預設值；執行 HITL 審閱（`references/hitl-review.md`）之調用者可傳遞不同之 `identity` 對以指定歸屬子代理。勿使用 `ai:compound` 或其他臨時變體——身份保持一致，除非調用者明確覆寫。
 
-## Human-in-the-Loop Review Mode
+## 人機協作審閱模式
 
-When a caller (e.g., `ce-brainstorm`, `ce-plan`) needs to upload a local markdown doc, collect structured human feedback in Proof, and sync the final doc back to disk, load `references/hitl-review.md` for the full loop spec: invocation contract, mark classification (change / question / objection / ambiguous), idempotent ingest passes, exception-based terminal reporting, and end-sync atomic write.
+當調用者（如 `ce-brainstorm`、`ce-plan`）需上傳本機 markdown 文檔、收集結構化人類回饋並同步最終文檔回磁碟時，載入 `references/hitl-review.md` 以獲完整循環規格：調用合約、標記分類（change / question / objection / ambiguous）、冪等攝入遍歷、基於異常之終端報告及 end-sync 原子寫入。
 
-## Web API (Primary for Sharing)
+## Web API（分享之主要方式）
 
-### Create a Shared Document
+### 建立共享文檔
 
-No authentication required. Returns a shareable URL with access token.
+無需認證。回傳含存取令牌之可分享 URL。
 
 ```bash
 curl -X POST https://www.proofeditor.ai/share/markdown \
@@ -40,7 +40,7 @@ curl -X POST https://www.proofeditor.ai/share/markdown \
   -d '{"title":"My Doc","markdown":"# Hello\n\nContent here."}'
 ```
 
-**Response format:**
+**回應格式：**
 ```json
 {
   "slug": "abc123",
@@ -54,74 +54,74 @@ curl -X POST https://www.proofeditor.ai/share/markdown \
 }
 ```
 
-Use the `tokenUrl` as the shareable link. The `_links` give you the exact API paths.
+以 `tokenUrl` 作為分享連結。`_links` 提供精確 API 路徑。
 
-### Read a Shared Document
+### 讀取共享文檔
 
 ```bash
 curl -s "https://www.proofeditor.ai/api/agent/{slug}/state" \
   -H "x-share-token: <token>"
 ```
 
-### Edit a Shared Document
+### 編輯共享文檔
 
-All operations go to `POST https://www.proofeditor.ai/api/agent/{slug}/ops`
+所有操作送至 `POST https://www.proofeditor.ai/api/agent/{slug}/ops`
 
-**Note:** Use the `/api/agent/{slug}/ops` path (from `_links` in create response), NOT `/api/documents/{slug}/ops`.
+**註：** 使用 `/api/agent/{slug}/ops` 路徑（取自建立回應之 `_links`），而非 `/api/documents/{slug}/ops`。
 
-**Authentication for protected docs:**
-- Header: `x-share-token: <token>` or `Authorization: Bearer <token>`
-- Token comes from the URL parameter: `?token=xxx` or the `accessToken` from create response
-- Header: `X-Agent-Id: ai:compound-engineering` (required for presence; include on ops for consistent attribution)
+**受保護文檔之認證：**
+- 標頭：`x-share-token: <token>` 或 `Authorization: Bearer <token>`
+- 令牌取自 URL 參數：`?token=xxx` 或建立回應之 `accessToken`
+- 標頭：`X-Agent-Id: ai:compound-engineering`（presence 所需；包含於 ops 以確保歸屬一致）
 
-**Wire-format reminder.** `/api/agent/{slug}/ops` uses a top-level `type` field; `/api/agent/{slug}/edit/v2` uses an `operations` array where each entry has `op`. Do not mix — sending `op` to `/ops` returns 422.
+**線格式提醒。** `/api/agent/{slug}/ops` 使用頂層 `type` 欄位；`/api/agent/{slug}/edit/v2` 使用 `operations` 陣列，各條目含 `op`。勿混用——向 `/ops` 發送 `op` 回傳 422。
 
-**Every mutation requires a `baseToken`.** Read it from `/state.mutationBase.token` (or `/snapshot.mutationBase.token`) immediately before each write, and include it in the request body. On `BASE_TOKEN_REQUIRED` or `STALE_BASE`, re-read and retry once. See the baseToken recipe in `references/hitl-review.md`.
+**每次變更需 `baseToken`。** 寫入前立即自 `/state.mutationBase.token`（或 `/snapshot.mutationBase.token`）讀取，並含入請求體。遇 `BASE_TOKEN_REQUIRED` 或 `STALE_BASE` 時重新讀取並重試一次。見 `references/hitl-review.md` 中之 baseToken 食譜。
 
-**`Idempotency-Key` header** is recommended on every mutation for safe automation retries; required when `/state.contract.idempotencyRequired` is true.
+**`Idempotency-Key` 標頭**建議用於每次變更以利自動化重試；`/state.contract.idempotencyRequired` 為 true 時必須。
 
-**Comment on text:**
+**對文字評論：**
 ```json
 {"type": "comment.add", "quote": "text to comment on", "by": "ai:compound-engineering", "text": "Your comment here", "baseToken": "<token>"}
 ```
 
-**Reply to a comment:**
+**回覆評論：**
 ```json
 {"type": "comment.reply", "markId": "<id>", "by": "ai:compound-engineering", "text": "Reply text", "baseToken": "<token>"}
 ```
 
-**Resolve / unresolve a comment:**
+**解決 / 取消解決評論：**
 ```json
 {"type": "comment.resolve", "markId": "<id>", "by": "ai:compound-engineering", "baseToken": "<token>"}
 {"type": "comment.unresolve", "markId": "<id>", "by": "ai:compound-engineering", "baseToken": "<token>"}
 ```
 
-**Suggest a replacement (pending — user must accept/reject):**
+**建議取代（待定——用戶須接受/拒絕）：**
 ```json
 {"type": "suggestion.add", "kind": "replace", "quote": "original text", "by": "ai:compound-engineering", "content": "replacement text", "baseToken": "<token>"}
 ```
 
-**Suggest and immediately apply (tracked but committed — user can reject to revert):**
+**建議並立即套用（已追蹤但已提交——用戶可拒絕以回復）：**
 ```json
 {"type": "suggestion.add", "kind": "replace", "quote": "original text", "by": "ai:compound-engineering", "content": "replacement text", "status": "accepted", "baseToken": "<token>"}
 ```
 
-`status: "accepted"` creates the suggestion mark and commits the change in one call. The mark persists as an audit trail with per-edit attribution and a reject-to-revert affordance. Works with `kind: "insert" | "delete" | "replace"`.
+`status: "accepted"` 於一次呼叫中建立建議標記並提交變更。標記作為稽核軌跡保留，附逐項編輯歸屬及拒絕回復功能。適用於 `kind: "insert" | "delete" | "replace"`。
 
-**Accept or reject an existing suggestion:**
+**接受或拒絕既有建議：**
 ```json
 {"type": "suggestion.accept", "markId": "<id>", "by": "ai:compound-engineering", "baseToken": "<token>"}
 {"type": "suggestion.reject", "markId": "<id>", "by": "ai:compound-engineering", "baseToken": "<token>"}
 ```
 
-`suggestion.resolve` is not supported — use accept or reject instead.
+`suggestion.resolve` 不受支援——改用接受或拒絕。
 
-**Bulk rewrite (whole-doc replacement):**
+**批量重寫（全檔取代）：**
 ```json
 {"type": "rewrite.apply", "content": "full new markdown", "by": "ai:compound-engineering", "baseToken": "<token>"}
 ```
 
-**Block-level edits via `/edit/v2`** (separate endpoint, separate shape):
+**透過 `/edit/v2` 之區塊級編輯**（獨立端點，獨立格式）：
 ```bash
 curl -X POST "https://www.proofeditor.ai/api/agent/{slug}/edit/v2" \
   -H "Content-Type: application/json" \
@@ -138,32 +138,32 @@ curl -X POST "https://www.proofeditor.ai/api/agent/{slug}/edit/v2" \
   }'
 ```
 
-Supported `op` kinds inside `operations`: `replace_block`, `insert_before`, `insert_after`, `delete_block`, `replace_range` (uses `fromRef` + `toRef`), `find_replace_in_block` (takes `occurrence: "first" | "all"`). Read `/snapshot` to get stable block `ref` IDs and the `mutationBase.token`.
+`operations` 內支援之 `op` 類型：`replace_block`、`insert_before`、`insert_after`、`delete_block`、`replace_range`（使用 `fromRef` + `toRef`）、`find_replace_in_block`（取 `occurrence: "first" | "all"`）。讀取 `/snapshot` 以取得穩定區塊 `ref` ID 及 `mutationBase.token`。
 
-**Editing while a client is connected is fine.** `/edit/v2`, `suggestion.add` (including `status: "accepted"`), and all comment ops work during active collab. Only `rewrite.apply` is blocked by `LIVE_CLIENTS_PRESENT` — it would clobber in-flight Yjs edits.
+**客戶端連線時編輯無礙。** `/edit/v2`、`suggestion.add`（含 `status: "accepted"`）及所有評論操作於活躍協作中可用。僅 `rewrite.apply` 受 `LIVE_CLIENTS_PRESENT` 阻擋——其會覆蓋進行中之 Yjs 編輯。
 
-**When the loop breaks.** If a mutation keeps failing after a fresh read and one retry, or state across reads looks inconsistent, call `POST https://www.proofeditor.ai/api/bridge/report_bug` with the failing request ID, slug, and raw response. The server enriches and files an issue.
+**當循環中斷時。** 若變更在重新讀取及一次重試後仍持續失敗，或跨次讀取之狀態不一致，呼叫 `POST https://www.proofeditor.ai/api/bridge/report_bug` 並附上失敗請求 ID、slug 及原始回應。伺服器將豐富化並提報問題。
 
-### Known Limitations (Web API)
+### 已知限制（Web API）
 
-- Bridge-style endpoints (`/d/{slug}/bridge/*`) require client version headers (`x-proof-client-version`, `x-proof-client-build`, `x-proof-client-protocol`) and return 426 CLIENT_UPGRADE_REQUIRED without them. Use `/api/agent/{slug}/ops` instead.
+- 橋接風格端點（`/d/{slug}/bridge/*`）需要客戶端版本標頭（`x-proof-client-version`、`x-proof-client-build`、`x-proof-client-protocol`），缺少時回傳 426 CLIENT_UPGRADE_REQUIRED。改用 `/api/agent/{slug}/ops`。
 
-## Local Bridge (macOS App)
+## 本機橋接（macOS 應用）
 
-Requires Proof.app running. Bridge at `http://localhost:9847`.
+需 Proof.app 運行中。橋接位於 `http://localhost:9847`。
 
-**Required headers:**
-- `X-Agent-Id: claude` (identity for presence)
+**必要標頭：**
+- `X-Agent-Id: claude`（presence 身份）
 - `Content-Type: application/json`
-- `X-Window-Id: <uuid>` (when multiple docs open)
+- `X-Window-Id: <uuid>`（多文檔開啟時）
 
-### Key Endpoints
+### 主要端點
 
-| Method | Endpoint | Purpose |
+| 方法 | 端點 | 用途 |
 |--------|----------|---------|
-| GET | `/windows` | List open documents |
-| GET | `/state` | Read markdown, cursor, word count |
-| GET | `/marks` | List all suggestions and comments |
+| GET | `/windows` | 列出開啟文檔 |
+| GET | `/state` | 讀取 markdown、游標、字數 |
+| GET | `/marks` | 列出所有建議及評論 |
 | POST | `/marks/suggest-replace` | `{"quote":"old","by":"ai:compound-engineering","content":"new"}` |
 | POST | `/marks/suggest-insert` | `{"quote":"after this","by":"ai:compound-engineering","content":"insert"}` |
 | POST | `/marks/suggest-delete` | `{"quote":"delete this","by":"ai:compound-engineering"}` |
@@ -174,45 +174,45 @@ Requires Proof.app running. Bridge at `http://localhost:9847`.
 | POST | `/marks/reject` | `{"markId":"<id>"}` |
 | POST | `/rewrite` | `{"content":"full markdown","by":"ai:compound-engineering"}` |
 | POST | `/presence` | `{"status":"reading","summary":"..."}` |
-| GET | `/events/pending` | Poll for user actions |
+| GET | `/events/pending` | 輪詢用戶操作 |
 
-### Presence Statuses
+### 出席狀態
 
-`thinking`, `reading`, `idle`, `acting`, `waiting`, `completed`
+`thinking`、`reading`、`idle`、`acting`、`waiting`、`completed`
 
-## Workflow: Review a Shared Document
+## 工作流：審閱共享文檔
 
-When given a Proof URL like `https://www.proofeditor.ai/d/abc123?token=xxx`:
+當收到 Proof URL 如 `https://www.proofeditor.ai/d/abc123?token=xxx`：
 
-1. Extract the slug (`abc123`) and token from the URL
-2. Read the document state via the API
-3. Add comments or suggest edits using the ops endpoint
-4. The author sees changes in real-time
+1. 自 URL 擷取 slug（`abc123`）及令牌
+2. 透過 API 讀取文檔狀態
+3. 使用 ops 端點新增評論或建議編輯
+4. 作者即時看到變更
 
 ```bash
-# Read
+# 讀取
 curl -s "https://www.proofeditor.ai/api/agent/abc123/state" \
   -H "x-share-token: xxx"
 
-# Get baseToken for the next mutation
+# 取得下次變更之 baseToken
 BASE=$(curl -s "https://www.proofeditor.ai/api/agent/abc123/state" \
   -H "x-share-token: xxx" | jq -r '.mutationBase.token')
 
-# Comment
+# 評論
 curl -X POST "https://www.proofeditor.ai/api/agent/abc123/ops" \
   -H "Content-Type: application/json" \
   -H "x-share-token: xxx" \
   -H "X-Agent-Id: ai:compound-engineering" \
   -d "$(jq -n --arg base "$BASE" '{type:"comment.add",quote:"text",by:"ai:compound-engineering",text:"comment",baseToken:$base}')"
 
-# Suggest edit (tracked, pending)
+# 建議編輯（已追蹤，待定）
 curl -X POST "https://www.proofeditor.ai/api/agent/abc123/ops" \
   -H "Content-Type: application/json" \
   -H "x-share-token: xxx" \
   -H "X-Agent-Id: ai:compound-engineering" \
   -d "$(jq -n --arg base "$BASE" '{type:"suggestion.add",kind:"replace",quote:"old",by:"ai:compound-engineering",content:"new",baseToken:$base}')"
 
-# Suggest and immediately apply (tracked, committed)
+# 建議並立即套用（已追蹤，已提交）
 curl -X POST "https://www.proofeditor.ai/api/agent/abc123/ops" \
   -H "Content-Type: application/json" \
   -H "x-share-token: xxx" \
@@ -220,30 +220,30 @@ curl -X POST "https://www.proofeditor.ai/api/agent/abc123/ops" \
   -d "$(jq -n --arg base "$BASE" '{type:"suggestion.add",kind:"replace",quote:"old",by:"ai:compound-engineering",content:"new",status:"accepted",baseToken:$base}')"
 ```
 
-## Workflow: Create and Share a New Document
+## 工作流：建立並分享新文檔
 
 ```bash
-# 1. Create
+# 1. 建立
 RESPONSE=$(curl -s -X POST https://www.proofeditor.ai/share/markdown \
   -H "Content-Type: application/json" \
   -d '{"title":"My Doc","markdown":"# Title\n\nContent here."}')
 
-# 2. Extract URL and token
+# 2. 擷取 URL 及令牌
 URL=$(echo "$RESPONSE" | jq -r '.tokenUrl')
 SLUG=$(echo "$RESPONSE" | jq -r '.slug')
 TOKEN=$(echo "$RESPONSE" | jq -r '.accessToken')
 
-# 3. Bind display name via presence
+# 3. 透過 presence 綁定顯示名稱
 curl -s -X POST "https://www.proofeditor.ai/api/agent/$SLUG/presence" \
   -H "Content-Type: application/json" \
   -H "x-share-token: $TOKEN" \
   -H "X-Agent-Id: ai:compound-engineering" \
   -d '{"name":"Compound Engineering","status":"reading","summary":"Uploaded doc"}'
 
-# 4. Share the URL
+# 4. 分享 URL
 echo "$URL"
 
-# 5. Make edits using the ops endpoint (baseToken required)
+# 5. 使用 ops 端點編輯（需 baseToken）
 BASE=$(curl -s "https://www.proofeditor.ai/api/agent/$SLUG/state" \
   -H "x-share-token: $TOKEN" | jq -r '.mutationBase.token')
 curl -X POST "https://www.proofeditor.ai/api/agent/$SLUG/ops" \
@@ -253,39 +253,39 @@ curl -X POST "https://www.proofeditor.ai/api/agent/$SLUG/ops" \
   -d "$(jq -n --arg base "$BASE" '{type:"comment.add",quote:"Content here",by:"ai:compound-engineering",text:"Added a note",baseToken:$base}')"
 ```
 
-## Workflow: Pull a Proof Doc to Local
+## 工作流：拉取 Proof 文檔至本機
 
-Sync the current Proof doc state to a local markdown file. Used by:
+同步當前 Proof 文檔狀態至本機 markdown 檔案。用於：
 
-- HITL review end-sync (`references/hitl-review.md` Phase 5) when the doc originated from a local file
-- Ad-hoc snapshots of a Proof doc to disk (before closing the tab, archiving, handing off)
-- Refreshing a local working copy against the live Proof version
+- HITL 審閱 end-sync（`references/hitl-review.md` 階段五），當文檔源自本機檔案
+- Proof 文檔之臨時快照至磁碟（關閉分頁前、歸檔、交接）
+- 刷新本機工作副本以對照即時 Proof 版本
 
 ```bash
 SLUG=<slug>
 TOKEN=<accessToken>
 LOCAL=<absolute-path>
 
-# One read to a temp file — avoids passing markdown through $(...), which would strip trailing newlines.
+# 一次讀取至暫存檔——避免透過 $(...) 傳遞 markdown，因其會去除尾隨換行。
 STATE_TMP=$(mktemp)
 curl -s "https://www.proofeditor.ai/api/agent/$SLUG/state" \
   -H "x-share-token: $TOKEN" > "$STATE_TMP"
 REVISION=$(jq -r '.revision' "$STATE_TMP")
 
-# Atomic write: stream .markdown bytes directly to a temp sibling, then rename.
+# 原子寫入：直接將 .markdown 位元組串流至暫存同檔，然後更名。
 TMP="${LOCAL}.proof-sync.$$"
 jq -jr '.markdown' "$STATE_TMP" > "$TMP" && mv "$TMP" "$LOCAL"
 rm "$STATE_TMP"
 ```
 
-`jq -jr` (`-j` no trailing newline, `-r` raw string) streams the markdown bytes straight to the temp file without going through a shell variable, so trailing newlines survive intact. `mv` within the same filesystem is atomic — a crashed write leaves the original untouched rather than a half-written file.
+`jq -jr`（`-j` 無尾隨換行，`-r` 原始字串）直接將 markdown 位元組串流至暫存檔，不經 shell 變數，故尾隨換行完整保留。同一檔案系統內 `mv` 為原子操作——崩潰之寫入保留原始檔案不變，而非半寫檔案。
 
-**Confirm before writing when the pull isn't directly asked for.** If a workflow ends up pulling as a side-effect of a different action (e.g., HITL review completion), surface the impending write with a short confirm like "Sync reviewed doc to `<localPath>`?" A silent overwrite is surprising — the user may have forgotten the local file exists in that session, or expected Proof to stay canonical until they explicitly asked to pull.
+**拉取非直接請求時先確認。** 若工作流因其他操作之副作用而拉取（如 HITL 審閱完成），顯示即將寫入之提示如「同步已審閱文檔至 `<localPath>`？」靜默覆寫令人驚訝——用戶可能已忘記該會話中存在本機檔案，或預期 Proof 保持正本直至明確要求拉取。
 
-## Safety
+## 安全
 
-- Use `/state` content as source of truth before editing
-- During active collab use `edit/v2` (direct block changes) or `suggestion.add` (tracked changes); reserve `rewrite.apply` for no-client scenarios since it's blocked by `LIVE_CLIENTS_PRESENT` when anyone is connected
-- Don't span table cells in a single replace
-- Always include `by: "ai:compound-engineering"` on every op and `X-Agent-Id: ai:compound-engineering` in headers for consistent attribution
-- Read a fresh `baseToken` before every mutation; on `STALE_BASE`, re-read and retry once
+- 編輯前以 `/state` 內容為真實來源
+   - 活躍協作中使用 `edit/v2`（直接區塊變更）或 `suggestion.add`（追蹤變更）；`rewrite.apply` 僅用於無客戶端場景，因其於任何人連線時受 `LIVE_CLIENTS_PRESENT` 阻擋
+   - 勿於單一 replace 中跨越表格單元格
+   - 每次操作必含 `by: "ai:compound-engineering"`，標頭必含 `X-Agent-Id: ai:compound-engineering` 以確保歸屬一致
+   - 每次變更前讀取新鮮 `baseToken`；遇 `STALE_BASE` 時重新讀取並重試一次

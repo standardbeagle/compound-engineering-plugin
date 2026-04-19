@@ -1,49 +1,49 @@
 ---
 name: ce-commit-push-pr
-description: Commit, push, and open a PR with an adaptive, value-first description. Use when the user says "commit and PR", "push and open a PR", "ship this", "create a PR", "open a pull request", "commit push PR", or wants to go from working changes to an open pull request in one step. Also use when the user says "update the PR description", "refresh the PR description", "freshen the PR", or wants to rewrite an existing PR description. Produces PR descriptions that scale in depth with the complexity of the change, avoiding cookie-cutter templates.
+description: 提交、推送並開啟附自適應價值優先描述之 PR。適用於用戶說「commit and PR」、「push and open a PR」、「ship this」、「create a PR」、「open a pull request」、「commit push PR」或欲從工作變更一步至開放拉取請求。亦適用於用戶說「update the PR description」、「refresh the PR description」、「freshen the PR」或欲重寫既有 PR 描述。產出之 PR 描述深度隨變更複雜度伸縮，避免千篇一律之模板。
 ---
 
-# Git Commit, Push, and PR
+# Git 提交、推送與 PR
 
-Go from working changes to an open pull request, or rewrite an existing PR description.
+從工作變更到開放拉取請求，或重寫既有 PR 描述。
 
-**Asking the user:** When this skill says "ask the user", use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If unavailable, present the question and wait for a reply.
+**詢問用戶：** 當此技能說「詢問用戶」時，使用平台之阻塞式提問工具（Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`）。若不可用，呈現問題並等候回覆。
 
-## Mode detection
+## 模式偵測
 
-If the user is asking to update, refresh, or rewrite an existing PR description (with no mention of committing or pushing), this is a **description-only update**. The user may also provide a focus (e.g., "update the PR description and add the benchmarking results"). Note any focus for DU-3.
+若用戶要求更新、刷新或重寫既有 PR 描述（未提及提交或推送），此為**僅描述更新**。用戶亦可提供焦點（如「update the PR description and add the benchmarking results」）。記錄任何焦點供 DU-3 使用。
 
-For description-only updates, follow the Description Update workflow below. Otherwise, follow the full workflow.
+僅描述更新時，遵循下方之描述更新工作流。否則遵循完整工作流。
 
-## Context
+## 上下文
 
-**If you are not Claude Code**, skip to the "Context fallback" section below and run the command there to gather context.
+**若非 Claude Code**，跳至下方「上下文後備」區段並執行其中指令以收集上下文。
 
-**If you are Claude Code**, the six labeled sections below contain pre-populated data. Use them directly -- do not re-run these commands.
+**若為 Claude Code**，下方六段標記區段含預填資料。直接使用——勿重新執行這些指令。
 
-**Git status:**
+**Git 狀態：**
 !`git status`
 
-**Working tree diff:**
+**工作樹差異：**
 !`git diff HEAD`
 
-**Current branch:**
+**當前分支：**
 !`git branch --show-current`
 
-**Recent commits:**
+**近期提交：**
 !`git log --oneline -10`
 
-**Remote default branch:**
+**遠端預設分支：**
 !`git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo 'DEFAULT_BRANCH_UNRESOLVED'`
 
-**Existing PR check:**
+**既有 PR 檢查：**
 !`gh pr view --json url,title,state 2>/dev/null || echo 'NO_OPEN_PR'`
 
-### Context fallback
+### 上下文後備
 
-**If you are Claude Code, skip this section — the data above is already available.**
+**若為 Claude Code，跳過此區段——上方資料已可用。**
 
-Run this single command to gather all context:
+執行此單一指令以收集所有上下文：
 
 ```bash
 printf '=== STATUS ===\n'; git status; printf '\n=== DIFF ===\n'; git diff HEAD; printf '\n=== BRANCH ===\n'; git branch --show-current; printf '\n=== LOG ===\n'; git log --oneline -10; printf '\n=== DEFAULT_BRANCH ===\n'; git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo 'DEFAULT_BRANCH_UNRESOLVED'; printf '\n=== PR_CHECK ===\n'; gh pr view --json url,title,state 2>/dev/null || echo 'NO_OPEN_PR'
@@ -51,99 +51,99 @@ printf '=== STATUS ===\n'; git status; printf '\n=== DIFF ===\n'; git diff HEAD;
 
 ---
 
-## Description Update workflow
+## 描述更新工作流
 
-### DU-1: Confirm intent
+### DU-1：確認意圖
 
-Ask the user: "Update the PR description for this branch?" If declined, stop.
+詢問用戶：「Update the PR description for this branch?」若拒絕，停止。
 
-### DU-2: Find the PR
+### DU-2：找到 PR
 
-Use the current branch and existing PR check from context. If the current branch is empty (detached HEAD), report no branch and stop. If the PR check returned `state: OPEN`, note the PR `url` from the context block — this is the unambiguous reference to pass downstream — and proceed to DU-3. Otherwise, report no open PR and stop.
+使用當前分支與上下文中之既有 PR 檢查。若當前分支為空（分離 HEAD），回報無分支並停止。若 PR 檢查回傳 `state: OPEN`，記下上下文區塊中 PR 的 `url`——此為傳遞予下游之明確參照——並進入 DU-3。否則回報無開放 PR 並停止。
 
-### DU-3: Write and apply the updated description
+### DU-3：撰寫並套用更新後之描述
 
-Read the current PR description to drive the compare-and-confirm step later:
+讀取當前 PR 描述以驅動後續之比較與確認：
 
 ```bash
 gh pr view --json body --jq '.body'
 ```
 
-**Generate the updated title and body** — load the `ce-pr-description` skill with the PR URL from DU-2 (e.g., `https://github.com/owner/repo/pull/123`). The URL preserves repo/PR identity even when invoked from a worktree or subdirectory where the current repo is ambiguous. If the user provided a focus (e.g., "include the benchmarking results"), append it as free-text steering after the URL. The skill returns a `{title, body_file}` block (body in an OS temp file) without applying or prompting.
+**生成更新後之標題與正文**——載入 `ce-pr-description` 技能，傳入 DU-2 之 PR URL（如 `https://github.com/owner/repo/pull/123`）。URL 保留倉庫/PR 身份，即使從 worktree 或子目錄調用亦然。若用戶提供了焦點（如「include the benchmarking results」），以自由文字引導附加於 URL 後。技能回傳 `{title, body_file}` 區塊（正文在 OS 臨時檔案中）而不套用或提示。
 
-If `ce-pr-description` returns a "not open" or other graceful-exit message instead of a `{title, body_file}` pair, report that message and stop.
+若 `ce-pr-description` 回傳「not open」或其他優雅退出訊息而非 `{title, body_file}` 對，回報該訊息並停止。
 
-**Evidence decision:** `ce-pr-description` preserves any existing `## Demo` or `## Screenshots` block from the current body by default. If the user's focus asks to refresh or remove evidence, pass that intent as steering text — the skill will honor it. If no evidence block exists and one would benefit the reader, invoke `ce-demo-reel` separately to capture, then re-invoke `ce-pr-description` with updated steering that references the captured evidence.
+**證據決策：** `ce-pr-description` 預設保留當前正文中任何既有之 `## Demo` 或 `## Screenshots` 區塊。若用戶之焦點要求刷新或移除證據，將該意圖作為引導文字傳遞——技能將遵循。若無證據區塊且有助於讀者，另啟 `ce-demo-reel` 擷取後重新調用 `ce-pr-description` 並附參照已擷取證據之更新引導。
 
-**Compare and confirm** — briefly explain what the new description covers differently from the old one. This helps the user decide whether to apply; the description itself does not narrate these differences. Summarize from the body already in context (from the bash call that wrote `body_file`); do not `cat` the temp file, which would re-emit the body.
+**比較並確認**——簡要解釋新描述與舊描述有何不同。這幫助用戶決定是否套用；描述本身不解說這些差異。從已於上下文中之正文摘要（來自寫入 `body_file` 之 bash 呼叫）；勿 `cat` 臨時檔案，因那會重新輸出正文。
 
-- If the user provided a focus, confirm it was addressed.
-- Ask the user to confirm before applying.
+- 若用戶提供了焦點，確認已處理。
+- 套用前詢問用戶確認。
 
-**If confirmed, perform these two actions in order.** They are separate steps with a hand-off boundary between them — do not stop after action 1.
+**若確認，依序執行以下兩項動作。** 它們是獨立步驟，之間有交接邊界——勿在動作 1 後停止。
 
-1. `ce-pr-description` has already returned its `=== TITLE ===` / `=== BODY_FILE ===` block and stopped; it does not apply on its own.
-2. Apply the returned title and body file yourself. This is this skill's responsibility, not the delegated skill's. Substitute `<TITLE>` and `<BODY_FILE>` verbatim from the return block; if `<TITLE>` contains `"`, `` ` ``, `$`, or `\`, escape them or switch to single quotes:
+1. `ce-pr-description` 已回傳其 `=== TITLE ===` / `=== BODY_FILE ===` 區塊並停止；其不自行套用。
+2. 自行套用回傳之標題與正文檔案。此為此技能之責任，非被委派技能者。逐字代入回傳區塊中之 `<TITLE>` 與 `<BODY_FILE>`；若 `<TITLE>` 含 `"`、`` ` ``、`$` 或 `\`，轉義之或改用單引號：
 
    ```bash
    gh pr edit --title "<TITLE>" --body "$(cat "<BODY_FILE>")"
    ```
 
-Report the PR URL.
+回報 PR URL。
 
 ---
 
-## Full workflow
+## 完整工作流
 
-### Step 1: Gather context
+### 步驟一：收集上下文
 
-Use the context above. All data needed for this step and Step 3 is already available -- do not re-run those commands.
+使用上方上下文。此步與步驟三所需之資料皆已備——勿重新執行那些指令。
 
-The remote default branch value returns something like `origin/main`. Strip the `origin/` prefix. If it returned `DEFAULT_BRANCH_UNRESOLVED` or a bare `HEAD`, try:
+遠端預設分支值回傳如 `origin/main`。去除 `origin/` 前綴。若回傳 `DEFAULT_BRANCH_UNRESOLVED` 或純 `HEAD`，嘗試：
 
 ```bash
 gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'
 ```
 
-If both fail, fall back to `main`.
+若兩者皆失敗，回退為 `main`。
 
-If the current branch is empty (detached HEAD), explain that a branch is required. Ask whether to create a feature branch now.
-- If yes, derive a branch name from the change content, create with `git checkout -b <branch-name>`, and use that for the rest of the workflow.
-- If no, stop.
+若當前分支為空（分離 HEAD），解釋需要分支。詢問是否立即建立功能分支。
+- 若是，自變更內容推導分支名，以 `git checkout -b <branch-name>` 建立之，並用於後續工作流。
+- 若否，停止。
 
-If the working tree is clean (no staged, modified, or untracked files), determine the next action:
+若工作樹乾淨（無暫存、修改或未追蹤檔案），判斷下一步：
 
-1. Run `git rev-parse --abbrev-ref --symbolic-full-name @{u}` to check upstream.
-2. If upstream exists, run `git log <upstream>..HEAD --oneline` for unpushed commits.
+1. 執行 `git rev-parse --abbrev-ref --symbolic-full-name @{u}` 檢查上游。
+2. 若上游存在，執行 `git log <upstream>..HEAD --oneline` 檢查未推送提交。
 
-Decision tree:
+決策樹：
 
-- **On default branch, unpushed commits or no upstream** -- ask whether to create a feature branch (pushing default directly is not supported). If yes, create and continue from Step 5. If no, stop.
-- **On default branch, all pushed, no open PR** -- report no feature branch work. Stop.
-- **Feature branch, no upstream** -- skip Step 4, continue from Step 5.
-- **Feature branch, unpushed commits** -- skip Step 4, continue from Step 5.
-- **Feature branch, all pushed, no open PR** -- skip Steps 4-5, continue from Step 6.
-- **Feature branch, all pushed, open PR** -- report up to date. Stop.
+- **在預設分支，有未推送提交或無上游** ——詢問是否建立功能分支（不支援直接推送預設分支）。若是，建立並自步驟五繼續。若否，停止。
+- **在預設分支，全部已推送，無開放 PR** ——回報無功能分支工作。停止。
+- **功能分支，無上游** ——跳過步驟四，自步驟五繼續。
+- **功能分支，有未推送提交** ——跳過步驟四，自步驟五繼續。
+- **功能分支，全部已推送，無開放 PR** ——跳過步驟四至五，自步驟六繼續。
+- **功能分支，全部已推送，有開放 PR** ——回報已為最新。停止。
 
-### Step 2: Determine conventions
+### 步驟二：判斷慣例
 
-Priority order for commit messages and PR titles:
+提交訊息與 PR 標題之優先順序：
 
-1. **Repo conventions in context** -- follow project instructions if they specify conventions. Do not re-read; they load at session start.
-2. **Recent commit history** -- match the pattern in the last 10 commits.
-3. **Default** -- `type(scope): description` (conventional commits).
+1. **上下文中已有之倉庫慣例** ——若專案指引指定慣例則遵循之。勿重新讀取；其於對話啟始時已載入。
+2. **近期提交歷史** ——匹配最近 10 筆提交之模式。
+3. **預設** ——`type(scope): description`（慣例提交）。
 
-### Step 3: Check for existing PR
+### 步驟三：檢查既有 PR
 
-Use the current branch and existing PR check from context. If the branch is empty, report detached HEAD and stop.
+使用當前分支與上下文中之既有 PR 檢查。若分支為空，回報分離 HEAD 並停止。
 
-If the PR check returned `state: OPEN`, note the URL -- this is the existing-PR flow. Continue to Step 4 and 5 (commit any pending work and push), then go to Step 7 to ask whether to rewrite the description. Only run Step 6 (which generates a new description via `ce-pr-description`) if the user confirms the rewrite; Step 7's existing-PR sub-path consumes the `{title, body_file}` that Step 6 produces. Otherwise (no open PR), continue through Steps 6, 7, and 8 in order.
+若 PR 檢查回傳 `state: OPEN`，記下 URL——此為既有 PR 流程。續至步驟四與五（提交任何待處理工作並推送），然後至步驟七詢問是否重寫描述。僅當用戶確認重寫時方執行步驟六（透過 `ce-pr-description` 生成新描述）；步驟七之既有 PR 子路徑消費步驟六產出之 `{title, body_file}`。否則（無開放 PR），依序續至步驟六、七及八。
 
-### Step 4: Branch, stage, and commit
+### 步驟四：分支、暫存與提交
 
-1. If on the default branch, create a feature branch first with `git checkout -b <branch-name>`.
-2. Scan changed files for naturally distinct concerns. If files clearly group into separate logical changes, create separate commits (2-3 max). Group at the file level only (no `git add -p`). When ambiguous, one commit is fine.
-3. Stage and commit each group in a single call. Avoid `git add -A` or `git add .`. Follow conventions from Step 2:
+1. 若在預設分支，先以 `git checkout -b <branch-name>` 建立功能分支。
+2. 掃描變更檔案以辨識自然分離之關注點。若檔案明顯分屬不同邏輯變更，分別建立提交（最多 2-3 個）。僅以檔案層級分組（無 `git add -p`）。模糊時一個提交即可。
+3. 以單一呼叫暫存並提交每組。避免 `git add -A` 或 `git add .`。遵循步驟二之慣例：
    ```bash
    git add file1 file2 file3 && git commit -m "$(cat <<'EOF'
    commit message here
@@ -151,38 +151,38 @@ If the PR check returned `state: OPEN`, note the URL -- this is the existing-PR 
    )"
    ```
 
-### Step 5: Push
+### 步驟五：推送
 
 ```bash
 git push -u origin HEAD
 ```
 
-### Step 6: Generate the PR title and body
+### 步驟六：生成 PR 標題與正文
 
-The working-tree diff from Step 1 only shows uncommitted changes at invocation time. The PR description must cover **all commits** in the PR.
+步驟一之工作樹差異僅顯示調用時之未提交變更。PR 描述須涵蓋 PR 中**所有提交**。
 
-**Detect the base branch and remote.** Resolve both the base branch and the remote (fork-based PRs may use a remote other than `origin`). Stop at the first that succeeds:
+**偵測基礎分支與遠端。** 解析基礎分支與遠端（fork 型 PR 可能使用 `origin` 以外之遠端）。依序嘗試，首個成功即停：
 
-1. **PR metadata** (if existing PR found in Step 3):
+1. **PR 元資料**（若步驟三找到既有 PR）：
    ```bash
    gh pr view --json baseRefName,url
    ```
-   Extract `baseRefName`. Match `owner/repo` from the PR URL against `git remote -v` fetch URLs to find the base remote. Fall back to `origin`.
-2. **Remote default branch from context** -- if resolved, strip `origin/` prefix. Use `origin`.
-3. **GitHub metadata:**
+   取 `baseRefName`。以 PR URL 中之 `owner/repo` 對照 `git remote -v` 之 fetch URL 以找基礎遠端。回退為 `origin`。
+2. **上下文中之遠端預設分支** ——若已解析，去除 `origin/` 前綴。使用 `origin`。
+3. **GitHub 元資料：**
    ```bash
    gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'
    ```
-   Use `origin`.
-4. **Common names** -- check `main`, `master`, `develop`, `trunk` in order:
+   使用 `origin`。
+4. **常見名稱** ——依序檢查 `main`、`master`、`develop`、`trunk`：
    ```bash
    git rev-parse --verify origin/<candidate>
    ```
-   Use `origin`.
+   使用 `origin`。
 
-If none resolve, ask the user to specify the target branch.
+若皆未解析，詢問用戶指定目標分支。
 
-**Gather the full branch diff (before evidence decision).** The working-tree diff from Step 1 only reflects uncommitted changes at invocation time — on the common "feature branch, all pushed, open PR" path, Step 1 skips the commit/push steps and the working-tree diff is empty. The evidence decision below needs the real branch diff to judge whether behavior is observable, so compute it explicitly against the base resolved above. Only fetch when the local ref isn't available — if `<base-remote>/<base-branch>` already resolves locally, run the diff from local state so offline / restricted-network / expired-auth environments don't hard-fail:
+**收集完整分支 diff（證據決策前）。** 步驟一之工作樹差異僅反映調用時之未提交變更——在常見之「功能分支，全部已推送，有開放 PR」路徑上，步驟一跳過提交/推送步驟，工作樹差異為空。下方證據決策需要真實分支 diff 以判斷行為是否可觀察，故須對上方解析之基礎明確計算。僅在本地 ref 不可用時方 fetch——若 `<base-remote>/<base-branch>` 已在本地解析，自本地狀態跑 diff，以免離線/受限網路/認證過期環境硬性失敗：
 
 ```bash
 git rev-parse --verify <base-remote>/<base-branch> >/dev/null 2>&1 \
@@ -190,52 +190,52 @@ git rev-parse --verify <base-remote>/<base-branch> >/dev/null 2>&1 \
 git diff <base-remote>/<base-branch>...HEAD
 ```
 
-Use this branch diff (not the working-tree diff) for the evidence decision. If the branch diff is empty (e.g., HEAD is already merged into the base or the branch has no unique commits), skip the evidence prompt and continue to delegation.
+以分支 diff（非工作樹 diff）做證據決策。若分支 diff 為空（如 HEAD 已合併至基礎或分支無獨有提交），跳過證據提示並繼續委派。
 
-**Evidence decision (before delegation).** If the branch diff changes observable behavior (UI, CLI output, API behavior with runnable code, generated artifacts, workflow output) and evidence is not otherwise blocked (unavailable credentials, paid services, deploy-only infrastructure, hardware), ask: "This PR has observable behavior. Capture evidence for the PR description?"
+**證據決策（委派前）。** 若分支 diff 改變可觀察行為（UI、CLI 輸出、含可跑程式碼之 API 行為、生成產物、工作流輸出）且證據未被其他原因阻擋（不可用憑證、付費服務、僅部署基礎設施、硬體），詢問：「This PR has observable behavior. Capture evidence for the PR description?」
 
-- **Capture now** -- load the `ce-demo-reel` skill with a target description inferred from the branch diff. ce-demo-reel returns `Tier`, `Description`, and `URL`. Note the captured evidence so it can be passed as free-text steering to `ce-pr-description` (e.g., "include the captured demo: <URL> as a `## Demo` section") or spliced into the returned body before apply. If capture returns `Tier: skipped` or `URL: "none"`, proceed with no evidence.
-- **Use existing evidence** -- ask for the URL or markdown embed, then pass it as free-text steering to `ce-pr-description` or splice in before apply.
-- **Skip** -- proceed with no evidence section.
+- **立即擷取**——載入 `ce-demo-reel` 技能，傳入自分支 diff 推斷之目標描述。ce-demo-reel 回傳 `Tier`、`Description` 及 `URL`。記下擷取之證據，俾作為自由文字引導傳予 `ce-pr-description`（如 "include the captured demo: <URL> as a `## Demo` section"）或在套用前嵌入回傳之正文。若擷取回傳 `Tier: skipped` 或 `URL: "none"`，以無證據繼續。
+- **使用既有證據**——詢問 URL 或 markdown 嵌入，然後作為自由文字引導傳予 `ce-pr-description` 或在套用前嵌入。
+- **跳過**——以無證據區段繼續。
 
-When evidence is not possible (docs-only, markdown-only, changelog-only, release metadata, CI/config-only, test-only, or pure internal refactors), skip without asking.
+當證據不可行（僅文檔、僅 markdown、僅更新日誌、發布元資料、僅 CI/配置、僅測試或純內部重構）時，不問而跳過。
 
-**Delegate title and body generation to `ce-pr-description`.** Load the `ce-pr-description` skill:
+**委派標題與正文生成予 `ce-pr-description`。** 載入 `ce-pr-description` 技能：
 
-- **For a new PR** (no existing PR found in Step 3): invoke with `base:<base-remote>/<base-branch>` using the already-resolved base from earlier in this step, so `ce-pr-description` describes the correct commit range even when the branch targets a non-default base (e.g., `develop`, `release/*`). Append any captured-evidence context or user focus as free-text steering (e.g., "include the captured demo: <URL> as a `## Demo` section").
-- **For an existing PR** (found in Step 3): invoke with the full PR URL from the Step 3 context (e.g., `https://github.com/owner/repo/pull/123`). The URL preserves repo/PR identity even when invoked from a worktree or subdirectory; the skill reads the PR's own `baseRefName` so no `base:` override is needed. Append any focus steering as free text after the URL.
+- **新 PR**（步驟三未找到既有 PR）：以 `base:<base-remote>/<base-branch>` 調用，使用本步驟稍早已解析之基礎，俾 `ce-pr-description` 描述正確之提交範圍，即使分支目標非預設基礎（如 `develop`、`release/*`）。附加任何已擷取證據之上下文或用戶焦點作為自由文字引導。
+- **既有 PR**（步驟三找到）：以步驟三上下文中之完整 PR URL 調用。URL 保留倉庫/PR 身份即使從 worktree 或子目錄調用；技能讀取 PR 自身之 `baseRefName` 故不需 `base:` 覆寫。URL 後附加任何焦點引導作為自由文字。
 
-`ce-pr-description` returns a `{title, body_file}` block (body in an OS temp file). It applies the value-first writing principles, commit classification, sizing, narrative framing, writing voice, visual communication, numbering rules, and the Compound Engineering badge footer internally. Use the returned values verbatim in Step 7; do not layer manual edits onto them unless a focused adjustment is required (e.g., splicing an evidence block captured in this step that was not passed as steering text — in that case, edit the body file directly before applying).
+`ce-pr-description` 回傳 `{title, body_file}` 區塊（正文在 OS 臨時檔案中）。其內部套用價值優先寫作原則、提交分類、規模評估、敘事框架、寫作聲調、視覺傳達、編號規則及 Compound Engineering 徽章頁尾。於步驟七中逐字使用回傳值；除非需焦點調整（如嵌入此步驟擷取但未作為引導文字傳遞之證據區塊——此時直接編輯正文檔案後再套用），勿對其疊加手動編輯。
 
-If `ce-pr-description` returns a graceful-exit message instead of `{title, body_file}` (e.g., closed PR, no commits to describe, base ref unresolved), report the message and stop — do not create or edit the PR.
+若 `ce-pr-description` 回傳優雅退出訊息而非 `{title, body_file}`（如已關閉 PR、無提交可描述、基礎 ref 未解析），回報該訊息並停止——勿建立或編輯 PR。
 
-### Step 7: Create or update the PR
+### 步驟七：建立或更新 PR
 
-#### New PR (no existing PR from Step 3)
+#### 新 PR（步驟三無既有 PR）
 
-Using the `=== TITLE ===` / `=== BODY_FILE ===` block returned by `ce-pr-description`, substitute `<TITLE>` and `<BODY_FILE>` verbatim. If `<TITLE>` contains `"`, `` ` ``, `$`, or `\`, escape them or switch to single quotes:
+使用 `ce-pr-description` 回傳之 `=== TITLE ===` / `=== BODY_FILE ===` 區塊，逐字代入 `<TITLE>` 與 `<BODY_FILE>`。若 `<TITLE>` 含 `"`、`` ` ``、`$` 或 `\`，轉義之或改用單引號：
 
 ```bash
 gh pr create --title "<TITLE>" --body "$(cat "<BODY_FILE>")"
 ```
 
-Keep the title under 72 characters; `ce-pr-description` already emits a conventional-commit title in that range.
+保持標題在 72 字元以內；`ce-pr-description` 已發出該範圍內之慣例提交標題。
 
-#### Existing PR (found in Step 3)
+#### 既有 PR（步驟三找到）
 
-The new commits are already on the PR from Step 5. Report the PR URL, then ask whether to rewrite the description.
+新提交已於步驟五後在 PR 上。回報 PR URL，然後詢問是否重寫描述。
 
-- If **no** -- skip Step 6 entirely and finish. Do not run delegation or evidence capture when the user declined the rewrite.
-- If **yes**, perform these two actions in order. They are separate steps with a hand-off boundary between them -- do not stop after action 1.
-  1. Run Step 6 to generate via `ce-pr-description` (passing the existing PR URL as `pr:`). `ce-pr-description` explicitly does not apply on its own; it returns its `=== TITLE ===` / `=== BODY_FILE ===` block and stops.
-  2. Apply the returned title and body file yourself. This is this skill's responsibility, not the delegated skill's. Substitute `<TITLE>` and `<BODY_FILE>` verbatim from the return block; if `<TITLE>` contains `"`, `` ` ``, `$`, or `\`, escape them or switch to single quotes:
+- 若**否**——完全跳過步驟六並結束。用戶拒絕重寫時不跑委派或證據擷取。
+- 若**是**，依序執行以下兩項動作。它們是獨立步驟，之間有交接邊界——勿在動作 1 後停止。
+  1. 執行步驟六以透過 `ce-pr-description` 生成（傳遞既有 PR URL 作為 `pr:`）。`ce-pr-description` 明確不自行套用；其回傳 `=== TITLE ===` / `=== BODY_FILE ===` 區塊後停止。
+  2. 自行套用回傳之標題與正文檔案。此為此技能之責任，非被委派技能者。逐字代入回傳區塊中之 `<TITLE>` 與 `<BODY_FILE>`；若 `<TITLE>` 含 `"`、`` ` ``、`$` 或 `\`，轉義之或改用單引號：
 
      ```bash
      gh pr edit --title "<TITLE>" --body "$(cat "<BODY_FILE>")"
      ```
 
-  Then report the PR URL (Step 8).
+  然後回報 PR URL（步驟八）。
 
-### Step 8: Report
+### 步驟八：回報
 
-Output the PR URL.
+輸出 PR URL。

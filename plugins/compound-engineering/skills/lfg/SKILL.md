@@ -1,30 +1,30 @@
 ---
 name: lfg
-description: Full autonomous engineering workflow
+description: 全自主工程工作流
 argument-hint: "[feature description]"
 disable-model-invocation: true
 ---
 
-CRITICAL: You MUST execute every step below IN ORDER. Do NOT skip any required step. Do NOT jump ahead to coding or implementation. The plan phase (step 2) MUST be completed and verified BEFORE any work begins. Violating this order produces bad output.
+要務：必依序執行下述各步。勿跳過任何必要步驟。勿逕行編碼或實作。規劃階段（步驟二）須於動工前完成並驗證。違此序者產出必劣。
 
-1. **Optional:** If the `ralph-loop` skill is available, run `/ralph-loop:ralph-loop "finish all slash commands" --completion-promise "DONE"`. If not available or it fails, skip and continue to step 2 immediately.
+1. **選擇性：** 若 `ralph-loop` 技能可用，執行 `/ralph-loop:ralph-loop "finish all slash commands" --completion-promise "DONE"`。若不可用或失敗，跳過，即行步驟二。
 
 2. `/ce-plan $ARGUMENTS`
 
-   GATE: STOP. If ce-plan reported the task is non-software and cannot be processed in pipeline mode, stop the pipeline and inform the user that LFG requires software tasks. Otherwise, verify that the `ce-plan` workflow produced a plan file in `docs/plans/`. If no plan file was created, run `/ce-plan $ARGUMENTS` again. Do NOT proceed to step 3 until a written plan exists. **Record the plan file path** — it will be passed to ce-code-review in step 4.
+   關卡：停。若 ce-plan 回報任務非軟體且無法以管線模式處理，即止管線，告知用戶 LFG 僅適用軟體任務。否則，驗證 `ce-plan` 工作流已於 `docs/plans/` 產出計劃檔。若無計劃檔，再執行 `/ce-plan $ARGUMENTS`。未得書面計劃前，勿進步驟三。**記錄計劃檔路徑**——將傳予步驟四之 ce-code-review。
 
 3. `/ce-work`
 
-   GATE: STOP. Verify that implementation work was performed - files were created or modified beyond the plan. Do NOT proceed to step 4 if no code changes were made.
+   關卡：停。驗證已執行實作——有檔案建立或修改（非僅計劃）。若無程式碼變更，勿進步驟四。
 
 4. `/ce-code-review mode:autofix plan:<plan-path-from-step-2>`
 
-   Pass the plan file path from step 2 so ce-code-review can verify requirements completeness.
+   傳入步驟二之計劃檔路徑，俾 ce-code-review 驗證需求完整性。
 
 5. `/ce-todo-resolve`
 
 6. `/ce-test-browser`
 
-7. Output `<promise>DONE</promise>` when complete
+7. 完成時輸出 `<promise>DONE</promise>`
 
-Start with step 2 now (or step 1 if ralph-loop is available). Remember: plan FIRST, then work. Never skip the plan.
+即刻自步驟二始（或若有 ralph-loop 則自步驟一）。謹記：先規劃，後動工。絕不跳過規劃。

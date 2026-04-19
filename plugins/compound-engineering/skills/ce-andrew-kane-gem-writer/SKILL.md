@@ -1,19 +1,19 @@
 ---
 name: ce-andrew-kane-gem-writer
-description: This skill should be used when writing Ruby gems following Andrew Kane's proven patterns and philosophy. It applies when creating new Ruby gems, refactoring existing gems, designing gem APIs, or when clean, minimal, production-ready Ruby library code is needed. Triggers on requests like "create a gem", "write a Ruby library", "design a gem API", or mentions of Andrew Kane's style.
+description: 撰寫遵循 Andrew Kane 驗證模式與哲學之 Ruby gem 時使用。適用於建立新 Ruby gem、重構既有 gem、設計 gem API，或需要簡潔、最小化、生產就緒之 Ruby 函式庫程式碼。觸發詞如「create a gem」、「write a Ruby library」、「design a gem API」或提及 Andrew Kane 風格。
 ---
 
-# Andrew Kane Gem Writer
+# Andrew Kane Gem 撰寫器
 
-Write Ruby gems following Andrew Kane's battle-tested patterns from 100+ gems with 374M+ downloads (Searchkick, PgHero, Chartkick, Strong Migrations, Lockbox, Ahoy, Blazer, Groupdate, Neighbor, Blind Index).
+依循 Andrew Kane 歷經百餘 gem、3.74 億次下載之實戰模式撰寫 Ruby gem（Searchkick、PgHero、Chartkick、Strong Migrations、Lockbox、Ahoy、Blazer、Groupdate、Neighbor、Blind Index）。
 
-## Core Philosophy
+## 核心哲學
 
-**Simplicity over cleverness.** Zero or minimal dependencies. Explicit code over metaprogramming. Rails integration without Rails coupling. Every pattern serves production use cases.
+**簡潔勝於取巧。** 零或最少依賴。顯式程式碼勝於元編程。Rails 整合而不耦合 Rails。每個模式皆服務於生產用途。
 
-## Entry Point Structure
+## 入口點結構
 
-Every gem follows this exact pattern in `lib/gemname.rb`:
+每個 gem 於 `lib/gemname.rb` 遵循此確切模式：
 
 ```ruby
 # 1. Dependencies (stdlib preferred)
@@ -40,9 +40,9 @@ module GemName
 end
 ```
 
-## Class Macro DSL Pattern
+## 類別巨集 DSL 模式
 
-The signature Kane pattern—single method call configures everything:
+Kane 之標誌模式——單一方法呼叫配置一切：
 
 ```ruby
 # Usage
@@ -74,9 +74,9 @@ module GemName
 end
 ```
 
-## Rails Integration
+## Rails 整合
 
-**Always use `ActiveSupport.on_load`—never require Rails gems directly:**
+**一律使用 `ActiveSupport.on_load`——勿直接 require Rails gem：**
 
 ```ruby
 # WRONG
@@ -94,9 +94,9 @@ ActiveSupport.on_load(:active_record) do
 end
 ```
 
-## Configuration Pattern
+## 配置模式
 
-Use `class << self` with `attr_accessor`, not Configuration objects:
+使用 `class << self` 搭配 `attr_accessor`，而非 Configuration 物件：
 
 ```ruby
 module GemName
@@ -114,9 +114,9 @@ module GemName
 end
 ```
 
-## Error Handling
+## 錯誤處理
 
-Simple hierarchy with informative messages:
+簡潔繼承層級附明確訊息：
 
 ```ruby
 module GemName
@@ -131,7 +131,7 @@ def initialize(key:)
 end
 ```
 
-## Testing (Minitest Only)
+## 測試（僅 Minitest）
 
 ```ruby
 # test/test_helper.rb
@@ -148,9 +148,9 @@ class ModelTest < Minitest::Test
 end
 ```
 
-## Gemspec Pattern
+## Gemspec 模式
 
-Zero runtime dependencies when possible:
+儘可能零運行時依賴：
 
 ```ruby
 Gem::Specification.new do |spec|
@@ -163,22 +163,22 @@ Gem::Specification.new do |spec|
 end
 ```
 
-## Anti-Patterns to Avoid
+## 應避免之反模式
 
-- `method_missing` (use `define_method` instead)
-- Configuration objects (use class accessors)
-- `@@class_variables` (use `class << self`)
-- Requiring Rails gems directly
-- Many runtime dependencies
-- Committing Gemfile.lock in gems
-- RSpec (use Minitest)
-- Heavy DSLs (prefer explicit Ruby)
+- `method_missing`（改用 `define_method`）
+- Configuration 物件（改用類別存取器）
+- `@@class_variables`（改用 `class << self`）
+- 直接 require Rails gem
+- 大量運行時依賴
+- 於 gem 中提交 Gemfile.lock
+- RSpec（改用 Minitest）
+- 重量級 DSL（偏好顯式 Ruby）
 
-## Reference Files
+## 參考檔案
 
-For deeper patterns, see:
-- `references/module-organization.md` - Directory layouts, method decomposition
-- `references/rails-integration.md` - Railtie, Engine, on_load patterns
-- `references/database-adapters.md` - Multi-database support patterns
-- `references/testing-patterns.md` - Multi-version testing, CI setup
-- `references/resources.md` - Links to Kane's repos and articles
+深入模式請參照：
+- `references/module-organization.md` - 目錄佈局、方法分解
+- `references/rails-integration.md` - Railtie、Engine、on_load 模式
+- `references/database-adapters.md` - 多資料庫支援模式
+- `references/testing-patterns.md` - 多版本測試、CI 設定
+- `references/resources.md` - Kane 倉庫與文章連結

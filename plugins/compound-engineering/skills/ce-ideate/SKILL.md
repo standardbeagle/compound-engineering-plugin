@@ -1,171 +1,171 @@
 ---
 name: ce-ideate
-description: "Generate and critically evaluate grounded ideas about a topic. Use when asking what to improve, requesting idea generation, exploring surprising directions, or wanting the AI to proactively suggest strong options before brainstorming one in depth. Triggers on phrases like 'what should I improve', 'give me ideas', 'ideate on X', 'surprise me', 'what would you change', or any request for AI-generated suggestions rather than refining the user's own idea."
+description: "生成並批判性評估關於某主題之紮實構想。適用於詢問應改進什麼、請求構想生成、探索意外方向、或希望 AI 在深入腦力激盪一個構想前主動建議強力選項。觸發詞如 'what should I improve'、'give me ideas'、'ideate on X'、'surprise me'、'what would you change' 或任何請求 AI 生成建議而非精煉用戶自身構想。"
 argument-hint: "[feature, focus area, or constraint]"
 ---
 
-# Generate Improvement Ideas
+# 生成改進構想
 
-**Note: The current year is 2026.** Use this when dating ideation documents and checking recent ideation artifacts.
+**注意：今年為 2026 年。** 構想文檔標註日期及檢查近期構想產物時使用。
 
-`ce-ideate` precedes `ce-brainstorm`.
+`ce-ideate` 先於 `ce-brainstorm`。
 
-- `ce-ideate` answers: "What are the strongest ideas worth exploring?"
-- `ce-brainstorm` answers: "What exactly should one chosen idea mean?"
-- `ce-plan` answers: "How should it be built?"
+- `ce-ideate` 回答：「哪些構想最值得探索？」
+- `ce-brainstorm` 回答：「選定的構想究竟應意味什麼？」
+- `ce-plan` 回答：「應如何建構？」
 
-This workflow produces a ranked ideation artifact in `docs/ideation/`. It does **not** produce requirements, plans, or code.
+此工作流於 `docs/ideation/` 中產出排序之構想產物。其**不**產出需求、計劃或程式碼。
 
-## Interaction Method
+## 互動方式
 
-Use the platform's blocking question tool when available (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Otherwise, present numbered options in chat and wait for the user's reply before proceeding.
+可用時使用平台之阻塞式提問工具（Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`）。否則於聊天中呈現編號選項並等候用戶回覆。
 
-Ask one question at a time. Prefer concise single-select choices when natural options exist.
+一次問一個問題。自然選項存在時偏好簡潔之單選。
 
-## Focus Hint
+## 焦點提示
 
 <focus_hint> #$ARGUMENTS </focus_hint>
 
-Interpret any provided argument as optional context. It may be:
+將任何提供之參數解讀為選擇性上下文。其可能為：
 
-- a concept such as `DX improvements`
-- a path such as `plugins/compound-engineering/skills/`
-- a constraint such as `low-complexity quick wins`
-- a volume hint such as `top 3`, `100 ideas`, or `raise the bar`
+- 一個概念如 `DX improvements`
+- 一個路徑如 `plugins/compound-engineering/skills/`
+- 一個約束如 `low-complexity quick wins`
+- 一個數量提示如 `top 3`、`100 ideas` 或 `raise the bar`
 
-If no argument is provided, proceed with open-ended ideation.
+若未提供參數，以開放式構想生成進行。
 
-## Core Principles
+## 核心原則
 
-1. **Ground before ideating** - Scan the actual codebase first. Do not generate abstract product advice detached from the repository.
-2. **Generate many -> critique all -> explain survivors only** - The quality mechanism is explicit rejection with reasons, not optimistic ranking. Do not let extra process obscure this pattern.
-3. **Route action into brainstorming** - Ideation identifies promising directions; `ce-brainstorm` defines the selected one precisely enough for planning. Do not skip to planning from ideation output.
+1. **生成前先紮根** ——先掃描實際碼庫。勿生成脫離倉庫之抽象產品建議。
+2. **生成多數 → 批判全部 → 僅解釋存活者** ——品質機制為附理由之明確拒絕，非樂觀排名。勿讓額外流程掩蓋此模式。
+3. **將行動路由至腦力激盪** ——構想生成識別有前途之方向；`ce-brainstorm` 精確定義所選者俾便規劃。勿自構想輸出跳至規劃。
 
-## Execution Flow
+## 執行流程
 
-### Phase 0: Resume and Scope
+### 階段零：恢復與範圍
 
-#### 0.1 Check for Recent Ideation Work
+#### 0.1 檢查近期構想工作
 
-Look in `docs/ideation/` for ideation documents created within the last 30 days.
+查看 `docs/ideation/` 中過去 30 天內建立之構想文檔。
 
-Treat a prior ideation doc as relevant when:
-- the topic matches the requested focus
-- the path or subsystem overlaps the requested focus
-- the request is open-ended and there is an obvious recent open ideation doc
-- the issue-grounded status matches: do not offer to resume a non-issue ideation when the current argument indicates issue-tracker intent, or vice versa — treat these as distinct topics
+以下情況視既有構想文檔為相關：
+- 主題匹配請求之焦點
+- 路徑或子系統重疊請求之焦點
+- 請求為開放式且有明顯近期開放構想文檔
+- 議題扎根狀態匹配：當前參數指示議題追蹤器意圖時勿提供恢復非議題構想，反之亦然——視為不同主題
 
-If a relevant doc exists, ask whether to:
-1. continue from it
-2. start fresh
+若相關文檔存在，詢問是否：
+1. 自其繼續
+2. 重新開始
 
-If continuing:
-- read the document
-- summarize what has already been explored
-- preserve previous idea statuses
-- update the existing file instead of creating a duplicate
+若繼續：
+- 讀取文檔
+- 摘要已探索之物
+- 保留先前構想狀態
+- 更新既有檔案而非建立重複
 
-#### 0.2 Classify Subject Mode
+#### 0.2 分類主題模式
 
-Classify the **subject of ideation** (what the user wants ideas about), not the environment. A user inside any repo can ideate about something unrelated to that repo; a user in `/tmp` can ideate about code they hold in their head.
+分類**構想之主題**（用戶想要關於什麼的構想），非環境。任何倉庫中之用戶可構想與該倉庫無關之物；在 `/tmp` 中之用戶可構想其腦中之程式碼。
 
-Make two sequential binary decisions, enumerating negative signals at each:
+做兩個順序二元決策，各列舉負面信號：
 
-**Decision 1 — repo-grounded vs elsewhere.** Weigh prompt content first, topic-repo coherence second, and CWD repo presence as supporting evidence only.
+**決策一——倉庫扎根 vs. 他處。** 先權衡提示內容，次考量主題-倉庫一致性，CWD 倉庫存在僅為支持證據。
 
-- Positive signals for **repo-grounded**: prompt references repo files, code, architecture, modules, tests, or workflows; topic is clearly bounded by the current codebase.
-- Negative signals (push toward **elsewhere**): prompt names things absent from the repo (pricing, naming, narrative, business model, personal decisions, brand, content, market positioning); topic is creative, business, or personal with no code surface.
+- **倉庫扎根**之正面信號：提示引用倉庫檔案、程式碼、架構、模組、測試或工作流；主題明確受當前碼庫界定。
+- **他處**之負面信號（推向他處）：提示命名倉庫中不存在之物（定價、命名、敘事、商業模式、個人決策、品牌、內容、市場定位）；主題為創意、商業或個人，無程式碼表面。
 
-**Decision 2 (only fires if Decision 1 = elsewhere) — software vs non-software.** Classify by whether the *subject* of ideation is a software artifact or system, not by where the individual ideas will eventually land. If the topic concerns a product, app, SaaS, web/mobile UI, feature, page, or service, it is **elsewhere-software** — even when the ideas themselves are about copy, UX, CRO, pricing, onboarding, visual design, or positioning *for that software product*. **Elsewhere-non-software** is reserved for topics with no software surface at all: company or brand naming (independent of product), narrative and creative writing, personal decisions, non-digital business strategy, physical-product design.
+**決策二（僅當決策一 = 他處時觸發）——軟體 vs. 非軟體。** 以構想之*主題*是否為軟體產物或系統來分類，非以個別構想最終歸宿。若主題涉及產品、應用、SaaS、網頁/行動 UI、功能、頁面或服務，即為**他處-軟體**——即使構想本身關於文案、UX、CRO、定價、入門、視覺設計或該軟體產品之定位。**他處-非軟體**保留給完全無軟體表面之主題：公司或品牌命名（獨立於產品）、敘事與創意寫作、個人決策、非數位商業策略、實體產品設計。
 
-Sample classifications:
+範例分類：
 
-- "Improve conversion on our sign-up page" → elsewhere-software (the subject is a page)
-- "Redesign the onboarding flow" → elsewhere-software (the subject is a flow)
-- "Pricing page A/B test ideas" → elsewhere-software (the subject is a page)
-- "Features to add to our note-taking app" → elsewhere-software
-- "Name my new coffee shop" → elsewhere-non-software (the subject is a brand)
-- "Plot ideas for a short story" → elsewhere-non-software (the subject is a narrative)
-- "Options for my next career move" → elsewhere-non-software (the subject is a personal decision)
+- "Improve conversion on our sign-up page" → 他處-軟體（主題為頁面）
+- "Redesign the onboarding flow" → 他處-軟體（主題為流程）
+- "Pricing page A/B test ideas" → 他處-軟體（主題為頁面）
+- "Features to add to our note-taking app" → 他處-軟體
+- "Name my new coffee shop" → 他處-非軟體（主題為品牌）
+- "Plot ideas for a short story" → 他處-非軟體（主題為敘事）
+- "Options for my next career move" → 他處-非軟體（主題為個人決策）
 
-State the inferred approach in one sentence at the top, using plain language the user will recognize. Never print the internal taxonomy label (`repo-grounded`, `elsewhere-software`, `elsewhere-non-software`) to the user — those names are for routing only. Adapt the template below to the actual topic; pick a domain word from the topic itself (e.g., "landing page", "onboarding flow", "naming", "career decision") instead of a mode label.
+於頂部以一句話陳述推斷之方式，使用用戶能辨識之通俗語言。永不向用戶列印內部分類標籤（`repo-grounded`、`elsewhere-software`、`elsewhere-non-software`）——那些名稱僅供路由。依下方模板適應實際主題；自主題本身取一領域詞彙（如「landing page」、「onboarding flow」、「naming」、「career decision」）取代模式標籤。
 
-- **Repo-grounded:** "Treating this as a topic in this codebase — about X. Say 'actually this is outside the repo' to switch."
-- **Elsewhere-software:** "Treating this as a product/software topic outside this repo — about X. Say 'actually this is about this repo' or 'actually this has no software surface' to switch."
-- **Elsewhere-non-software:** "Treating this as a [naming | narrative | business | personal] topic — about X. Say 'actually this is about a software product' or 'actually this is about this repo' to switch."
+- **倉庫扎根：** "Treating this as a topic in this codebase — about X. Say 'actually this is outside the repo' to switch."
+- **他處-軟體：** "Treating this as a product/software topic outside this repo — about X. Say 'actually this is about this repo' or 'actually this has no software surface' to switch."
+- **他處-非軟體：** "Treating this as a [naming | narrative | business | personal] topic — about X. Say 'actually this is about a software product' or 'actually this is about this repo' to switch."
 
-The correction hints must also be plain language ("actually this is outside the repo", "actually this is about this repo"), not internal labels ("actually elsewhere-software").
+修正提示亦須為通俗語言（"actually this is outside the repo"、"actually this is about this repo"），非內部標籤（"actually elsewhere-software"）。
 
-**Active confirmation on ambiguity (V16).** When classifier confidence is low — single-keyword or short prompts mapping cleanly to either mode (`/ce-ideate ideas`, `/ce-ideate ideas for the docs`), conflicting CWD/prompt signals, or topic mentioning both repo-internal and external surfaces — ask one confirmation question via the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini) **before dispatching Phase 1 grounding**. For clear cases the one-sentence inferred-mode statement is sufficient; do not ask.
+**模糊時主動確認（V16）。** 分類器信心低時——單關鍵詞或短提示可乾淨映射至任一模式（`/ce-ideate ideas`、`/ce-ideate ideas for the docs`）、CWD/提示信號衝突、或主題同時提及倉庫內外表面——透過平台之阻塞式提問工具（Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`）在**分派階段一紮根前**問一個確認問題。清晰案例一句話之推斷模式陳述即足；勿問。
 
-Sample wording (refine to fit the prompt at hand; follow the Interactive Question Tool Design rules in the plugin AGENTS.md — self-contained labels, max 4, third person, front-loaded distinguishing word, no leaked internal mode names):
+範例措辭（依手邊提示調整；遵循插件 AGENTS.md 中之互動提問工具設計規則——自足標籤、上限 4、第三人稱、前置區分詞、不洩露內部模式名）：
 
-- **Stem:** "What should the agent ideate about?"
-- **Options:**
+- **題幹：** "What should the agent ideate about?"
+- **選項：**
   - "Code in this repository — features, refactors, architecture"
   - "A topic outside this repository — business, design, content, personal decisions"
   - "Cancel — let me rephrase the prompt"
 
-If the user confirms or selects "elsewhere," still run Decision 2 to choose between elsewhere-software and elsewhere-non-software.
+若用戶確認或選擇「elsewhere」，仍跑決策二以選擇他處-軟體 vs. 他處-非軟體。
 
-**Routing rule.** When Decision 2 = non-software, still run Phase 1 Elsewhere-mode grounding (user-context synthesis + web-research by default; skip phrases honored). Learnings-researcher is skipped by default in this mode — the CWD's `docs/solutions/` rarely transfers to naming, narrative, personal, or non-digital business topics; see Phase 1 for the full rationale. Then load `references/universal-ideation.md` and follow it in place of Phase 2's software frame dispatch and the Phase 6 menu narrative. This load is non-optional — the file contains the domain-agnostic generation frames, critique rubric, and wrap-up menu that replace Phase 2 and the post-ideation menu for this mode, and none of those details live in this main body. Improvising from memory produces the wrong facilitation for non-software topics. Do not run the repo-specific codebase scan at any point. The §6.5 Proof Failure Ladder in `references/post-ideation-workflow.md` still applies — load and follow it whenever a Proof save (the elsewhere-mode default for Save and end) fails, so the local-save fallback path stays reachable in non-software elsewhere runs.
+**路由規則。** 當決策二 = 非軟體時，仍跑階段一他處模式紮根（用戶上下文綜合 + 預設網路研究；跳過短語受尊重）。Learnings-researcher 在此模式預設跳過——CWD 之 `docs/solutions/` 罕能轉移至命名、敘事、個人或非數位商業主題；見階段一之完整理由。然後載入 `references/universal-ideation.md` 並遵循之以取代階段二之軟體框架分派及階段六選單敘事。此載入為非選擇性——該檔包含領域無關之生成框架、批判評分標準及收尾選單，取代此模式下之階段二與構想後選單，這些細節不存在於此主體中。憑記憶即興創作會為非軟體主題產生錯誤引導。勿在任何時刻跑倉庫特定之碼庫掃描。`references/post-ideation-workflow.md` 中之 §6.5 Proof Failure Ladder 仍適用——每當 Proof 儲存（他處模式下「Save and end」之預設）失敗時載入並遵循之，俾本地儲存後備路徑在非軟體他處執行中保持可達。
 
-If any prompt-broadening or intake step (0.4 below) materially changes the topic, re-evaluate the mode statement before dispatching Phase 1 — classify on the scope to be acted on, not the scope at first read.
+若任何提示擴展或攝取步驟（下方 0.4）實質改變主題，在分派階段一前重新評估模式陳述——依將行動之範圍分類，非首次閱讀之範圍。
 
-#### 0.3 Interpret Focus and Volume
+#### 0.3 詮釋焦點與數量
 
-Infer three things from the argument:
+自參數推斷三件事：
 
-- **Focus context** - concept, path, constraint, or open-ended
-- **Volume override** - any hint that changes candidate or survivor counts
-- **Issue-tracker intent** - whether the user wants issue/bug data as an input source. **Repo-mode only** — do not trigger in elsewhere mode.
+- **焦點上下文** ——概念、路徑、約束或開放式
+- **數量覆寫** ——任何改變候選者或存活者數量之提示
+- **議題追蹤器意圖** ——用戶是否想要議題/錯誤資料作為輸入來源。**僅倉庫模式**——他處模式不觸發。
 
-Issue-tracker intent triggers when the argument's primary intent is about analyzing issue patterns: `bugs`, `github issues`, `open issues`, `issue patterns`, `what users are reporting`, `bug reports`, `issue themes`.
+議題追蹤器意圖在參數之主要意圖為分析議題模式時觸發：`bugs`、`github issues`、`open issues`、`issue patterns`、`what users are reporting`、`bug reports`、`issue themes`。
 
-Do NOT trigger on arguments that merely mention bugs as a focus: `bug in auth`, `fix the login issue`, `the signup bug` — these are focus hints, not requests to analyze the issue tracker.
+以下參數**不**觸發：僅將錯誤作為焦點提及：`bug in auth`、`fix the login issue`、`the signup bug`——此為焦點提示，非分析議題追蹤器之請求。
 
-When combined (e.g., `top 3 bugs in authentication`): detect issue-tracker intent first, volume override second, remainder is the focus hint. The focus narrows which issues matter; the volume override controls survivor count.
+組合時（如 `top 3 bugs in authentication`）：先偵測議題追蹤器意圖，次數量覆寫，餘者為焦點提示。焦點縮窄哪些議題重要；數量覆寫控制存活者數量。
 
-Default volume:
-- each ideation sub-agent generates about 6-8 ideas (yielding ~36-48 raw ideas across 6 frames in the default path, or ~24-32 across 4 frames in issue-tracker mode; roughly 25-30 survivors after dedupe in the 6-frame path and fewer in the 4-frame path)
-- keep the top 5-7 survivors
+預設數量：
+- 每個構想子代理生成約 6-8 個構想（預設路徑 6 框架下約 36-48 個原始構想，或議題追蹤器模式 4 框架下約 24-32 個；6 框架路徑去重後約 25-30 個存活者，4 框架路徑較少）
+- 保留前 5-7 個存活者
 
-Honor clear overrides such as:
+尊重明確覆寫如：
 - `top 3`
 - `100 ideas`
 - `go deep`
 - `raise the bar`
 
-Use reasonable interpretation rather than formal parsing.
+以合理詮釋取代形式解析。
 
-#### 0.4 Light Context Intake (Elsewhere Mode, Software Topics Only)
+#### 0.4 輕量上下文攝取（僅他處模式，僅軟體主題）
 
-Skip this step in repo mode (Phase 1 grounding agents do the work) and in non-software elsewhere mode (the universal facilitation reference governs intake).
+倉庫模式跳過此步（階段一紮根代理做此工作）。非軟體他處模式亦跳過（通用引導參照管轄攝取）。
 
-Apply the **discrimination test** before asking anything: would swapping one piece of the user's stated context for a contrasting alternative materially change which ideas survive? If yes, the context is load-bearing — proceed without asking. If no, ask 1-3 narrowly chosen questions, building on what the user already provided rather than starting from a template. Default to free-form questions; use single-select only when the answer space is small and discrete (e.g., genre, tone). After each answer, re-apply the test before asking another. Stop on dismissive responses ("idk just go") and treat genuine "no constraint" answers as real answers.
+詢問前先施**區辨測試**：將用戶所述上下文之一塊替換為對比替代方案是否會實質改變哪些構想存活？若會，上下文為承重者——不問即進。若不會，問 1-3 個窄選問題，基於用戶已提供者構建而非從模板開始。預設自由形式問題；僅當答案空間小且離散時用單選（如類型、調性）。每次回答後重新施測試再問下一個。以敷衍回應（"idk just go"）為停止信號，將真正之「無約束」回答視為真正答案。
 
-When the user provides rich context up front (a paste, a brief, an existing draft), confirm understanding in one line and skip intake entirely.
+用戶前提供豐富上下文時（貼文、簡報、既有草稿），一行確認理解後完全跳過攝取。
 
-#### 0.5 Cost Transparency Notice
+#### 0.5 成本透明通知
 
-Before dispatching Phase 1, surface the agent count for the inferred mode in one short line so multi-agent cost is not invisible. Compute the count from the actual dispatch decision: 1 grounding-context agent (codebase scan in repo mode; user-context synthesis in elsewhere) + 1 learnings (skip in elsewhere-non-software) + 1 web researcher + 6 ideation = baseline 9 in repo mode and elsewhere-software, 8 in elsewhere-non-software. When issue-tracker intent triggers (repo mode only): add 1 for the issue-intelligence agent and drop ideation from 6 to 4, for a net -1 (baseline 8). Add 1 if the user opted into Slack research. Subtract 1 if the user issued a web-research skip phrase or V15 reuse will fire.
+分派階段一前，以一行短句呈現推斷模式下之代理數量，俾多代理成本非不可見。自實際分派決策計算數量：1 紮根上下文代理（倉庫模式下為碼庫掃描；他處下為用戶上下文綜合）+ 1 learnings（他處-非軟體中跳過）+ 1 網路研究員 + 6 構想 = 倉庫模式與他處-軟體基線 9，他處-非軟體 8。議題追蹤器意圖觸發時（僅倉庫模式）：加 1 議題情報代理並將構想自 6 降至 4，淨減 1（基線 8）。用戶選擇加入 Slack 研究則加 1。用戶發出網路研究跳過短語或 V15 重用將觸發則減 1。
 
-Examples (defaults, no skips, no opt-ins):
+範例（預設、無跳過、無選擇加入）：
 
-- **Repo mode:** "Will dispatch ~9 agents: codebase scan + learnings + web research + 6 ideation sub-agents. Skip phrases: 'no external research', 'no slack'."
-- **Repo mode, issue-tracker intent:** "Will dispatch ~8 agents: codebase scan + learnings + web research + issue intelligence + 4 ideation sub-agents. Skip phrases: 'no external research', 'no slack'." Reflects the successful-theme path; if issue intelligence returns insufficient signal (see Phase 1), ideation falls back to 6 sub-agents and the total becomes ~9.
-- **Elsewhere-software:** "Will dispatch ~9 agents: context synthesis + learnings + web research + 6 ideation sub-agents. Skip phrases: 'no external research'."
-- **Elsewhere-non-software:** "Will dispatch ~8 agents: context synthesis + web research + 6 ideation sub-agents. Skip phrases: 'no external research'."
+- **倉庫模式：** "Will dispatch ~9 agents: codebase scan + learnings + web research + 6 ideation sub-agents. Skip phrases: 'no external research', 'no slack'."
+- **倉庫模式，議題追蹤器意圖：** "Will dispatch ~8 agents: codebase scan + learnings + web research + issue intelligence + 4 ideation sub-agents. Skip phrases: 'no external research', 'no slack'." 反映成功主題路徑；若議題情報回傳不足信號（見階段一），構想回退為 6 個子代理，總數變為 ~9。
+- **他處-軟體：** "Will dispatch ~9 agents: context synthesis + learnings + web research + 6 ideation sub-agents. Skip phrases: 'no external research'."
+- **他處-非軟體：** "Will dispatch ~8 agents: context synthesis + web research + 6 ideation sub-agents. Skip phrases: 'no external research'."
 
-The line is informational; users do not need to acknowledge it.
+此行為資訊性；用戶不需確認。
 
-### Phase 1: Mode-Aware Grounding
+### 階段一：模式感知紮根
 
-Before generating ideas, gather grounding. The dispatch set depends on the mode chosen in Phase 0.2. Web research runs in all modes (skip phrases honored). Learnings runs in repo mode and elsewhere-software, and is **skipped by default in elsewhere-non-software** — the CWD repo's `docs/solutions/` almost always contains engineering patterns that do not transfer to naming, narrative, personal, or non-digital business topics.
+生成構想前，收集紮根資訊。分派集合取決於階段 0.2 所選模式。網路研究在所有模式中運行（跳過短語受尊重）。Learnings 在倉庫模式與他處-軟體中運行，**在他處-非軟體中預設跳過**——CWD 倉庫之 `docs/solutions/` 幾乎總是包含無法轉移至命名、敘事、個人或非數位商業主題之工程模式。
 
-Generate a `<run-id>` once at the start of Phase 1 (8 hex chars). Reuse it for the V15 cache file (this phase) and the V17 checkpoints (Phases 2 and 4) so they share one per-run scratch directory.
+於階段一起始生成一次 `<run-id>`（8 位十六進位字元）。V15 快取檔案（此階段）與 V17 檢查點（階段二與四）重用之，使它們共用一個每次執行之臨時目錄。
 
-**Pre-resolve the scratch directory path.** Scratch lives in OS temp (not `.context/`), per the cross-invocation-reusable rule in the repo Scratch Space convention — the ideation topic is rarely tied to the CWD repo (especially in elsewhere mode), so keeping scratch out of any repo tree is the right default. Run one bash command to create the directory and capture its **absolute path** for all downstream use. Do not pass `${TMPDIR:-/tmp}` as a literal string to non-shell tools (Write, Read, Glob); those tools do not perform shell expansion.
+**預解析臨時目錄路徑。** 臨時空間在 OS temp（非 `.context/`），依倉庫臨時空間慣例中跨調用可重用規則——構想主題鮮少綁定於 CWD 倉庫（尤其在他處模式），故將臨時空間保持於任何倉庫樹之外為正確預設。執行一條 bash 指令建立目錄並擷取其**絕對路徑**供後續使用。勿將 `${TMPDIR:-/tmp}` 作為字面字串傳遞予非 shell 工具（Write、Read、Glob）；這些工具不執行 shell 展開。
 
 ```bash
 SCRATCH_DIR="${TMPDIR:-/tmp}/compound-engineering/ce-ideate/<run-id>"
@@ -173,13 +173,13 @@ mkdir -p "$SCRATCH_DIR"
 echo "$SCRATCH_DIR"
 ```
 
-Use the echoed absolute path (e.g., `/var/folders/.../T/compound-engineering/ce-ideate/a3f7c2e1` on macOS, `/tmp/compound-engineering/ce-ideate/a3f7c2e1` on Linux) as `<scratch-dir>` for every subsequent checkpoint write and cache read in this run. The run directory is not deleted on Phase 6 completion — the V15 cache is session-scoped and reused across run-ids, and the checkpoints follow the cross-invocation-reusable convention of leaving session-scoped artifacts for later invocations to find.
+使用回傳之絕對路徑（如 macOS 上 `/var/folders/.../T/compound-engineering/ce-ideate/a3f7c2e1`、Linux 上 `/tmp/compound-engineering/ce-ideate/a3f7c2e1`）作為 `<scratch-dir>` 供此運行中每個後續檢查點寫入與快取讀取。運行目錄不在階段六完成時刪除——V15 快取為對話範圍且跨 run-id 重用，檢查點遵循跨調用可重用慣例保留對話範圍產物供後續調用發現。
 
-Run grounding agents in parallel in the **foreground** (do not background — results are needed before Phase 2):
+**前台**並行運行紮根代理（勿背景化——結果在階段二前需要）：
 
-**Repo mode dispatch:**
+**倉庫模式分派：**
 
-1. **Quick context scan** — dispatch a general-purpose sub-agent using the platform's cheapest capable model (e.g., `model: "haiku"` in Claude Code) with this prompt:
+1. **快速上下文掃描** ——以平台最便宜之勝任模型（如 Claude Code 中 `model: "haiku"`）分派通用子代理，提示如下：
 
    > Read the project's AGENTS.md (or CLAUDE.md only as compatibility fallback, then README.md if neither exists), then discover the top-level directory layout using the native file-search/glob tool (e.g., `Glob` with pattern `*` or `*/*` in Claude Code). Return a concise summary (under 30 lines) covering:
    > - project shape (language, framework, top-level directory layout)
@@ -191,78 +191,78 @@ Run grounding agents in parallel in the **foreground** (do not background — re
    >
    > Focus hint: {focus_hint}
 
-2. **Learnings search** — dispatch `research:ce-learnings-researcher` with a brief summary of the ideation focus.
+2. **Learnings 搜尋** ——以構想焦點之簡要摘要分派 `research:ce-learnings-researcher`。
 
-3. **Web research** (always-on; see "Web research" subsection below for skip-phrase and V15 cache handling).
+3. **網路研究**（一律開啟；見下方「網路研究」子區段之跳過短語與 V15 快取處理）。
 
-4. **Issue intelligence** (conditional) — if issue-tracker intent was detected in Phase 0.3, dispatch `research:ce-issue-intelligence-analyst` with the focus hint. Run in parallel with the other agents.
+4. **議題情報**（條件式）——若階段 0.3 偵測到議題追蹤器意圖，以焦點提示分派 `research:ce-issue-intelligence-analyst`。與其他代理並行運行。
 
-   If the agent returns an error (gh not installed, no remote, auth failure), log a warning to the user ("Issue analysis unavailable: {reason}. Proceeding with standard ideation.") and continue with the remaining grounding.
+   若代理回傳錯誤（gh 未安裝、無遠端、認證失敗），向用戶記錄警告（"Issue analysis unavailable: {reason}. Proceeding with standard ideation."）並以剩餘紮根繼續。
 
-   If the agent reports fewer than 5 total issues, note "Insufficient issue signal for theme analysis" and proceed with default ideation frames in Phase 2.
+   若代理回報少於 5 個總議題，注明「Insufficient issue signal for theme analysis」並以預設構想框架進入階段二。
 
-**Elsewhere mode dispatch (skip the codebase scan; user-supplied context is the primary grounding):**
+**他處模式分派（跳過碼庫掃描；用戶提供之上下文為主要紮根）：**
 
-1. **User-context synthesis** — dispatch a general-purpose sub-agent (cheapest capable model) to read the user-supplied context from Phase 0.4 intake plus any rich-prompt material, and return a structured grounding summary that mirrors the codebase-context shape (project shape → topic shape; notable patterns → stated constraints; pain points → user-named pain points; leverage points → opportunity hooks the context implies). This keeps Phase 2 sub-agents agnostic to grounding source.
+1. **用戶上下文綜合** ——分派通用子代理（最便宜之勝任模型）讀取階段 0.4 攝取之用戶提供上下文加任何豐富提示材料，回傳映射碼庫上下文形狀之結構化紮根摘要（專案形狀 → 主題形狀；顯著模式 → 已述約束；痛點 → 用戶命名之痛點；槓桿點 → 上下文暗示之機會鉤子）。這保持階段二子代理對紮根來源不可知。
 
-2. **Learnings search** *(elsewhere-software only; skipped by default in elsewhere-non-software)* — dispatch `research:ce-learnings-researcher` with the topic summary in case relevant institutional knowledge exists (skill-design patterns, prior solutions in similar shape). Skip for elsewhere-non-software: the CWD's `docs/solutions/` is unlikely to be topically relevant for non-digital topics, and running it risks polluting generation with unrelated engineering patterns.
+2. **Learnings 搜尋** *（僅他處-軟體；他處-非軟體中預設跳過）* ——以主題摘要分派 `research:ce-learnings-researcher` 以防相關之機構知識存在。他處-非軟體跳過：CWD 之 `docs/solutions/` 不太可能與非數位主題主題相關，運行有以無關工程模式污染生成之風險。
 
-3. **Web research** — same as repo mode (see subsection below).
+3. **網路研究** ——同倉庫模式（見下方子區段）。
 
-Issue intelligence does not apply in elsewhere mode. Slack research is opt-in for both modes (see "Slack context" below).
+議題情報不適用於他處模式。Slack 研究兩模式皆為選擇性加入（見下方「Slack 上下文」）。
 
-#### Web Research (V5, V15)
+#### 網路研究（V5、V15）
 
-Always-on for both modes. Skip when the user said "no external research", "skip web research", or equivalent in their prompt or earlier answers; in that case, omit `research:ce-web-researcher` from dispatch and note the skip in the consolidated grounding summary.
+兩模式一律開啟。用戶於提示或先前回答中說 "no external research"、"skip web research" 或等效語時跳過；此情況下自分派中省略 `research:ce-web-researcher` 並於合併紮根摘要中注明跳過。
 
-Reuse prior web research within a session via a sidecar cache — see `references/web-research-cache.md` for the cache file shape, reuse check, append behavior, and platform-degradation rules. Read it the first time `research:ce-web-researcher` would be dispatched in this run (and on every subsequent dispatch where the cache might apply).
+透過附屬快取在同一對話中重用先前網路研究——見 `references/web-research-cache.md` 了解快取檔案形狀、重用檢查、附接行為及平台降級規則。於此運行中首次將分派 `research:ce-web-researcher` 時讀取之（及每次快取可能適用之後續分派）。
 
-When dispatching `research:ce-web-researcher`, pass: the focus hint, a brief planning context summary (one or two sentences), and the mode. Do not pass codebase content — the agent operates externally.
+分派 `research:ce-web-researcher` 時，傳入：焦點提示、簡要規劃上下文摘要（一兩句話）及模式。勿傳入碼庫內容——代理在外部運作。
 
-#### Consolidated Grounding Summary
+#### 合併紮根摘要
 
-Consolidate all dispatched results into a short grounding summary using these sections (omit any section that produced nothing):
+將所有分派結果合併為簡短紮根摘要，使用以下區段（無產出者省略）：
 
-- **Codebase context** *(repo mode)* OR **Topic context** *(elsewhere mode)* — project/topic shape, notable patterns or stated constraints, pain points, leverage points
-- **Past learnings** — relevant institutional knowledge from `docs/solutions/`
-- **Issue intelligence** *(when present, repo mode only)* — theme summaries with titles, descriptions, issue counts, and trend directions
-- **External context** *(when web research ran)* — prior art, adjacent solutions, market signals, cross-domain analogies. Note "(reused from earlier dispatch)" when V15 reuse fired
-- **Slack context** *(when present)* — organizational context
+- **碼庫上下文** *（倉庫模式）* 或 **主題上下文** *（他處模式）* ——專案/主題形狀、顯著模式或已述約束、痛點、槓桿點
+- **過往 learnings** ——來自 `docs/solutions/` 之相關機構知識
+- **議題情報** *（存在時，僅倉庫模式）* ——主題摘要含標題、描述、議題數量及趨勢方向
+- **外部上下文** *（網路研究運行時）* ——先前藝術、相鄰解決方案、市場信號、跨領域類比。V15 重用觸發時注明 "(reused from earlier dispatch)"
+- **Slack 上下文** *（存在時）* ——組織脈絡
 
-**Failure handling.** Grounding agent failures follow "warn and proceed" — never block on grounding failure. If `research:ce-web-researcher` fails (network, tool unavailable), log a warning ("External research unavailable: {reason}. Proceeding with internal grounding only.") and continue. If elsewhere-mode intake produced no usable context, note in the grounding summary that context is thin so Phase 2 sub-agents can compensate with broader generation.
+**失敗處理。** 紮根代理失敗遵循「警告並繼續」——永不阻塞於紮根失敗。若 `research:ce-web-researcher` 失敗（網路、工具不可用），記錄警告（"External research unavailable: {reason}. Proceeding with internal grounding only."）並繼續。若他處模式攝取未產出可用上下文，在紮根摘要中注明上下文薄弱，俾階段二子代理得以更廣泛之生成補償。
 
-**Slack context** (opt-in, both modes) — never auto-dispatch. When the user asks for Slack context and Slack tools are available (look for any `slack-researcher` agent or `slack` MCP tools in the current environment), dispatch `research:ce-slack-researcher` with the focus hint in parallel with other Phase 1 agents. When tools are present but the user did not ask, mention availability in the grounding summary so they can opt in. When the user asked but no Slack tools are reachable, surface the install hint instead.
+**Slack 上下文**（選擇性加入，兩模式）——永不自動分派。用戶要求 Slack 上下文且 Slack 工具可用時（於當前環境中尋找任何 `slack-researcher` 代理或 `slack` MCP 工具），以焦點提示與其他階段一代理並行分派 `research:ce-slack-researcher`。工具存在但用戶未要求時，在紮根摘要中提及可用性俾其選擇加入。用戶要求但 Slack 工具不可達時，顯示安裝提示。
 
-### Phase 2: Divergent Ideation
+### 階段二：發散構想生成
 
-Generate the full candidate list before critiquing any idea.
+批判任何構想前先生成完整候選列表。
 
-Dispatch parallel ideation sub-agents on the inherited model (do not tier down -- creative ideation needs the orchestrator's reasoning level). Omit the `mode` parameter so the user's configured permission settings apply. Dispatch count is mode-conditional: **4 sub-agents only when issue-tracker intent was detected in Phase 0.3 AND the issue intelligence agent returned usable themes** (see override below — cluster-derived frames capped at 4); **6 sub-agents otherwise**, including the insufficient-issue-signal fallback from Phase 1 where intent triggered but themes were not returned. Each targets ~6-8 ideas (yielding ~36-48 raw ideas across 6 frames or ~24-32 across 4 frames, roughly 25-30 survivors after dedupe in the 6-frame path and fewer in the 4-frame path). Adjust per-agent targets when volume overrides apply (e.g., "100 ideas" raises it, "top 3" may lower the survivor count instead).
+以繼承之模型並行分派構想子代理（勿降級——創意構想需編排者之推理水準）。省略 `mode` 參數俾用戶已配置之權限設定生效。分派數量依模式條件化：**僅當階段 0.3 偵測到議題追蹤器意圖且議題情報代理回傳可用主題時為 4 個子代理**（見下方覆寫——聚類衍生框架上限 4）；**否則 6 個子代理**，包括階段一意圖觸發但未回傳主題之不足議題信號後備。每個目標 ~6-8 個構想（6 框架下約 36-48 個原始構想或 4 框架下約 24-32 個，6 框架路徑去重後約 25-30 個存活者，4 框架路徑較少）。數量覆寫適用時調整每代理目標（如 "100 ideas" 提高，"top 3" 可能降低存活者數量）。
 
-Give each sub-agent: the grounding summary, the focus hint, the per-agent volume target, and an instruction to generate raw candidates only (not critique). Each agent's first few ideas tend to be obvious -- push past them. Ground every idea in the Phase 1 grounding summary.
+給每個子代理：紮根摘要、焦點提示、每代理數量目標及僅生成原始候選（非批判）之指令。每個代理之前幾個構想往往顯而易見——推過它們。每個構想皆紮根於階段一紮根摘要。
 
-Assign each sub-agent a different ideation frame as a **starting bias, not a constraint**. Prompt each to begin from its assigned perspective but follow any promising thread -- cross-cutting ideas that span multiple frames are valuable.
+分配每個子代理不同之構想框架作為**起始偏見，非約束**。提示各自從分配之視角開始但追隨任何有前途之線索——跨框架之構想最有價值。
 
-**Frame selection (mode-symmetric — same six frames in repo and elsewhere modes):**
+**框架選擇（模式對稱——倉庫與他處模式相同六框架）：**
 
-1. **Pain and friction** — user, operator, or topic-level pain points; what is consistently slow, broken, or annoying.
-2. **Inversion, removal, or automation** — invert a painful step, remove it entirely, or automate it away.
-3. **Assumption-breaking and reframing** — what is being treated as fixed that is actually a choice; reframe one level up or sideways.
-4. **Leverage and compounding** — choices that, once made, make many future moves cheaper or stronger; second-order effects.
-5. **Cross-domain analogy** — generate ideas by asking how completely different fields solve a structurally analogous problem. The grounding domain is the user's topic; the analogy domain is anywhere else (other industries, biology, games, infrastructure, history). Push past the obvious analogy to non-obvious ones.
-6. **Constraint-flipping** — invert the obvious constraint to its opposite or extreme. What if the budget were 10x or 0? What if the team were 100 people or 1? What if there were no users, or 1M? Use the resulting design as a candidate even if the constraint flip itself is not realistic.
+1. **痛苦與摩擦** ——用戶、操作者或主題層級之痛點；什麼始終緩慢、破碎或惱人。
+2. **反轉、移除或自動化** ——反轉痛苦步驟、完全移除之或自動化消除之。
+3. **打破假設與重新框架** ——什麼被視為固定實為選擇；提升一層或側向重新框架。
+4. **槓桿與複利** ——一旦做出即使許多未來行動更便宜或更強之選擇；二階效應。
+5. **跨領域類比** ——透過問完全不同領域如何解決結構上類似之問題來生成構想。紮根領域為用戶主題；類比領域為任何他處（其他產業、生物學、遊戲、基礎設施、歷史）。推過顯而易見之類比至非顯而易見者。
+6. **約束翻轉** ——將顯而易見之約束反轉為其對立或極端。若預算為 10 倍或 0？若團隊為 100 人或 1 人？若無用戶或有百萬？將結果設計作為候選，即使約束翻轉本身不現實。
 
-**Issue-tracker mode override (repo mode only).** When issue-tracker intent is active and themes were returned by the issue intelligence agent: each high/medium-confidence theme becomes a frame. Pad with frames from the 6-frame default pool (in the order listed above) if fewer than 3 cluster-derived frames. Cap at 4 total — issue-tracker mode keeps its tighter dispatch by design.
+**議題追蹤器模式覆寫（僅倉庫模式）。** 當議題追蹤器意圖活躍且議題情報代理回傳主題時：每個高/中信心主題成為一個框架。若聚類衍生框架少於 3 個，以 6 框架預設池中之框架填充（依上列順序）。上限 4 個——議題追蹤器模式刻意保持更緊之分派。
 
-Ask each sub-agent to return a compact structure per idea: title, summary, why_it_matters, evidence/grounding hooks, optional boldness or focus_fit signal.
+要求每個子代理每個構想回傳精簡結構：title、summary、why_it_matters、evidence/grounding hooks、選填之 boldness 或 focus_fit 信號。
 
-After all sub-agents return:
+所有子代理回傳後：
 
-1. Merge and dedupe into one master candidate list.
-2. Synthesize cross-cutting combinations -- scan for ideas from different frames that combine into something stronger (expect 3-5 additions at most).
-3. If a focus was provided, weight the merged list toward it without excluding stronger adjacent ideas.
-4. Spread ideas across multiple dimensions when justified: workflow/DX, reliability, extensibility, missing capabilities, docs/knowledge compounding, quality/maintenance, leverage on future work.
+1. 合併並去重為一個主候選列表。
+2. 綜合跨領域組合——掃描不同框架中可組合為更強構想之構想（預期最多 3-5 個添加）。
+3. 若提供了焦點，在不排除更強之相鄰構想前提下將合併列表權重傾向之。
+4. 適當時跨多維度分佈構想：工作流/DX、可靠性、擴展性、缺失能力、文檔/知識複利、品質/維護、對未來工作之槓桿。
 
-**Checkpoint A (V17).** Immediately after the cross-cutting synthesis step completes and the raw candidate list is consolidated, write `<scratch-dir>/raw-candidates.md` (using the absolute path captured in Phase 1) containing the full candidate list with sub-agent attribution. This protects the most expensive output (6 parallel sub-agent dispatches + dedupe) before Phase 3 critique potentially compacts context. Best-effort: if the write fails (disk full, permissions), log a warning and proceed; the checkpoint is not load-bearing. Not cleaned up at the end of the run (the run directory is preserved so the V15 cache remains reusable across run-ids in the same session — see Phase 6).
+**檢查點 A（V17）。** 跨領域綜合步驟完成且原始候選列表合併後，立即寫入 `<scratch-dir>/raw-candidates.md`（使用階段一擷取之絕對路徑），含完整候選列表及子代理歸屬。這在最昂貴產出（6 個並行子代理分派 + 去重）進入階段三批判可能壓縮上下文前保護之。盡力而為：若寫入失敗（磁碟滿、權限），記錄警告並繼續；檢查點非承重者。運行結束不清理（運行目錄保留俾 V15 快取在同一對話中跨 run-id 可重用——見階段六）。
 
-After merging and synthesis — and before presenting survivors — load `references/post-ideation-workflow.md`. This load is non-optional. The file contains the adversarial filtering rubric, artifact template, quality bar, and the canonical Phase 6 handoff menu (Refine, Open and iterate in Proof, Brainstorm, Save and end) — these options do not appear anywhere in this main body. Skipping the load silently degrades every subsequent step; the agent improvises the menu from memory instead of presenting the documented options. "Quickly" means fewer Phase 2 sub-agents, not skipping references. Do not load this file before Phase 2 agent dispatch completes.
+合併與綜合後——呈現存活者前——載入 `references/post-ideation-workflow.md`。此載入為非選擇性。該檔含對抗過濾評分標準、產物模板、品質門檻及正式階段六交接選單（Refine、Open and iterate in Proof、Brainstorm、Save and end）——這些選項不出現在此主體中任何地方。跳過載入會靜默退化每個後續步驟；代理憑記憶即興創作選單而非呈現文檔化選項。「快速」意味更少階段二子代理，非跳過參照。勿在階段二代理分派完成前載入此檔。

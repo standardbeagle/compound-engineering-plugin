@@ -1,82 +1,82 @@
-# `/ce-optimize` Usage Guide
+# `/ce-optimize` 用法指南
 
-## What This Skill Is For
+## 此技能適用於
 
-`/ce-optimize` is for hard engineering problems where:
+`/ce-optimize` 適用於以下困難工程問題：
 
-1. You can try multiple code or config variants.
-2. You can run the same evaluation against each variant.
-3. You want the skill to keep the good variants and reject the bad ones.
+1. 可嘗試多種程式碼或配置變體。
+2. 可對各變體執行相同評估。
+3. 希望技能保留優良變體並淘汰不良者。
 
-It is best for "search the space and score the results" work, not one-shot implementation work.
+最適合「搜尋空間並評分結果」之工作，非一次性實施工作。
 
-## When To Use It
+## 何時使用
 
-Use `/ce-optimize` when the problem looks like:
+問題符合以下描述時使用 `/ce-optimize`：
 
-- "Find the smallest memory limit that stops OOM crashes without wasting RAM."
-- "Tune clustering parameters without collapsing everything into one garbage cluster."
-- "Find a prompt that is cheaper but still produces summaries good enough for downstream clustering."
-- "Compare several ranking, retrieval, batching, or threshold strategies against the same harness."
+- 「找出停止 OOM 崩潰且不浪費 RAM 之最小記憶體限制。」
+- 「調整聚類參數，避免將一切坍縮為一個垃圾集群。」
+- 「找出更便宜但仍產生足夠好摘要供下游聚類之提示。」
+- 「以相同線束比較多種排名、檢索、批次或閾值策略。」
 
-Choose `type: hard` when success is objective and cheap to measure:
+成功客觀且衡量成本低時選擇 `type: hard`：
 
-- Memory usage
-- Latency
-- Throughput
-- Test pass rate
-- Build time
+- 記憶體使用
+- 延遲
+- 吞吐量
+- 測試通過率
+- 建置時間
 
-Choose `type: judge` when a numeric metric can be gamed or when human usefulness matters:
+數字指標可被博弈或人類效用重要時選擇 `type: judge`：
 
-- Cluster coherence
-- Search relevance
-- Summary quality
-- Prompt quality
-- Classification quality with semantic edge cases
+- 集群連貫性
+- 搜尋相關性
+- 摘要品質
+- 提示品質
+- 含語義邊緣案例之分類品質
 
-## When Not To Use It
+## 何時不使用
 
-`/ce-optimize` is usually the wrong tool when:
+以下情況 `/ce-optimize` 通常為錯誤工具：
 
-- The fix is obvious and does not need experimentation
-- There is no repeatable measurement harness
-- The search space is fake and only has one plausible answer
-- The cost of evaluating variants is too high to justify multiple runs
+- 修正顯而易見，不需實驗
+- 無可重複之量測線束
+- 搜尋空間為假，僅有一個合理答案
+- 評估變體成本過高，不值得多次運行
 
-## How To Think About It
+## 如何思考
 
-The pattern is:
+模式為：
 
-1. Define the target.
-2. Build or validate the measurement harness first.
-3. Generate multiple plausible variants.
-4. Run the same evaluation loop against each variant.
-5. Keep the variants that improve the target without violating guard rails.
+1. 定義目標。
+2. 先建置或驗證量測線束。
+3. 生成多個合理變體。
+4. 對各變體執行相同評估循環。
+5. 保留改善目標且不違反護欄之變體。
 
-The core rule is simple:
+核心規則簡單：
 
-- If a hard metric captures "better," optimize the hard metric.
-- If a hard metric can be gamed, add LLM-as-judge.
+- 若硬指標捕捉「更好」，優化硬指標。
+- 若硬指標可被博弈，加入 LLM-as-judge。
 
-Example: lowering a clustering threshold may increase cluster coverage. That sounds good until everything ends up in one giant cluster. Hard metrics may say "improved"; an LLM judge sampling real clusters can say "this is trash."
+例：降低聚類閾值可能增加集群覆蓋率。聽起來不錯，直到一切歸入一個巨大集群。硬指標可能說「改善」；LLM 評審抽樣真實集群可說「這是垃圾」。
 
-## First-Run Advice
+## 首次運行建議
 
-For the first run:
+首次運行：
 
-- Prefer `execution.mode: serial`
-- Set `execution.max_concurrent: 1`
-- Keep `stopping.max_iterations` small
-- Keep `stopping.max_hours` small
-- Avoid new dependencies until the baseline is trustworthy
-- In judge mode, use a small sample and a low cost cap
+- 偏好 `execution.mode: serial`
+- 設 `execution.max_concurrent: 1`
+- 保持 `stopping.max_iterations` 較小
+- 保持 `stopping.max_hours` 較小
+- 基線可信前避免新依賴
+- judge 模式中，使用小樣本及低成本上限
 
-The goal of the first run is to validate the harness, not to win the optimization immediately.
+首次運行目標為驗證線束，非即刻贏得優化。
 
-## Example Prompts
+## 範例提示
 
-### 1. Memory Tuning
+### 1. 記憶體調整
 
 ```text
 Use /ce-optimize to find the smallest memory setting that keeps this service stable under our load test.
@@ -89,7 +89,7 @@ The current container limit is 512 MB and the app sometimes OOM-crashes. Do not 
 Prefer the smallest memory limit that passes the guard rails.
 ```
 
-### 2. Clustering Quality
+### 2. 聚類品質
 
 ```text
 Use /ce-optimize to improve issue and PR clustering quality.
@@ -101,7 +101,7 @@ Do not mutate the shared default database. Copy it for the run, then use per-exp
 Do not optimize only for coverage. Use LLM-as-judge to sample clusters and confirm they still preserve real semantic similarity instead of collapsing into giant low-quality clusters.
 ```
 
-### 3. Prompt Optimization
+### 3. 提示優化
 
 ```text
 Use /ce-optimize to create a summarization prompt for issues and PRs that minimizes token spend while still producing summaries that are good enough for downstream clustering.
@@ -109,19 +109,19 @@ Use /ce-optimize to create a summarization prompt for issues and PRs that minimi
 I want the loop to compare prompt variants, measure token cost, and judge whether the summaries preserve the distinctions needed to cluster related issues together without merging unrelated ones.
 ```
 
-## Choosing Between Hard Metrics And Judge Mode
+## 硬指標與評審模式之間之選擇
 
-Use hard metrics alone when:
+以下情況單獨使用硬指標：
 
-- "Better" is obvious from the numbers.
+- 「更好」從數字即可看出。
 
-Add judge mode when:
+以下情況加入評審模式：
 
-- The numbers can improve while the real output gets worse.
+- 數字可能改善而實際輸出變差。
 
-Common pattern:
+常見模式：
 
-- Hard gates reject broken outputs.
-- Judge mode scores the surviving candidates for actual usefulness.
+- 硬門檻拒絕損壞輸出。
+- 評審模式為存活候選評分實際效用。
 
-That hybrid setup is often the best default for ranking, clustering, and prompt work.
+此混合設置常為排名、聚類及提示工作之最佳預設。

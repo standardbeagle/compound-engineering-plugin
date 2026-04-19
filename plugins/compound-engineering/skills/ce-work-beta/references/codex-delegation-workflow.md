@@ -1,44 +1,44 @@
-# Codex Delegation Workflow
+# Codex 委託工作流
 
-When `delegation_active` is true, code implementation is delegated to the Codex CLI (`codex exec`) instead of being implemented directly. The orchestrating Claude Code agent retains control of planning, review, git operations, and orchestration.
+當 `delegation_active` 為 true 時，程式碼實施委託至 Codex CLI（`codex exec`）而非直接實施。編排之 Claude Code 代理保留規劃、審閱、git 操作及編排之控制權。
 
-## Delegation Decision
+## 委託決策
 
-If `work_delegate_decision` is `ask`, present the recommendation and wait for the user's choice before proceeding.
+若 `work_delegate_decision` 為 `ask`，呈現建議並等候用戶選擇再繼續。
 
-**When recommending Codex delegation:**
+**建議 Codex 委託時：**
 
 > "Codex delegation active. [N] implementation units -- delegating in one batch."
 > 1. Delegate to Codex *(recommended)*
 > 2. Execute with Claude Code instead
 
-**When recommending Codex delegation, multiple batches:**
+**建議 Codex 委託且多批次時：**
 
 > "Codex delegation active. [N] implementation units -- delegating in [X] batches."
 > 1. Delegate to Codex *(recommended)*
 > 2. Execute with Claude Code instead
 
-**When recommending Claude Code (all units are trivial):**
+**建議 Claude Code 時（所有單元皆為 trivial）：**
 
 > "Codex delegation active, but these are small changes where the cost of delegating outweighs having Claude Code do them."
 > 1. Execute with Claude Code *(recommended)*
 > 2. Delegate to Codex anyway
 
-If the user chooses the delegation option, proceed to Pre-Delegation Checks below. If the user chooses the Claude Code option, set `delegation_active` to false and return to standard execution in the parent skill.
+用戶選擇委託選項時，繼續至下方預委託檢查。選擇 Claude Code 選項時，設 `delegation_active` 為 false 並返回父技能之標準執行。
 
-If `work_delegate_decision` is `auto` (the default), state the execution plan in one line and proceed without waiting: "Codex delegation active. Delegating [N] units in [X] batch(es)." If all units are trivial, set `delegation_active` to false and proceed: "Codex delegation active. All units are trivial -- executing with Claude Code."
+若 `work_delegate_decision` 為 `auto`（預設），以一行陳述執行計劃並不等待繼續："Codex delegation active. Delegating [N] units in [X] batch(es)." 若所有單元皆為 trivial，設 `delegation_active` 為 false 並繼續："Codex delegation active. All units are trivial -- executing with Claude Code."
 
-## Pre-Delegation Checks
+## 預委託檢查
 
-Run these checks **once before the first batch**. If any check fails, fall back to standard mode for the remainder of the plan execution. Do not re-run on subsequent batches.
+**於首批次前運行一次**。任何檢查失敗時，回退至標準模式執行剩餘計劃。後續批次不重新運行。
 
-**0. Platform Gate**
+**0. 平台閘門**
 
-Codex delegation is only supported when the orchestrating agent is running in Claude Code. If the current session is Codex, Gemini CLI, OpenCode, or any other platform, set `delegation_active` to false and proceed in standard mode.
+Codex 委託僅在編排代理運行於 Claude Code 時支援。若當前會話為 Codex、Gemini CLI、OpenCode 或任何其他平台，設 `delegation_active` 為 false 並以標準模式繼續。
 
-**1. Environment Guard**
+**1. 環境守衛**
 
-Check whether the current agent is already running inside a Codex sandbox:
+檢查當前代理是否已在 Codex 沙箱內運行：
 
 ```bash
 if [ -n "$CODEX_SANDBOX" ] || [ -n "$CODEX_SESSION_ID" ]; then
@@ -48,83 +48,82 @@ else
 fi
 ```
 
-If `inside_sandbox` is true, delegation would recurse or fail.
+`inside_sandbox` 為 true 時，委託會遞迴或失敗。
 
-- If `delegation_source` is `argument`: emit "Already inside Codex sandbox -- using standard mode." and set `delegation_active` to false.
-- If `delegation_source` is `config` or `default`: set `delegation_active` to false silently.
+- 若 `delegation_source` 為 `argument`：發出 "Already inside Codex sandbox -- using standard mode." 並設 `delegation_active` 為 false。
+- 若 `delegation_source` 為 `config` 或 `default`：靜默設 `delegation_active` 為 false。
 
-**2. Availability Check**
+**2. 可用性檢查**
 
-**Codex availability (pre-resolved):**
+**Codex 可用性（預解析）：**
 !`command -v codex >/dev/null 2>&1 && echo "CODEX_AVAILABLE" || echo "CODEX_NOT_FOUND"`
 
-If the line above shows `CODEX_AVAILABLE`, proceed to the next check.
-If it shows `CODEX_NOT_FOUND`, the Codex CLI is not installed. Emit "Codex CLI not found (install via `npm install -g @openai/codex` or `brew install codex`) -- using standard mode." and set `delegation_active` to false.
-If it shows an unresolved command string, run `command -v codex` using a shell tool. If the command prints a path, proceed. If it fails or prints nothing, emit the same message and set `delegation_active` to false.
+上方顯示 `CODEX_AVAILABLE` 時，繼續下一檢查。
+顯示 `CODEX_NOT_FOUND` 時，Codex CLI 未安裝。發出 "Codex CLI not found (install via `npm install -g @openai/codex` or `brew install codex`) -- using standard mode." 並設 `delegation_active` 為 false。
+顯示未解析之命令字串時，使用 shell 工具運行 `command -v codex`。若命令印出路徑，繼續。若失敗或無輸出，發出相同訊息並設 `delegation_active` 為 false。
 
-**3. Consent Flow**
+**3. 同意流程**
 
-If `consent_granted` is not true (from config `work_delegate_consent`):
+若 `consent_granted` 不為 true（來自配置 `work_delegate_consent`）：
 
-Present a one-time consent warning using the platform's blocking question tool (AskUserQuestion in Claude Code). The consent warning explains:
-- Delegation sends implementation units to `codex exec` as a structured prompt
-- **yolo mode** (`--yolo`): Full system access including network. Required for verification steps that run tests or install dependencies. **Recommended.**
-- **full-auto mode** (`--full-auto`): Workspace-write sandbox, no network access.
+以平台之阻斷式提問工具呈現一次性同意警告（Claude Code 中之 AskUserQuestion）。同意警告解釋：
+- 委託將實施單元作為結構化提示發送至 `codex exec`
+- **yolo 模式**（`--yolo`）：完整系統存取包含網路。運行測試或安裝依賴之驗證步驟所需。**推薦。**
+- **full-auto 模式**（`--full-auto`）：工作區寫入沙箱，無網路存取。
 
-Present the sandbox mode choice: (1) yolo (recommended), (2) full-auto.
+呈現沙箱模式選擇：(1) yolo（推薦），(2) full-auto。
 
-On acceptance:
-- Resolve the repo root: `git rev-parse --show-toplevel`. Write `work_delegate_consent: true` and `work_delegate_sandbox: <chosen-mode>` to `<repo-root>/.compound-engineering/config.local.yaml`
-- To write: (1) if file or directory does not exist, create `<repo-root>/.compound-engineering/` and write the YAML file; (2) if file exists, merge new keys preserving existing keys
-- Update `consent_granted` and `sandbox_mode` in the resolved state
+接受時：
+- 解析倉庫根：`git rev-parse --show-toplevel`。寫入 `work_delegate_consent: true` 及 `work_delegate_sandbox: <chosen-mode>` 至 `<repo-root>/.compound-engineering/config.local.yaml`
+- 寫入方式：(1) 檔案或目錄不存在時，建立 `<repo-root>/.compound-engineering/` 並寫入 YAML 檔案；(2) 檔案存在時，合併新鍵保留既有鍵
+- 更新已解析狀態中之 `consent_granted` 及 `sandbox_mode`
 
-On decline:
-- Ask whether to disable delegation entirely for this project
-- If yes: write `work_delegate: false` to `<repo-root>/.compound-engineering/config.local.yaml` (using the same repo root resolved above). To write: (1) if file or directory does not exist, create `<repo-root>/.compound-engineering/` and write the YAML file; (2) if file exists, merge new keys preserving existing keys. Set `delegation_active` to false, proceed in standard mode
-- If no: set `delegation_active` to false for this invocation only, proceed in standard mode
+拒絕時：
+- 詢問是否完全禁用此專案之委託
+- 是：寫入 `work_delegate: false` 至 `<repo-root>/.compound-engineering/config.local.yaml`（使用上述相同倉庫根）。寫入方式：(1) 檔案或目錄不存在時建立並寫入；(2) 檔案存在時合併新鍵保留既有鍵。設 `delegation_active` 為 false，以標準模式繼續
+- 否：僅本次調用設 `delegation_active` 為 false，以標準模式繼續
 
-**Headless consent:** If running in a headless or non-interactive context, delegation proceeds only if `work_delegate_consent` is already `true` in the config file. If consent is not recorded, set `delegation_active` to false silently.
+**無頭同意：** 若運行於無頭或非互動上下文，僅在配置檔中已記錄 `work_delegate_consent` 為 `true` 時委託繼續。未記錄同意時，靜默設 `delegation_active` 為 false。
 
-## Batching
+## 批次處理
 
-Delegate all units in one batch. If the plan exceeds 5 units, split into batches at the plan's own phase boundaries, or in groups of roughly 5 -- never splitting units that share files. Skip delegation entirely if every unit is trivial.
+所有單元作為一批委託。若計劃超過 5 單元，按計劃自身之階段邊界拆分，或約每 5 個一組——永不拆分共享檔案之單元。若每個單元皆為 trivial 則完全跳過委託。
 
-## Prompt Template
+## 提示模板
 
-At the start of delegated execution, create a per-run OS-temp scratch directory via `mktemp -d` and capture its **absolute path** for all downstream use. All scratch files for this invocation live under that directory. Do not use `.context/` — these scratch files are per-run throwaway that get cleaned up when delegated execution ends (see Cleanup below), matching the repo Scratch Space convention for one-shot artifacts. Do not pass unresolved shell-variable strings to non-shell tools (Write, Read); use the absolute path returned by `mktemp -d`.
+委託執行開始時，透過 `mktemp -d` 建立每次運行之 OS 臨時臨時目錄並捕獲其**絕對路徑**用於所有下游用途。此調用之所有臨時檔案存於該目錄下。勿使用 `.context/`——這些臨時檔案為每次運行之一次性品，委託執行結束時清理（見下方清理），符合倉庫臨時空間慣例中之一-shot 產物。勿將未解析之 shell 變數字串傳遞至非 shell 工具（Write, Read）；使用 `mktemp -d` 返回之絕對路徑。
 
 ```bash
 SCRATCH_DIR="$(mktemp -d -t ce-work-codex-XXXXXX)"
 echo "$SCRATCH_DIR"
 ```
 
-Refer to the echoed absolute path as `<scratch-dir>` throughout the rest of this workflow.
+將回顯之絕對路徑稱為 `<scratch-dir>`，貫穿此工作流其餘部分。
 
-Before each batch, write a prompt file to `<scratch-dir>/prompt-batch-<batch-num>.md`.
+各批次前，寫入提示檔案至 `<scratch-dir>/prompt-batch-<batch-num>.md`。
 
-Build the prompt from the batch's implementation units using these XML-tagged sections:
+從批次之實施單元使用以下 XML 標記章節建構提示：
 
 ```xml
 <task>
-[For a single-unit batch: Goal from the implementation unit.
-For a multi-unit batch: list each unit with its Goal, stating the concrete
-job, repository context, and expected end state for each.]
+[單單元批次：實施單元之目標。
+多單元批次：列出各單元及其目標，陳述各單元之具體工作、
+倉庫上下文及預期最終狀態。]
 </task>
 
 <files>
-[Combined file list from all units in the batch -- files to create, modify, or read.]
+[批次中所有單元之合併檔案列表——欲建立、修改或讀取之檔案。]
 </files>
 
 <patterns>
-[File paths from all units' "Patterns to follow" fields. If no patterns:
+[所有單元 "Patterns to follow" 欄位之檔案路徑。若無模式：
 "No explicit patterns referenced -- follow existing conventions in the
 modified files."]
 </patterns>
 
 <approach>
-[For a single-unit batch: Approach from the unit.
-For a multi-unit batch: list each unit's approach, noting dependencies
-and suggested ordering.]
+[單單元批次：單元之方法。
+多單元批次：列出各單元之方法，注明依賴及建議排序。]
 </approach>
 
 <constraints>
@@ -156,7 +155,7 @@ fail, fix the issues and re-run until they pass. Do not report status
 "completed" unless verification passes. This is your responsibility --
 the orchestrator will not re-run verification independently.
 
-[Test and lint commands from the project. Use the union of all units'
+[Project test and lint commands. Use the union of all units'
 verification commands as a single combined invocation.]
 </verify>
 
@@ -174,9 +173,9 @@ Report your result via the --output-schema mechanism. Fill in every field:
 </output_contract>
 ```
 
-## Result Schema
+## 結果 Schema
 
-Write the result schema to `<scratch-dir>/result-schema.json` (using the absolute path captured at the start) once at the start of delegated execution:
+委託執行開始時一次寫入結果 schema 至 `<scratch-dir>/result-schema.json`（使用開始時捕獲之絕對路徑）：
 
 ```json
 {
@@ -193,37 +192,37 @@ Write the result schema to `<scratch-dir>/result-schema.json` (using the absolut
 }
 ```
 
-Each batch's result is written to `<scratch-dir>/result-batch-<batch-num>.json` via the `-o` flag. On plan failure, files are left in place for debugging.
+各批次結果透過 `-o` 旗標寫入 `<scratch-dir>/result-batch-<batch-num>.json`。計劃失敗時，檔案保留原地供調試。
 
-If the result JSON is absent or malformed after a successful exit code, classify as task failure.
+若結果 JSON 於成功退出碼後缺失或畸形，分類為任務失敗。
 
-## Execution Loop
+## 執行循環
 
-Initialize a `consecutive_failures` counter at 0 before the first batch.
+首批次前初始化 `consecutive_failures` 計數器為 0。
 
-**Clean-baseline preflight:** Before the first batch, verify there are no uncommitted changes to tracked files:
+**乾淨基線預檢：** 首批次前，驗證追蹤檔案無未提交變更：
 
 ```bash
 git diff --quiet HEAD
 ```
 
-This intentionally ignores untracked files. Only staged or unstaged modifications to tracked files make rollback unsafe. However, if untracked files exist at paths in the batch's planned Files list, rollback (`git clean -fd -- <paths>`) would delete them. If such overlaps are detected, warn the user and recommend committing or stashing those files before proceeding.
+此故意忽略未追蹤檔案。僅追蹤檔案之已暫存或未暫存修改使回滾不安全。但若批次計劃檔案列表之路徑存在未追蹤檔案，回滾（`git clean -fd -- <paths>`）將刪除之。若偵測到此類重疊，警告用戶並建議提交或暫存這些檔案後再繼續。
 
-If tracked files are dirty, stop and present options: (1) commit current changes, (2) stash explicitly (`git stash push -m "pre-delegation"`), (3) continue in standard mode (sets `delegation_active` to false). Do not auto-stash user changes.
+追蹤檔案為 dirty 時停止並呈現選項：(1) 提交當前變更，(2) 顯式暫存（`git stash push -m "pre-delegation"`），(3) 以標準模式繼續（設 `delegation_active` 為 false）。勿自動暫存用戶變更。
 
-**Delegation invocation:** For each batch, execute these as **separate Bash tool calls** (not combined into one):
+**委託調用：** 各批次，以**獨立之 Bash 工具呼叫**執行以下步驟（非合併為一次）：
 
-**Step A — Launch (background, separate Bash call):**
+**步驟 A — 啟動（背景，獨立 Bash 呼叫）：**
 
-Write the prompt file, then make a single Bash tool call with `run_in_background: true` set on the tool parameter. This call returns immediately and has no timeout ceiling.
+寫入提示檔案，然後以單一 Bash 工具呼叫設 `run_in_background: true`。此呼叫立即返回且無超時上限。
 
-Substitute the literal absolute path captured at setup for every `<scratch-dir>` below. Each Bash tool call starts a fresh shell, so the `$SCRATCH_DIR` variable from the setup snippet is not preserved — an unresolved `$SCRATCH_DIR` would expand empty and break result detection.
+以下各 `<scratch-dir>` 替換為設定時捕獲之字面絕對路徑。各 Bash 工具呼叫啟動新鮮 shell，故設定片段中之 `$SCRATCH_DIR` 變數不保留——未解析之 `$SCRATCH_DIR` 會展開為空並破壞結果偵測。
 
 ```bash
-# Substitute the resolved sandbox_mode value (yolo or full-auto) from the skill state
+# 替換為已解析之 sandbox_mode 值（yolo 或 full-auto）
 SANDBOX_MODE="<sandbox_mode>"
 
-# Resolve sandbox flag
+# 解析沙箱旗標
 if [ "$SANDBOX_MODE" = "full-auto" ]; then
   SANDBOX_FLAG="--full-auto"
 else
@@ -239,17 +238,17 @@ codex exec \
   - < "<scratch-dir>/prompt-batch-<batch-num>.md"
 ```
 
-Critical: `run_in_background: true` must be set as a **Bash tool parameter**, not as a shell `&` suffix. The tool parameter is what removes the timeout ceiling. A shell `&` inside a foreground Bash call still hits the 2-minute default timeout.
+關鍵：`run_in_background: true` 必須設為 **Bash 工具參數**，非 shell `&` 後綴。工具參數移除超時上限。前景 Bash 呼叫內之 shell `&` 仍受 2 分鐘預設超時。
 
-Quoting is critical for the `-c` flag: use single quotes around the entire key=value and double quotes around the TOML string value inside. Example: `-c 'model_reasoning_effort="high"'`.
+`-c` 旗標之引號至關重要：整個 key=value 使用單引號，TOML 字串值內使用雙引號。例：`-c 'model_reasoning_effort="high"'`。
 
-Do not improvise CLI flags or modify this invocation template.
+勿即興 CLI 旗標或修改此調用模板。
 
-**Step B — Poll (foreground, separate Bash calls):**
+**步驟 B — 輪詢（前景，獨立 Bash 呼叫）：**
 
-After the launch call returns, make a **new, separate** foreground Bash tool call that polls for the result file. This keeps the agent's turn active so the user cannot interfere with the working tree.
+啟動呼叫返回後，發起**新的、獨立的**前景 Bash 工具呼叫輪詢結果檔案。保持代理之回合活動，使用戶無法干預工作樹。
 
-Substitute the literal absolute path captured at setup for `<scratch-dir>`. The shell variable from Step A does not survive across separate Bash tool calls.
+`<scratch-dir>` 替換為設定時捕獲之字面絕對路徑。步驟 A 之 shell 變數不跨獨立 Bash 工具呼叫存活。
 
 ```bash
 RESULT_FILE="<scratch-dir>/result-batch-<batch-num>.json"
@@ -260,26 +259,26 @@ done
 echo "Waiting for Codex..."
 ```
 
-If the output is "Waiting for Codex...", issue the same polling command again as another separate Bash call. Repeat until the output is "DONE", then read the result file and proceed to classification.
+輸出為 "Waiting for Codex..." 時，作為另一次獨立 Bash 呼叫再次發出相同輪詢命令。重複直到輸出為 "DONE"，再讀取結果檔案並繼續分類。
 
-**Polling termination conditions:** Stop polling when any of these conditions is met:
+**輪詢終止條件：** 以下任一條件滿足時停止輪詢：
 
-- **Result file appears** (output is "DONE") -- proceed to result classification normally.
-- **Background process exits with non-zero code** -- classify as CLI failure (row 1). Rollback and fall back to standard mode.
-- **Background process exits with zero code but result file is absent** -- classify as task failure (row 2: exit 0, result JSON missing). Rollback and increment `consecutive_failures`.
-- **5 polling rounds** elapse (~5 minutes) without the result file appearing and without a background process notification -- treat as a hung process. Classify as CLI failure (row 1). Rollback and fall back to standard mode.
+- **結果檔案出現**（輸出為 "DONE"）——正常繼續結果分類。
+- **背景程序以非零碼退出** —— 分類為 CLI 失敗（第 1 列）。回滾並回退至標準模式。
+- **背景程序以零碼退出但結果檔案缺失** —— 分類為任務失敗（第 2 列：退出 0，結果 JSON 缺失）。回滾並遞增 `consecutive_failures`。
+- **5 輪輪詢**（約 5 分鐘）過去而結果檔案未出現且無背景程序通知 —— 視為掛起程序。分類為 CLI 失敗（第 1 列）。回滾並回退至標準模式。
 
-**Result classification:** Codex is responsible for running verification internally and fixing failures before reporting -- the orchestrator does not re-run verification independently.
+**結果分類：** Codex 負責內部運行驗證並在回報前修正失敗——編排器不獨立重新運行驗證。
 
-| # | Signal | Classification | Action |
-|---|--------|---------------|--------|
-| 1 | Exit code != 0 | CLI failure | Rollback to HEAD. Fall back to standard mode for ALL remaining work. |
-| 2 | Exit code 0, result JSON missing or malformed | Task failure | Rollback to HEAD. Increment `consecutive_failures`. |
-| 3 | Exit code 0, `status: "failed"` | Task failure | Rollback to HEAD. Increment `consecutive_failures`. |
-| 4 | Exit code 0, `status: "partial"` | Partial success | Keep the diff. Complete remaining work locally, verify, and commit. Increment `consecutive_failures`. |
-| 5 | Exit code 0, `status: "completed"` | Success | Commit changes. Reset `consecutive_failures` to 0. |
+| # | 信號 | 分類 | 行動 |
+|---|------|------|------|
+| 1 | 退出碼 != 0 | CLI 失敗 | 回滾至 HEAD。所有剩餘工作回退至標準模式。 |
+| 2 | 退出碼 0，結果 JSON 缺失或畸形 | 任務失敗 | 回滾至 HEAD。遞增 `consecutive_failures`。 |
+| 3 | 退出碼 0，`status: "failed"` | 任務失敗 | 回滾至 HEAD。遞增 `consecutive_failures`。 |
+| 4 | 退出碼 0，`status: "partial"` | 部分成功 | 保留差異。本地完成剩餘工作，驗證，提交。遞增 `consecutive_failures`。 |
+| 5 | 退出碼 0，`status: "completed"` | 成功 | 提交變更。重設 `consecutive_failures` 為 0。 |
 
-**Result handoff — surface to user:** After reading the result JSON and before committing or rolling back, display a summary so the user sees what happened. Format:
+**結果交接——呈現給用戶：** 讀取結果 JSON 後、提交或回滾前，顯示摘要使用戶了解發生何事。格式：
 
 > **Codex batch <batch-num> — <classification>**
 > <summary from result JSON>
@@ -288,35 +287,35 @@ If the output is "Waiting for Codex...", issue the same polling command again as
 > **Verification:** <verification_summary from result JSON>
 > **Issues:** <issues list, or "None">
 
-On failure or partial results, include the classification reason (e.g., "status: failed", "result JSON missing") so the user understands why the orchestrator is rolling back or completing locally.
+失敗或部分結果時，包含分類原因（如 "status: failed", "result JSON missing"）使用戶了解為何編排器回滾或本地完成。
 
-Keep this brief — the goal is transparency, not a wall of text. One short block per batch.
+保持簡短——目標為透明度，非文字牆。每批次一個短區塊。
 
-**Rollback procedure:**
+**回滾程序：**
 
 ```bash
 git checkout -- .
-git clean -fd -- <paths from the batch's combined Files list>
+git clean -fd -- <批次合併檔案列表之路徑>
 ```
 
-Do NOT use bare `git clean -fd` without path arguments.
+勿使用無路徑引數之裸 `git clean -fd`。
 
-**Commit on success:**
+**成功時提交：**
 
 ```bash
 git add $(git diff --name-only HEAD; git ls-files --others --exclude-standard)
 git commit -m "feat(<scope>): <batch summary>"
 ```
 
-**Between batches** (plans split into multiple batches): Report what completed, test results, and what's next. Continue immediately unless the user intervenes -- the checkpoint exists so the user *can* steer, not so they *must*.
+**批次間**（計劃拆分為多批次時）：報告完成內容、測試結果及下一步。立即繼續除非用戶干預——檢查點存在使用戶*可以*引導，非*必須*引導。
 
-**Circuit breaker:** After 3 consecutive failures, set `delegation_active` to false and emit: "Codex delegation disabled after 3 consecutive failures -- completing remaining units in standard mode."
+**斷路器：** 連續 3 次失敗後，設 `delegation_active` 為 false 並發出："Codex delegation disabled after 3 consecutive failures -- completing remaining units in standard mode."
 
-**Scratch cleanup:** No explicit cleanup needed — OS temp handles eventual cleanup (macOS `$TMPDIR` periodic purge; Linux/WSL `/tmp` reboot or periodic cleanup). Leaving `<scratch-dir>` in place after the run also preserves intermediate artifacts for debugging if anything went wrong.
+**臨時清理：** 無需明確清理——OS 臨時處理最終清理（macOS `$TMPDIR` 週期性清除；Linux/WSL `/tmp` 重啟或週期性清理）。運行後保留 `<scratch-dir>` 亦保存中間產物供調試，若有任何問題。
 
-## Mixed-Model Attribution
+## 混合模型歸因
 
-When some units are executed by Codex and others locally:
-- If all units used delegation: attribute to the Codex model
-- If all units used standard mode: attribute to the current agent's model
-- If mixed: note which units were delegated in the PR description and credit both models
+部分單元由 Codex 執行、部分本地執行時：
+- 所有單元使用委託：歸因至 Codex 模型
+- 所有單元使用標準模式：歸因至當前代理之模型
+- 混合：於 PR 描述中注明哪些單元被委託並同時標註兩個模型

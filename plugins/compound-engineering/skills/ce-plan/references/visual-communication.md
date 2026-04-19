@@ -1,31 +1,31 @@
-# Visual Communication in Plan Documents
+# 計劃文檔中之視覺傳達
 
-Section 3.4 covers diagrams about the *solution being planned* (pseudo-code, mermaid sequences, state diagrams). The existing Section 4.3 mermaid rule encourages those solution-design diagrams within Technical Design and per-unit fields. This guidance covers a different concern: visual aids that help readers *navigate and comprehend the plan document itself* -- dependency graphs, interaction diagrams, and comparison tables that make plan structure scannable.
+3.4 節涵蓋關於*正在規劃之解決方案*之圖表（偽程式碼、mermaid 序列、狀態圖）。既有 4.3 節 mermaid 規則鼓勵 Technical Design 及各單元欄位內之解決方案設計圖。此指引涵蓋不同關注點：幫助讀者*導航及理解計劃文檔本身*之視覺輔助——依賴圖、互動圖及比較表，使計劃結構可掃描。
 
-Visual aids are conditional on content patterns, not on plan depth classification -- a Lightweight plan about a complex multi-unit workflow may warrant a dependency graph; a Deep plan about a straightforward feature may not.
+視覺輔助以內容模式為條件，非計劃深度分類——關於複雜多單元工作流之輕量級計劃可能需要依賴圖；關於直接功能之深度計劃可能不需要。
 
-**When to include:**
+**何時包含：**
 
-| Plan describes... | Visual aid | Placement |
+| 計劃描述... | 視覺輔助 | 放置位置 |
 |---|---|---|
-| 4+ implementation units with non-linear dependencies (parallelism, diamonds, fan-in/fan-out) | Mermaid dependency graph | Before or after the Implementation Units heading |
-| System-Wide Impact naming 3+ interacting surfaces or cross-layer effects | Mermaid interaction or component diagram | Within the System-Wide Impact section |
-| Problem/Overview involving 3+ behavioral modes, states, or variants | Markdown comparison table | Within Overview or Problem Frame |
-| Key Technical Decisions with 3+ interacting decisions, or Alternative Approaches with 3+ alternatives | Markdown comparison table | Within the relevant section |
+| 4+ 實施單元具非線性依賴（並行、菱形、扇出/扇入） | Mermaid 依賴圖 | Implementation Units 標題前或後 |
+| System-Wide Impact 命名 3+ 互動介面或跨層效應 | Mermaid 互動或元件圖 | System-Wide Impact 章節內 |
+| Problem/Overview 涉及 3+ 行為模式、狀態或變體 | Markdown 比較表 | Overview 或 Problem Frame 內 |
+| Key Technical Decisions 含 3+ 互動決策，或 Alternative Approaches 含 3+ 替代方案 | Markdown 比較表 | 相關章節內 |
 
-**When to skip:**
-- The plan has 3 or fewer units in a straight dependency chain -- the Dependencies field on each unit is sufficient
-- Prose already communicates the relationships clearly
-- The visual would duplicate what the High-Level Technical Design section already shows
-- The visual describes code-level detail (specific method names, SQL columns, API field lists)
+**何時跳過：**
+- 計劃有 3 個或更少單元在直線依賴鏈中——各單元之 Dependencies 欄位即足
+- 散文已清楚傳達關係
+- 視覺輔助會重複 High-Level Technical Design 章節已展示者
+- 視覺輔助描述程式碼層級細節（特定方法名、SQL 欄位、API 欄位列表）
 
-**Format selection:**
-- **Mermaid** (default) for dependency graphs and interaction diagrams -- 5-15 nodes, no in-box annotations, standard flowchart shapes. Use `TB` (top-to-bottom) direction so diagrams stay narrow in both rendered and source form. Source should be readable as fallback in diff views and terminals.
-- **ASCII/box-drawing diagrams** for annotated flows that need rich in-box content -- file path layouts, decision logic branches, multi-column spatial arrangements. More expressive than mermaid when the diagram's value comes from annotations within nodes. Follow 80-column max for code blocks, use vertical stacking.
-- **Markdown tables** for mode/variant comparisons and decision/approach comparisons.
-- Keep diagrams proportionate to the plan. A 6-unit linear chain gets a simple 6-node graph. A complex dependency graph with fan-out and fan-in may need 10-15 nodes -- that is fine if every node earns its place.
-- Place inline at the point of relevance, not in a separate section.
-- Plan-structure level only -- unit dependencies, component interactions, mode comparisons, impact surfaces. Not implementation architecture, data schemas, or code structure (those belong in Section 3.4).
-- Prose is authoritative: when a visual aid and its surrounding prose disagree, the prose governs.
+**格式選擇：**
+- **Mermaid**（預設）用於依賴圖及互動圖——5-15 個節點，無框內標註，標準流程圖形狀。使用 `TB`（上至下）方向使圖表在渲染及原始形式中保持窄幅。原始碼在差異視圖及終端中應可讀作後備。
+- **ASCII/box-drawing 圖**用於需要豐富框內內容之標註流程——檔案路徑佈局、決策邏輯分支、多欄空間排列。當圖表價值來自節點內標註時比 mermaid 更具表現力。遵循程式碼區塊 80 欄最大值，使用垂直堆疊。
+- **Markdown 表格**用於模式/變體比較及決策/方法比較。
+- 圖表與計劃成比例。6 單元線性鏈獲簡單 6 節點圖。含扇出及扇入之複雜依賴圖可能需要 10-15 個節點——若每個節點都值得則可。
+- 置於相關點行內，非單獨章節。
+- 僅限計劃結構層級——單元依賴、元件互動、模式比較、影響介面。非實施架構、資料 schema 或程式碼結構（那些屬於 3.4 節）。
+- 散文為權威：當視覺輔助及其周圍散文不一致時，以散文為準。
 
-After generating a visual aid, verify it accurately represents the plan sections it illustrates -- correct dependency edges, no missing surfaces, no merged units.
+生成視覺輔助後，驗證其準確呈現所插圖之計劃章節——正確之依賴邊、無缺失介面、無合併單元。

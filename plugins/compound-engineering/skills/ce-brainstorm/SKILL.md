@@ -1,197 +1,198 @@
 ---
 name: ce-brainstorm
-description: 'Explore requirements and approaches through collaborative dialogue before writing a right-sized requirements document and planning implementation. Use for feature ideas, problem framing, when the user says ''let''s brainstorm'', or when they want to think through options before deciding what to build. Also use when a user describes a vague or ambitious feature request, asks ''what should we build'', ''help me think through X'', presents a problem with multiple valid solutions, or seems unsure about scope or direction — even if they don''t explicitly ask to brainstorm.'
+description: '透過協作對話探索需求與方案，再撰寫適切規模之需求文檔並規劃實作。適用於功能構想、問題框架、用戶說「let''s brainstorm」或想在決定建什麼前思考選項。亦適用於用戶描述模糊或宏大之功能請求、問「what should we build」、「help me think through X」、提出有多種合理解法之問題，或似乎對範圍或方向不確定——即使未明確要求腦力激盪。'
 argument-hint: "[feature idea or problem to explore]"
 ---
 
-# Brainstorm a Feature or Improvement
+# 腦力激盪功能或改進
 
-**Note: The current year is 2026.** Use this when dating requirements documents.
+**注意：今年為 2026 年。** 需求文檔標註日期時使用。
 
-Brainstorming helps answer **WHAT** to build through collaborative dialogue. It precedes `/ce-plan`, which answers **HOW** to build it.
+腦力激盪透過協作對話回答**建什麼**。其先於 `/ce-plan`，後者回答**如何建**。
 
-The durable output of this workflow is a **requirements document**. In other workflows this might be called a lightweight PRD or feature brief. In compound engineering, keep the workflow name `brainstorm`, but make the written artifact strong enough that planning does not need to invent product behavior, scope boundaries, or success criteria.
+此工作流之持久產出為**需求文檔**。在其他工作流中或稱輕量 PRD 或功能簡報。在複合工程中，保持工作流名稱 `brainstorm`，但使書面產物足夠紮實，讓規劃不需發明產品行為、範圍邊界或成功標準。
 
-This skill does not implement code. It explores, clarifies, and documents decisions for later planning or execution.
+此技能不實作程式碼。其探索、澄清並記錄決策供後續規劃或執行。
 
-**IMPORTANT: All file references in generated documents must use repo-relative paths (e.g., `src/models/user.rb`), never absolute paths. Absolute paths break portability across machines, worktrees, and teammates.**
+**重要：生成文檔中所有檔案引用須使用倉庫相對路徑（如 `src/models/user.rb`），絕不使用絕對路徑。絕對路徑破壞跨機器、worktree 與團隊成員之可攜性。**
 
-## Core Principles
+## 核心原則
 
-1. **Assess scope first** - Match the amount of ceremony to the size and ambiguity of the work.
-2. **Be a thinking partner** - Suggest alternatives, challenge assumptions, and explore what-ifs instead of only extracting requirements.
-3. **Resolve product decisions here** - User-facing behavior, scope boundaries, and success criteria belong in this workflow. Detailed implementation belongs in planning.
-4. **Keep implementation out of the requirements doc by default** - Do not include libraries, schemas, endpoints, file layouts, or code-level design unless the brainstorm itself is inherently about a technical or architectural change.
-5. **Right-size the artifact** - Simple work gets a compact requirements document or brief alignment. Larger work gets a fuller document. Do not add ceremony that does not help planning.
-6. **Apply YAGNI to carrying cost, not coding effort** - Prefer the simplest approach that delivers meaningful value. Avoid speculative complexity and hypothetical future-proofing, but low-cost polish or delight is worth including when its ongoing cost is small and easy to maintain.
+1. **先評估範圍** ——使儀式之繁簡匹配工作之規模與模糊度。
+2. **做思考夥伴** ——建議替代方案、挑戰假設、探索假設情境，而非僅提取需求。
+3. **在此解決產品決策** ——用戶面行為、範圍邊界與成功標準屬此工作流。詳細實作屬規劃。
+4. **預設將實作排除於需求文檔之外** ——不包含函式庫、schema、端點、檔案佈局或程式碼層級設計，除非腦力激盪本身即為技術或架構變更。
+5. **適切規模之產物** ——簡單工作得精簡需求文檔或簡要對齊。較大工作得較完整文檔。不加無助於規劃之儀式。
+6. **對持有成本施 YAGNI，非對編碼努力** ——偏好傳遞實質價值之最簡方案。避免投機性複雜度與假設性未來防備，但低成本之打磨或愉悅在持續成本小且易維護時值得納入。
 
-## Interaction Rules
+## 互動規則
 
-1. **Ask one question at a time** - Do not batch several unrelated questions into one message.
-2. **Prefer single-select multiple choice** - Use single-select when choosing one direction, one priority, or one next step.
-3. **Use multi-select rarely and intentionally** - Use it only for compatible sets such as goals, constraints, non-goals, or success criteria that can all coexist. If prioritization matters, follow up by asking which selected item is primary.
-4. **Use the platform's question tool when available** - When asking the user a question, prefer the platform's blocking question tool if one exists (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Otherwise, present numbered options in chat and wait for the user's reply before proceeding.
+1. **一次問一個問題** ——勿將多個不相關問題塞入一則訊息。
+2. **偏好單選** ——選擇方向、優先序或下一步時用單選。
+3. **罕用且刻意地使用多選** ——僅用於相容集合如目標、約束、非目標或可共存之成功標準。若優先序重要，追問哪個為首要。
+4. **可用時使用平台提問工具** ——詢問用戶時，偏好平台之阻塞式提問工具（Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`）。否則以編號選項於聊天中呈現並等候用戶回覆。
 
-## Output Guidance
+## 輸出指引
 
-- **Keep outputs concise** - Prefer short sections, brief bullets, and only enough detail to support the next decision.
-- **Use repo-relative paths** - When referencing files, use paths relative to the repo root (e.g., `src/models/user.rb`), never absolute paths. Absolute paths make documents non-portable across machines and teammates.
+- **保持輸出簡潔** ——偏好短區段、簡要條列，僅足夠支持下一決策之細節。
+- **使用倉庫相對路徑** ——引用檔案時，使用相對於倉庫根目錄之路徑（如 `src/models/user.rb`），絕不使用絕對路徑。
 
-## Feature Description
+## 功能描述
 
 <feature_description> #$ARGUMENTS </feature_description>
 
-**If the feature description above is empty, ask the user:** "What would you like to explore? Please describe the feature, problem, or improvement you're thinking about."
+**若上方功能描述為空，詢問用戶：**「想探索什麼？請描述你正在考慮的功能、問題或改進。」
 
-Do not proceed until you have a feature description from the user.
+未取得用戶之功能描述前勿繼續。
 
-## Execution Flow
+## 執行流程
 
-### Phase 0: Resume, Assess, and Route
+### 階段零：恢復、評估與路由
 
-#### 0.1 Resume Existing Work When Appropriate
+#### 0.1 適當時恢復既有工作
 
-If the user references an existing brainstorm topic or document, or there is an obvious recent matching `*-requirements.md` file in `docs/brainstorms/`:
-- Read the document
-- Confirm with the user before resuming: "Found an existing requirements doc for [topic]. Should I continue from this, or start fresh?"
-- If resuming, summarize the current state briefly, continue from its existing decisions and outstanding questions, and update the existing document instead of creating a duplicate
+若用戶引用既有腦力激盪主題或文檔，或 `docs/brainstorms/` 中有明顯匹配之近期 `*-requirements.md` 檔案：
+- 讀取文檔
+- 恢復前向用戶確認：「Found an existing requirements doc for [topic]. Should I continue from this, or start fresh?」
+- 若恢復，簡要摘要當前狀態，自既有決策與未決問題繼續，更新既有文檔而非建立重複
 
-#### 0.1b Classify Task Domain
+#### 0.1b 分類任務領域
 
-Before proceeding to Phase 0.2, classify whether this is a software task. The key question is: **does the task involve building, modifying, or architecting software?** -- not whether the task *mentions* software topics.
+進入階段 0.2 前，分類此是否為軟體任務。關鍵問題：**任務是否涉及建構、修改或架構軟體？** ——而非任務是否*提及*軟體主題。
 
-**Software** (continue to Phase 0.2) -- the task references code, repositories, APIs, databases, or asks to build/modify/debug/deploy software.
+**軟體**（續至階段 0.2）——任務引用程式碼、倉庫、API、資料庫，或要求建構/修改/除錯/部署軟體。
 
-**Non-software brainstorming** (route to universal brainstorming) -- BOTH conditions must be true:
-- None of the software signals above are present
-- The task describes something the user wants to explore, decide, or think through in a non-software domain
+**非軟體腦力激盪**（路由至通用腦力激盪）——下列兩條件俱真：
+- 無上述軟體信號
+- 任務描述用戶想在非軟體領域中探索、決定或思考之事
 
-**Neither** (respond directly, skip all brainstorming phases) -- the input is a quick-help request, error message, factual question, or single-step task that doesn't need a brainstorm.
+**兩者皆非**（直接回應，跳過所有腦力激盪階段）——輸入為快速求助、錯誤訊息、事實問題或不需要腦力激盪之單步任務。
 
-**If non-software brainstorming is detected:** Read `references/universal-brainstorming.md` and use those facilitation principles to brainstorm with the user naturally. Do not follow the software brainstorming phases below.
+**若偵測到非軟體腦力激盪：** 讀取 `references/universal-brainstorming.md` 並使用其中引導原則與用戶自然地腦力激盪。不遵循下方之軟體腦力激盪階段。
 
-#### 0.2 Assess Whether Brainstorming Is Needed
+#### 0.2 評估是否需要腦力激盪
 
-**Clear requirements indicators:**
-- Specific acceptance criteria provided
-- Referenced existing patterns to follow
-- Described exact expected behavior
-- Constrained, well-defined scope
+**需求明確之指標：**
+- 提供了具體驗收標準
+- 引用了既有模式可遵循
+- 描述了確切預期行為
+- 約束明確、範圍界定良好
 
-**If requirements are already clear:**
-Keep the interaction brief. Confirm understanding and present concise next-step options rather than forcing a long brainstorm. Only write a short requirements document when a durable handoff to planning or later review would be valuable. Skip Phase 1.1 and 1.2 entirely — go straight to Phase 1.3 or Phase 3.
+**若需求已明確：**
+保持互動簡短。確認理解並呈現簡要下一步選項，而非強制長時間腦力激盪。僅在需要持久交接予規劃或後續審查時方撰寫簡短需求文檔。完全跳過階段 1.1 與 1.2——直接進入階段 1.3 或階段 3。
 
-#### 0.3 Assess Scope
+#### 0.3 評估範圍
 
-Use the feature description plus a light repo scan to classify the work:
-- **Lightweight** - small, well-bounded, low ambiguity
-- **Standard** - normal feature or bounded refactor with some decisions to make
-- **Deep** - cross-cutting, strategic, or highly ambiguous
+使用功能描述加輕量倉庫掃描分類工作：
+- **輕量** ——小、範圍明確、低模糊度
+- **標準** ——正常功能或有界重構，有一些決策待定
+- **深度** ——跨領域、策略性或高模糊度
 
-If the scope is unclear, ask one targeted question to disambiguate and then proceed.
+範圍不明時，問一個針對性問題以消歧後繼續。
 
-### Phase 1: Understand the Idea
+### 階段一：理解構想
 
-#### 1.1 Existing Context Scan
+#### 1.1 既有上下文掃描
 
-Scan the repo before substantive brainstorming. Match depth to scope:
+實質腦力激盪前先掃描倉庫。深度匹配範圍：
 
-**Lightweight** — Search for the topic, check if something similar already exists, and move on.
+**輕量** ——搜尋主題，檢查是否已有類似存在，繼續。
 
-**Standard and Deep** — Two passes:
+**標準與深度** ——兩輪：
 
-*Constraint Check* — Check project instruction files (`AGENTS.md`, and `CLAUDE.md` only if retained as compatibility context) for workflow, product, or scope constraints that affect the brainstorm. If these add nothing, move on.
+*約束檢查* ——檢查專案指引檔案（`AGENTS.md`，及僅當保留為相容上下文時之 `CLAUDE.md`）中影響腦力激盪之工作流、產品或範圍約束。若無所增補則繼續。
 
-*Topic Scan* — Search for relevant terms. Read the most relevant existing artifact if one exists (brainstorm, plan, spec, skill, feature doc). Skim adjacent examples covering similar behavior.
+*主題掃描* ——搜尋相關術語。若有相關既有產物則讀取之（腦力激盪、計劃、規格、技能、功能文檔）。略讀涵蓋類似行為之相鄰範例。
 
-If nothing obvious appears after a short scan, say so and continue. Two rules govern technical depth during the scan:
+短暫掃描後若無明顯發現，如實說明並繼續。兩條規則管轄掃描期間之技術深度：
 
-1. **Verify before claiming** — When the brainstorm touches checkable infrastructure (database tables, routes, config files, dependencies, model definitions), read the relevant source files to confirm what actually exists. Any claim that something is absent — a missing table, an endpoint that doesn't exist, a dependency not in the Gemfile, a config option with no current support — must be verified against the codebase first; if not verified, label it as an unverified assumption. This applies to every brainstorm regardless of topic.
+1. **宣稱前先驗證** ——腦力激盪觸及可檢查之基礎設施（資料庫表、路由、配置檔、依賴、模型定義）時，讀取相關源碼檔案以確認實際存在。任何關於某物不存在之宣稱——缺失的表、不存在的端點、Gemfile 中沒有的依賴、無當前支援的配置選項——須先對照程式碼庫驗證；若未驗證，標記為未驗證假設。此適用於所有主題之腦力激盪。
 
-2. **Defer design decisions to planning** — Implementation details like schemas, migration strategies, endpoint structure, or deployment topology belong in planning, not here — unless the brainstorm is itself about a technical or architectural decision, in which case those details are the subject of the brainstorm and should be explored.
+2. **將設計決策推遲至規劃** ——實作細節如 schema、遷移策略、端點結構或部署拓撲屬規劃，非此處——除非腦力激盪本身即為技術或架構決策，則這些細節為腦力激盪之主題，應被探索。
 
-**Slack context** (opt-in, Standard and Deep only) — never auto-dispatch. Route by condition:
+**Slack 上下文**（選擇性加入，僅標準與深度）——不自動分派。依條件路由：
 
-- **Tools available + user asked**: Dispatch `research:ce-slack-researcher` with a brief summary of the brainstorm topic alongside Phase 1.1 work. Incorporate findings into constraint and context awareness.
-- **Tools available + user didn't ask**: Note in output: "Slack tools detected. Ask me to search Slack for organizational context at any point, or include it in your next prompt."
-- **No tools + user asked**: Note in output: "Slack context was requested but no Slack tools are available. Install and authenticate the Slack plugin to enable organizational context search."
+- **工具可用 + 用戶要求**：以腦力激盪主題之簡要摘要分派 `research:ce-slack-researcher`，與階段 1.1 工作並行。將發現納入約束與上下文感知。
+- **工具可用 + 用戶未要求**：於輸出中注明：「Slack tools detected. Ask me to search Slack for organizational context at any point, or include it in your next prompt.」
+- **無工具 + 用戶要求**：於輸出中注明：「Slack context was requested but no Slack tools are available. Install and authenticate the Slack plugin to enable organizational context search.」
 
-#### 1.2 Product Pressure Test
+#### 1.2 產品壓力測試
 
-Before generating approaches, challenge the request to catch misframing. Match depth to scope:
+生成方案前，挑戰請求以捕捉錯誤框架。深度匹配範圍：
 
-**Lightweight:**
-- Is this solving the real user problem?
-- Are we duplicating something that already covers this?
-- Is there a clearly better framing with near-zero extra cost?
+**輕量：**
+- 這解決了真正的用戶問題嗎？
+- 是否在複製已有覆蓋之物？
+- 是否有近乎零額外成本的更好框架？
 
-**Standard:**
-- Is this the right problem, or a proxy for a more important one?
-- What user or business outcome actually matters here?
-- What happens if we do nothing?
-- Is there a nearby framing that creates more user value without more carrying cost? If so, what complexity does it add?
-- Given the current project state, user goal, and constraints, what is the single highest-leverage move right now: the request as framed, a reframing, one adjacent addition, a simplification, or doing nothing?
-- Favor moves that compound value, reduce future carrying cost, or make the product meaningfully more useful or compelling
-- Use the result to sharpen the conversation, not to bulldoze the user's intent
+**標準：**
+- 這是正確的問題，還是更重要問題的代理？
+- 什麼用戶或業務成果真正重要？
+- 若什麼都不做會怎樣？
+- 是否有能創造更多用戶價值而不增加持有成本的鄰近框架？若有，增加了什麼複雜度？
+- 考量當前專案狀態、用戶目標與約束，現在最高槓桿的單一步驟是什麼：請求框架、重新框架、一個鄰近添加、簡化或什麼都不做？
+- 偏好能複利價值、降低未來持有成本或使產品顯著更有用或更有吸引力的步驟
+- 以結果磨銳對話，非強推用戶之意圖
 
-**Deep** — Standard questions plus:
-- What durable capability should this create in 6-12 months?
-- Does this move the product toward that, or is it only a local patch?
+**深度** ——標準問題加：
+- 6-12 個月內這應創造什麼持久能力？
+- 這使產品朝該方向前進，還是僅為局部補丁？
 
-#### 1.3 Collaborative Dialogue
+#### 1.3 協作對話
 
-Follow the Interaction Rules above. Use the platform's blocking question tool when available.
+遵循上述互動規則。可用時使用平台之阻塞式提問工具。
 
-**Guidelines:**
-- Ask what the user is already thinking before offering your own ideas. This surfaces hidden context and prevents fixation on AI-generated framings.
-- Start broad (problem, users, value) then narrow (constraints, exclusions, edge cases)
-- Clarify the problem frame, validate assumptions, and ask about success criteria
-- Make requirements concrete enough that planning will not need to invent behavior
-- Surface dependencies or prerequisites only when they materially affect scope
-- Resolve product decisions here; leave technical implementation choices for planning
-- Bring ideas, alternatives, and challenges instead of only interviewing
+**指引：**
+- 提出自己的想法前先問用戶已在想什麼。這揭示隱藏上下文並防止固著於 AI 生成的框架。
+- 先廣泛（問題、用戶、價值）再收窄（約束、排除、邊緣案例）
+- 澄清問題框架，驗證假設，詢問成功標準
+- 使需求具體到規劃不需發明行為
+- 僅當依賴或先決條件實質影響範圍時方揭露
+- 在此解決產品決策；技術實作選擇留給規劃
+- 帶來想法、替代方案與挑戰，而非僅面談
 
-**Exit condition:** Continue until the idea is clear OR the user explicitly wants to proceed.
+**退出條件：** 持續至構想清晰或用戶明確想繼續。
 
-### Phase 2: Explore Approaches
+### 階段二：探索方案
 
-If multiple plausible directions remain, propose **2-3 concrete approaches** based on research and conversation. Otherwise state the recommended direction directly.
+若仍有多个可行方向，基于研究与对话提出**2-3 个具体方案**。否则直接陈述推荐方向。
 
-Use at least one non-obvious angle — inversion (what if we did the opposite?), constraint removal (what if X weren't a limitation?), or analogy from how another domain solves this. The first approaches that come to mind are usually variations on the same axis.
+至少使用一个非显而易见的角度——反转（如果我们做相反的事呢？）、约束移除（如果 X 不是限制呢？）或类比其他领域如何解决此问题。首先浮現的想法通常是同一轴上的变体。
 
-Present approaches first, then evaluate. Let the user see all options before hearing which one is recommended — leading with a recommendation before the user has seen alternatives anchors the conversation prematurely.
+先呈現方案再評估。讓用戶在看所有選項後才聽到推薦——在用戶看到替代方案前以推薦開頭會過早錨定對話。
 
-When useful, include one deliberately higher-upside alternative:
-- Identify what adjacent addition or reframing would most increase usefulness, compounding value, or durability without disproportionate carrying cost. Present it as a challenger option alongside the baseline, not as the default. Omit it when the work is already obviously over-scoped or the baseline request is clearly the right move.
+適當時包含一個刻意更高上限的替代方案：
+- 識別哪個鄰近添加或重新框架最能增加有用性、複利價值或持久性而不造成不成比例的持有成本。作為挑戰選項與基線並列呈現，非作為預設。當工作已明顯過度擴展或基線請求顯然為正確之舉時省略。
 
-For each approach, provide:
-- Brief description (2-3 sentences)
-- Pros and cons
-- Key risks or unknowns
-- When it's best suited
+每個方案提供：
+- 簡要描述（2-3 句）
+- 優缺點
+- 關鍵風險或未知
+- 適用情境
 
-After presenting all approaches, state your recommendation and explain why. Prefer simpler solutions when added complexity creates real carrying cost, but do not reject low-cost, high-value polish just because it is not strictly necessary.
+呈現所有方案後，陳述推薦並解釋理由。當額外複雜度造成實際持有成本時偏好更簡單的解決方案，但不因非嚴格必要而拒絕低成本、高價值之打磨。
 
-If one approach is clearly best and alternatives are not meaningful, skip the menu and state the recommendation directly.
+若一個方案明顯最佳且替代方案無意義，跳過選單直接陳述推薦。
 
-If relevant, call out whether the choice is:
-- Reuse an existing pattern
-- Extend an existing capability
-- Build something net new
+相關時指出選擇屬於：
+- 複用既有模式
+- 擴展既有能力
+- 淨新建構
 
-### Phase 3: Capture the Requirements
+### 階段三：捕捉需求
 
-Write or update a requirements document only when the conversation produced durable decisions worth preserving. Read `references/requirements-capture.md` for the document template, formatting rules, visual aid guidance, and completeness checks.
+僅當對話產出值得保留之持久決策時方撰寫或更新需求文檔。讀取 `references/requirements-capture.md` 以了解文檔模板、格式規則、視覺輔助指引及完整性檢查。
 
-For **Lightweight** brainstorms, keep the document compact. Skip document creation when the user only needs brief alignment and no durable decisions need to be preserved.
-### Phase 3.5: Document Review
+**輕量**腦力激盪，保持文檔精簡。用戶僅需簡要對齊且無持久決策需保留時跳過文檔建立。
 
-When a requirements document was created or updated, run the `ce-doc-review` skill on it before presenting handoff options. Pass the document path as the argument.
+### 階段 3.5：文檔審查
 
-If document-review returns findings that were auto-applied, note them briefly when presenting handoff options. If residual P0/P1 findings were surfaced, mention them so the user can decide whether to address them before proceeding.
+當需求文檔被建立或更新時，對其執行 `ce-doc-review` 技能後方呈現交接選項。以文檔路徑作為參數傳遞。
 
-When document-review returns "Review complete", proceed to Phase 4.
+若文檔審查回傳自動套用之發現，呈現交接選項時簡要注明。若有殘餘 P0/P1 發現，提及之俾用戶決定是否在繼續前處理。
 
-### Phase 4: Handoff
+文檔審查回傳 "Review complete" 時，進入階段四。
 
-Present next-step options and execute the user's selection. Read `references/handoff.md` for the option logic, dispatch instructions, and closing summary format.
+### 階段四：交接
+
+呈現下一步選項並執行用戶之選擇。讀取 `references/handoff.md` 以了解選項邏輯、分派指引及結案摘要格式。

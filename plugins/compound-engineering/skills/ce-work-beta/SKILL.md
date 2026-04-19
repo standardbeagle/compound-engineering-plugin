@@ -5,115 +5,115 @@ disable-model-invocation: true
 argument-hint: "[Plan doc path or description of work. Blank to auto use latest plan doc] [delegate:codex]"
 ---
 
-# Work Execution Command
+# 工作執行指令
 
-Execute work efficiently while maintaining quality and finishing features.
+高效執行工作，同時保持品質、完成特性。
 
-## Introduction
+## 緒論
 
-This command takes a work document (plan, specification, or todo file) or a bare prompt describing the work, and executes it systematically. The focus is on **shipping complete features** by understanding requirements quickly, following existing patterns, and maintaining quality throughout.
+此指令取工作文檔（計劃、規格、待辦檔）或裸提示描述工作，系統化執行之。要旨為**交付完整特性**——速悉需求、循既有模式、全程保持品質。
 
-**Beta rollout note:** Invoke `ce-work-beta` manually when you want to trial Codex delegation. During the beta period, planning and workflow handoffs remain pointed at stable `ce-work` to avoid dual-path orchestration complexity.
+**Beta 推行註：** 欲試 Codex 委託時手動調 `ce-work-beta`。Beta 期間，規劃與工作流交接仍指穩定版 `ce-work`，以避雙路徑編排之複。
 
-## Input Document
+## 輸入文檔
 
 <input_document> #$ARGUMENTS </input_document>
 
-## Argument Parsing
+## 參數解析
 
-Parse `$ARGUMENTS` for the following optional tokens. Strip each recognized token before interpreting the remainder as the plan file path or bare prompt.
+自 `$ARGUMENTS` 解析下列可選令牌。識別後各自剝除，餘者作為計劃檔路徑或裸提示。
 
-| Token | Example | Effect |
+| 令牌 | 示例 | 效果 |
 |-------|---------|--------|
-| `delegate:codex` | `delegate:codex` | Activate Codex delegation mode for plan execution |
-| `delegate:local` | `delegate:local` | Deactivate delegation even if enabled in config |
+| `delegate:codex` | `delegate:codex` | 啟用 Codex 委託模式執行計劃 |
+| `delegate:local` | `delegate:local` | 停用委託，即使配置中已啟用 |
 
-All tokens are optional. When absent, fall back to the resolution chain below.
+所有令牌可選。缺省時，循下述解析鏈。
 
-**Fuzzy activation:** Also recognize imperative delegation-intent phrases such as "use codex", "delegate to codex", "codex mode", or "delegate mode" as equivalent to `delegate:codex`. A bare mention of "codex" in a prompt (e.g., "fix codex converter bugs") must NOT activate delegation -- only clear delegation intent triggers it.
+**模糊啟用：** 亦識別祈使委託意圖語句如 "use codex"、"delegate to codex"、"codex mode"、"delegate mode"為 `delegate:codex` 等價。提示中單提 "codex"（如 "fix codex converter bugs"）**不得**啟用委託——僅明確委託意圖方觸發。
 
-**Fuzzy deactivation:** Also recognize phrases such as "no codex", "local mode", "standard mode" as equivalent to `delegate:local`.
+**模糊停用：** 亦識別 "no codex"、"local mode"、"standard mode" 等為 `delegate:local` 等價。
 
-### Settings Resolution Chain
+### 設定解析鏈
 
-After extracting tokens from arguments, resolve the delegation state using this precedence chain:
+自參數提取令牌後，以下列優先鏈解析委託狀態：
 
-1. **Argument flag** -- `delegate:codex` or `delegate:local` from the current invocation (highest priority)
-2. **Config file** -- extract settings from the config block below. Value `codex` for `work_delegate` activates delegation; `false` deactivates.
-3. **Hard default** -- `false` (delegation off)
+1. **參數旗標** — 本次調用之 `delegate:codex` 或 `delegate:local`（最高優先）
+2. **配置檔** — 自下方配置塊提取設定。值 `codex` 啟用委託；`false` 停用。
+3. **硬預設** — `false`（委託關閉）
 
-**Config (pre-resolved):**
+**配置（預解析）：**
 !`cat "$(git rev-parse --show-toplevel 2>/dev/null)/.compound-engineering/config.local.yaml" 2>/dev/null || cat "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)")/.compound-engineering/config.local.yaml" 2>/dev/null || echo '__NO_CONFIG__'`
 
-If the block above contains YAML key-value pairs, extract values for the keys listed below.
-If it shows `__NO_CONFIG__`, the file does not exist — all settings fall through to defaults.
-If it shows an unresolved command string, read `.compound-engineering/config.local.yaml` from the repo root using the native file-read tool (e.g., Read in Claude Code, read_file in Codex). If the file does not exist, all settings fall through to defaults.
+若上塊含 YAML 鍵值對，提取下列鍵之值。
+若顯 `__NO_CONFIG__`，檔不存在——所有設定降至預設。
+若顯未解析之指令字串，以原生檔案讀取工具（如 Claude Code 之 Read、Codex 之 read_file）自倉庫根讀 `.compound-engineering/config.local.yaml`。若檔不存在，所有設定降至預設。
 
-If any setting has an unrecognized value, fall through to the hard default for that setting.
+若任何設定有不識之值，該設定降至硬預設。
 
-Config keys:
-- `work_delegate` -- `codex` or default `false`
-- `work_delegate_consent` -- `true` or default `false`
-- `work_delegate_sandbox` -- `yolo` (default) or `full-auto`
-- `work_delegate_decision` -- `auto` (default) or `ask`
-- `work_delegate_model` -- Codex model to use (default `gpt-5.4`). Passthrough — any valid model name accepted.
-- `work_delegate_effort` -- `minimal`, `low`, `medium`, `high` (default), or `xhigh`
+配置鍵：
+- `work_delegate` — `codex` 或預設 `false`
+- `work_delegate_consent` — `true` 或預設 `false`
+- `work_delegate_sandbox` — `yolo`（預設）或 `full-auto`
+- `work_delegate_decision` — `auto`（預設）或 `ask`
+- `work_delegate_model` — 所用 Codex 模型（預設 `gpt-5.4`）。透傳——接受任何有效模型名。
+- `work_delegate_effort` — `minimal`、`low`、`medium`、`high`（預設）、或 `xhigh`
 
-Store the resolved state for downstream consumption:
-- `delegation_active` -- boolean, whether delegation mode is on
-- `delegation_source` -- `argument` or `config` or `default` -- how delegation was resolved (used by environment guard to decide notification verbosity)
-- `sandbox_mode` -- `yolo` or `full-auto` (from config or default `yolo`)
-- `consent_granted` -- boolean (from config `work_delegate_consent`)
-- `delegate_model` -- string (from config or default `gpt-5.4`)
-- `delegate_effort` -- string (from config or default `high`)
+儲存已解析之狀態供下游消費：
+- `delegation_active` — 布林，委託模式是否開啟
+- `delegation_source` — `argument` 或 `config` 或 `default` — 委託如何解析（環境守衛用以決定通知詳略）
+- `sandbox_mode` — `yolo` 或 `full-auto`（自配置或預設 `yolo`）
+- `consent_granted` — 布林（自配置 `work_delegate_consent`）
+- `delegate_model` — 字串（自配置或預設 `gpt-5.4`）
+- `delegate_effort` — 字串（自配置或預設 `high`）
 
 ---
 
-## Execution Workflow
+## 執行工作流
 
-### Phase 0: Input Triage
+### 階段零：輸入分流
 
-Determine how to proceed based on what was provided in `<input_document>`.
+依 `<input_document>` 所供決定進路。
 
-**Plan document** (input is a file path to an existing plan, specification, or todo file) → skip to Phase 1.
+**計劃文檔**（輸入為既有計劃、規格或待辦檔之路徑） → 赴階段一。
 
-**Bare prompt** (input is a description of work, not a file path):
+**裸提示**（輸入為工作描述，非檔案路徑）：
 
-1. **Scan the work area**
+1. **掃描工作區**
 
-   - Identify files likely to change based on the prompt
-   - Find existing test files for those areas (search for test/spec files that import, reference, or share names with the implementation files)
-   - Note local patterns and conventions in the affected areas
+   - 依提示識別可能變更之檔案
+   - 尋相關區域之既有測試檔（搜尋引入、引用、或與實現檔同名之 test/spec 檔）
+   - 記受影響區域之本地模式與慣例
 
-2. **Assess complexity and route**
+2. **評估複雜度並路由**
 
-   | Complexity | Signals | Action |
+   | 複雜度 | 信號 | 行動 |
    |-----------|---------|--------|
-   | **Trivial** | 1-2 files, no behavioral change (typo, config, rename) | Proceed to Phase 1 step 2 (environment setup), then implement directly — no task list, no execution loop. Apply Test Discovery if the change touches behavior-bearing code |
-   | **Small / Medium** | Clear scope, under ~10 files | Build a task list from discovery. Proceed to Phase 1 step 2 |
-   | **Large** | Cross-cutting, architectural decisions, 10+ files, touches auth/payments/migrations | Inform the user this would benefit from `/ce-brainstorm` or `/ce-plan` to surface edge cases and scope boundaries. Honor their choice. If proceeding, build a task list and continue to Phase 1 step 2 |
+   | **微不足道** | 一二檔，無行為變更（筆誤、配置、更名） | 赴階段一步驟二（環境設置），隨即直施——無任務清單、無執行循環。若觸及承載行為之程式碼，施測試發現 |
+   | **小/中** | 範圍明確，約十檔以內 | 自發現建任務清單。赴階段一步驟二 |
+   | **大** | 跨切、架構決策、十檔以上、觸及認證/支付/遷移 | 告用戶宜先 `/ce-brainstorm` 或 `/ce-plan` 以暴露邊界情況與範圍界限。尊其選擇。若續行，建任務清單，赴階段一步驟二 |
 
 ---
 
-### Phase 1: Quick Start
+### 階段一：速啟
 
-1. **Read Plan and Clarify** _(skip if arriving from Phase 0 with a bare prompt)_
+1. **讀計劃並釐清** _(自階段零裸提示而來者略)_
 
-   - Read the work document completely
-   - Treat the plan as a decision artifact, not an execution script
-   - If the plan includes sections such as `Implementation Units`, `Work Breakdown`, `Requirements Trace`, `Files`, `Test Scenarios`, or `Verification`, use those as the primary source material for execution
-   - Check for `Execution note` on each implementation unit — these carry the plan's execution posture signal for that unit (for example, test-first or characterization-first). Note them when creating tasks.
-   - Check for a `Deferred to Implementation` or `Implementation-Time Unknowns` section — these are questions the planner intentionally left for you to resolve during execution. Note them before starting so they inform your approach rather than surprising you mid-task
-   - Check for a `Scope Boundaries` section — these are explicit non-goals. Refer back to them if implementation starts pulling you toward adjacent work
-   - Review any references or links provided in the plan
-   - If the user explicitly asks for TDD, test-first, or characterization-first execution in this session, honor that request even if the plan has no `Execution note`
-   - If anything is unclear or ambiguous, ask clarifying questions now
-   - If clarifying questions were needed above, get user approval on the resolved answers. If no clarifications were needed, proceed without a separate approval step — plan scope is the plan's authority, not something to renegotiate
-   - **Do not skip this** - better to ask questions now than build the wrong thing
+   - 完整讀工作文檔
+   - 視計劃為決策文物，非執行腳本
+   - 若計劃含 `Implementation Units`、`Work Breakdown`、`Requirements Trace`、`Files`、`Test Scenarios`、或 `Verification` 等段，以此為執行之主要素材
+   - 查每實現單元之 `Execution note`——載計劃對該單元之執行姿態信號（如測試先行或特徵化先行）。建任務時記之
+   - 查 `Deferred to Implementation` 或 `Implementation-Time Unknowns` 段——此為規劃者刻意留待執行時解決之問題。開始前記之，俾指導方法而非中途驚擾
+   - 查 `Scope Boundaries` 段——此為明確之非目標。若實現拉向鄰接工作，回顧之
+   - 審閱計劃中所提供之引用或連結
+   - 若用戶於本次會話明確要求 TDD、測試先行、或特徵化先行，尊其所求，即使計劃無 `Execution note`
+   - 若有不明白或含混，即刻釐清
+   - 若需釐清，獲用戶認可後方行。若無需釐清，無需另求認可——計劃範圍即計劃之權威，非待重新談判者
+   - **勿略此** — 寧今問，勝過誤建
 
-2. **Setup Environment**
+2. **設置環境**
 
-   First, check the current branch:
+   先查當前分支：
 
    ```bash
    current_branch=$(git branch --show-current)
@@ -125,177 +125,177 @@ Determine how to proceed based on what was provided in `<input_document>`.
    fi
    ```
 
-   **If already on a feature branch** (not the default branch):
+   **若已在特性分支**（非預設分支）：
 
-   First, check whether the branch name is **meaningful** — a name like `feat/crowd-sniff` or `fix/email-validation` tells future readers what the work is about. Auto-generated worktree names (e.g., `worktree-jolly-beaming-raven`) or other opaque names do not.
+   先查分支名是否**有意義**——如 `feat/crowd-sniff` 或 `fix/email-validation` 可令未來讀者知工作內容。自動生成之 worktree 名（如 `worktree-jolly-beaming-raven`）或其他晦澀名則否。
 
-   If the branch name is meaningless or auto-generated, suggest renaming it before continuing:
+   若分支名無意義或為自動生成，建議續行前更名：
    ```bash
    git branch -m <meaningful-name>
    ```
-   Derive the new name from the plan title or work description (e.g., `feat/crowd-sniff`). Present the rename as a recommended option alongside continuing as-is.
+   自計劃標題或工作描述推導新名（如 `feat/crowd-sniff`）。以更名為建議選項，與保持原狀並列。
 
-   Then ask: "Continue working on `[current_branch]`, or create a new branch?"
-   - If continuing (with or without rename), proceed to step 3
-   - If creating new, follow Option A or B below
+   繼問："Continue working on `[current_branch]`, or create a new branch?"
+   - 若續行（更名與否），赴步驟三
+   - 若新建，依下選項甲或乙
 
-   **If on the default branch**, choose how to proceed:
+   **若在預設分支**，選進路：
 
-   **Option A: Create a new branch**
+   **選項甲：建新分支**
    ```bash
    git pull origin [default_branch]
    git checkout -b feature-branch-name
    ```
-   Use a meaningful name based on the work (e.g., `feat/user-authentication`, `fix/email-validation`).
+   基於工作取有意義之名（如 `feat/user-authentication`、`fix/email-validation`）。
 
-   **Option B: Use a worktree (recommended for parallel development)**
+   **選項乙：用 worktree（並行開發推薦）**
    ```bash
    skill: ce-worktree
    # The skill will create a new branch from the default branch in an isolated worktree
    ```
 
-   **Option C: Continue on the default branch**
-   - Requires explicit user confirmation
-   - Only proceed after user explicitly says "yes, commit to [default_branch]"
-   - Never commit directly to the default branch without explicit permission
+   **選項丙：續行於預設分支**
+   - 需用戶明確確認
+   - 用戶明確言 "yes, commit to [default_branch]" 方行
+   - 未獲明確許可不得直接提交於預設分支
 
-   **Recommendation**: Use worktree if:
-   - You want to work on multiple features simultaneously
-   - You want to keep the default branch clean while experimenting
-   - You plan to switch between branches frequently
+   **建議**：以下情形用 worktree：
+   - 欲同時開發多項特性
+   - 欲保持預設分支整潔以利實驗
+   - 計劃頻繁切換分支
 
-3. **Create Todo List** _(skip if Phase 0 already built one, or if Phase 0 routed as Trivial)_
-   - Use your available task tracking tool (e.g., TodoWrite, task lists) to break the plan into actionable tasks
-   - Derive tasks from the plan's implementation units, dependencies, files, test targets, and verification criteria
-   - Carry each unit's `Execution note` into the task when present
-   - For each unit, read the `Patterns to follow` field before implementing — these point to specific files or conventions to mirror
-   - Use each unit's `Verification` field as the primary "done" signal for that task
-   - Do not expect the plan to contain implementation code, micro-step TDD instructions, or exact shell commands
-   - Include dependencies between tasks
-   - Prioritize based on what needs to be done first
-   - Include testing and quality check tasks
-   - Keep tasks specific and completable
+3. **建待辦清單** _(階段零已建者，或階段零路由為微不足道者，略)_
+   - 以可用任務追蹤工具（如 TodoWrite、任務清單）拆計劃為可執行任務
+   - 自計劃之實現單元、依賴、檔案、測試目標及驗證標準推導任務
+   - 單元有 `Execution note` 時帶入任務
+   - 每單元實施前讀其 `Patterns to follow` 欄——此指明應模仿之特定檔案或慣例
+   - 以每單元之 `Verification` 欄為該任務之首要「完成」信號
+   - 勿期計劃含實現程式碼、微步 TDD 指令、或精確 shell 指令
+   - 納任務間依賴
+   - 依優先序排列
+   - 納測試與品質檢查任務
+   - 任務保持具體且可完成
 
-4. **Choose Execution Strategy**
+4. **選執行策略**
 
-   **Delegation routing gate:** If `delegation_active` is true AND the input is a plan file (not a bare prompt), read `references/codex-delegation-workflow.md` and follow its Pre-Delegation Checks and Delegation Decision flow. If all checks pass and delegation proceeds, force **serial execution** and proceed directly to Phase 2 using the workflow's batched execution loop. If any check disables delegation, fall through to the standard strategy table below. If delegation is active but the input is a bare prompt (no plan file), set `delegation_active` to false with a brief note: "Codex delegation requires a plan file -- using standard mode." and continue with the standard strategy selection below.
+   **委託路由門控：** 若 `delegation_active` 為真且輸入為計劃檔（非裸提示），讀 `references/codex-delegation-workflow.md` 並循其預委託檢查與委託決策流程。若所有檢查通過且委託進行，強制**串行執行**並直赴階段二，循其批量執行循環。若任一檢查停用委託，降至下方標準策略表。若委託啟用但輸入為裸提示（無計劃檔），設 `delegation_active` 為假並簡註："Codex delegation requires a plan file -- using standard mode." 續以下方標準策略選擇。
 
-   After creating the task list, decide how to execute based on the plan's size and dependency structure:
+   建任務清單後，依計劃大小與依賴結構選執行策略：
 
-   | Strategy | When to use |
+   | 策略 | 何時用 |
    |----------|-------------|
-   | **Inline** | 1-2 small tasks, or tasks needing user interaction mid-flight. **Default for bare-prompt work** — bare prompts rarely produce enough structured context to justify subagent dispatch |
-   | **Serial subagents** | 3+ tasks with dependencies between them. Each subagent gets a fresh context window focused on one unit — prevents context degradation across many tasks. Requires plan-unit metadata (Goal, Files, Approach, Test scenarios) |
-   | **Parallel subagents** | 3+ tasks that pass the Parallel Safety Check (below). Dispatch independent units simultaneously, run dependent units after their prerequisites complete. Requires plan-unit metadata |
+   | **內聯** | 一二小任務，或需中途用戶互動者。**裸提示工作之預設**——裸提示鮮能產生足夠結構化上下文以支撐子代理分派 |
+   | **串行子代理** | 三以上任務且有依賴。每子代理獲聚焦一單元之新鮮上下文窗口——防跨多任務之上下文退化。需計劃單元元數據（Goal、Files、Approach、Test scenarios） |
+   | **並行子代理** | 三以上任務且通過並行安全檢查（見下）。同時分派獨立單元，依賴單元俟前置完成後運行。需計劃單元元數據 |
 
-   **Parallel Safety Check** — required before choosing parallel dispatch:
+   **並行安全檢查** — 選並行分派前必行：
 
-   1. Build a file-to-unit mapping from every candidate unit's `Files:` section (Create, Modify, and Test paths)
-   2. Check for intersection — any file path appearing in 2+ units means overlap
-   3. If any overlap is found, downgrade to serial subagents. Log the reason (e.g., "Units 2 and 4 share `config/routes.rb` — using serial dispatch"). Serial subagents still provide context-window isolation without shared-directory risks
+   1. 自每候選單元之 `Files:` 段（Create、Modify 及 Test 路徑）建檔至單元映射
+   2. 查交集——任何檔案路徑現於二以上單元即為重疊
+   3. 若有重疊，降至串行子代理。記因（如 "Units 2 and 4 share `config/routes.rb` — using serial dispatch"）。串行子代理仍提供上下文窗口隔離而無共享目錄風險
 
-   Even with no file overlap, parallel subagents sharing a working directory face git index contention (concurrent staging/committing corrupts the index) and test interference (concurrent test runs pick up each other's in-progress changes). The parallel subagent constraints below mitigate these.
+   縱無檔案重疊，並行子代理共享工作目錄仍面臨 git 索引爭用（並行暫存/提交損索引）與測試干擾（並行測試運行拾取彼此進行中變更）。下列並行子代理約束緩解之。
 
-   **Subagent dispatch** uses your available subagent or task spawning mechanism. For each unit, give the subagent:
-   - The full plan file path (for overall context)
-   - The specific unit's Goal, Files, Approach, Execution note, Patterns, Test scenarios, and Verification
-   - Any resolved deferred questions relevant to that unit
-   - Instruction to check whether the unit's test scenarios cover all applicable categories (happy paths, edge cases, error paths, integration) and supplement gaps before writing tests
+   **子代理分派**用可用之子代理或任務生成機制。每單元予子代理：
+   - 完整計劃檔路徑（供全局上下文）
+   - 該單元之 Goal、Files、Approach、Execution note、Patterns、Test scenarios 及 Verification
+   - 該單元相關之已解決延遲問題
+   - 指令檢查單元測試場景是否涵蓋所有適用類別（正常路徑、邊界情況、錯誤路徑、集成）並於撰寫測試前補闕
 
-   **Parallel subagent constraints** — when dispatching units in parallel (not serial or inline):
-   - Instruct each subagent: "Do not stage files (`git add`), create commits, or run the project test suite. The orchestrator handles testing, staging, and committing after all parallel units complete."
-   - These constraints prevent git index contention and test interference between concurrent subagents
+   **並行子代理約束** — 並行分派單元時（非串行或內聯）：
+   - 指示每子代理："Do not stage files (`git add`), create commits, or run the project test suite. The orchestrator handles testing, staging, and committing after all parallel units complete."
+   - 此約束防 git 索引爭用與並行子代理間測試干擾
 
-   **Permission mode:** Omit the `mode` parameter when dispatching subagents so the user's configured permission settings apply. Do not pass `mode: "auto"` — it overrides user-level settings like `bypassPermissions`.
+   **權限模式：** 分派子代理時省略 `mode` 參數，俾用戶已配置之權限設定生效。勿傳 `mode: "auto"`——其覆寫用戶級設定如 `bypassPermissions`。
 
-   **After each subagent completes (serial mode):**
-   1. Review the subagent's diff — verify changes match the unit's scope and `Files:` list
-   2. Run the relevant test suite to confirm the tree is healthy
-   3. If tests fail, diagnose and fix before proceeding — do not dispatch dependent units on a broken tree
-   4. Update the plan checkboxes and task list
-   5. Dispatch the next unit
+   **每子代理完成後（串行模式）：**
+   1. 審閱子代理之差異——驗證變更匹配單元範圍及 `Files:` 清單
+   2. 跑相關測試套件確認樹健康
+   3. 若測試失敗，診斷並修復後方續——勿於破損之樹上分派依賴單元
+   4. 更新計劃核取框與任務清單
+   5. 分派下一單元
 
-   **After all parallel subagents in a batch complete:**
-   1. Wait for every subagent in the current parallel batch to finish before acting on any of their results
-   2. Cross-check for discovered file collisions: compare the actual files modified by all subagents in the batch (not just their declared `Files:` lists). Subagents may create or modify files not anticipated during planning — this is expected, since plans describe *what* not *how*. A collision only matters when 2+ subagents in the same batch modified the same file. In a shared working directory, only the last writer's version survives — the other unit's changes to that file are lost. If a collision is detected: commit all non-colliding files from all units first, then re-run the affected units serially for the shared file so each builds on the other's committed work
-   3. For each completed unit, in dependency order: review the diff, run the relevant test suite, stage only that unit's files, and commit with a conventional message derived from the unit's Goal
-   4. If tests fail after committing a unit's changes, diagnose and fix before committing the next unit
-   5. Update the plan checkboxes and task list
-   6. Dispatch the next batch of independent units, or the next dependent unit
+   **並行批次中所有子代理完成後：**
+   1. 俟當前並行批次中每子代理完成後方處理任何結果
+   2. 交叉查驗發現之檔案衝突：比對批次中所有子代理實際修改之檔案（非僅其聲明之 `Files:` 清單）。子代理可能建立或修改計劃時未預見之檔案——此為預期，因計劃描述*何者*而非*如何*。衝突僅在二以上子代理於同批次修改同檔時方重要。共享工作目錄中僅末寫者存——另一單元對該檔之變更盡失。若偵測衝突：先提交所有單元之非衝突檔，然後串行重跑受影響單元處理共享檔，俾各基於已提交工作續建
+   3. 每完成單元，依依賴序：審閱差異、跑相關測試套件、僅暫存該單元之檔案、以單元 Goal 衍生之 convention 訊息提交
+   4. 若提交某單元後測試失敗，診斷並修復後方提交下一單元
+   5. 更新計劃核取框與任務清單
+   6. 分派下一批獨立單元或下一依賴單元
 
-### Phase 2: Execute
+### 階段二：執行
 
-1. **Task Execution Loop**
+1. **任務執行循環**
 
-   For each task in priority order:
+   依優先序逐任務：
 
    ```
    while (tasks remain):
-     - Mark task as in-progress
-     - Read any referenced files from the plan or discovered during Phase 0
-     - Look for similar patterns in codebase
-     - Find existing test files for implementation files being changed (Test Discovery — see below)
-     - If delegation_active: branch to the Codex Delegation Execution Loop
-       (see `references/codex-delegation-workflow.md`)
-     - Otherwise: implement following existing conventions
-     - Add, update, or remove tests to match implementation changes (see Test Discovery below)
-     - Run System-Wide Test Check (see below)
-     - Run tests after changes
-     - Assess testing coverage: did this task change behavior? If yes, were tests written or updated? If no tests were added, is the justification deliberate (e.g., pure config, no behavioral change)?
-     - Mark task as completed
-     - Evaluate for incremental commit (see below)
+     - 標任務為進行中
+     - 讀計劃所引或階段零所發現之檔案
+     - 於碼庫中尋類似模式
+     - 尋實現檔之既有測試檔（測試發現——見下）
+     - 若 delegation_active：分支至 Codex 委託執行循環
+       (見 `references/codex-delegation-workflow.md`)
+     - 否則：循既有慣例實施
+     - 增、改、刪測試以匹配實現變更（見下方測試發現）
+     - 行系統全域測試檢查（見下）
+     - 變更後跑測試
+     - 評測試覆蓋：此任務是否變更行為？若是，測試已撰或已更新？若無新測試，理由是否經深思（如純配置、無行為變更）？
+     - 標任務為完成
+     - 評增量提交（見下）
    ```
 
-   When a unit carries an `Execution note`, honor it. For test-first units, write the failing test before implementation for that unit. For characterization-first units, capture existing behavior before changing it. For units without an `Execution note`, proceed pragmatically.
+   單元有 `Execution note` 時，從之。測試先行單元，先撰失敗測試再實施。特徵化先行單元，先捕既有行為再變更。無 `Execution note` 者，務實行之。
 
-   Guardrails for execution posture:
-   - Do not write the test and implementation in the same step when working test-first
-   - Do not skip verifying that a new test fails before implementing the fix or feature
-   - Do not over-implement beyond the current behavior slice when working test-first
-   - Skip test-first discipline for trivial renames, pure configuration, and pure styling work
+   執行姿態護欄：
+   - 測試先行時勿於同一步撰測與實現
+   - 勿略驗證新測試先行失敗再實施修復或特性
+   - 測試先行時勿過實超出當前行為切片
+   - 微不足道之更名、純配置、純風格工作略測試先行紀律
 
-   **Test Discovery** — Before implementing changes to a file, find its existing test files (search for test/spec files that import, reference, or share naming patterns with the implementation file). When a plan specifies test scenarios or test files, start there, then check for additional test coverage the plan may not have enumerated. Changes to implementation files should be accompanied by corresponding test updates — new tests for new behavior, modified tests for changed behavior, removed or updated tests for deleted behavior.
+   **測試發現** — 實施檔案變更前，尋其既有測試檔（搜尋引入、引用、或與實現檔共享命名模式之 test/spec 檔）。計劃指定測試場景或測試檔時，自彼處始，復查計劃可能未列舉之額外覆蓋。實現檔變更應伴以相應測試更新——新行為加新測試、變更行為改測試、刪除行為移或改測試。
 
-   **Test Scenario Completeness** — Before writing tests for a feature-bearing unit, check whether the plan's `Test scenarios` cover all categories that apply to this unit. If a category is missing or scenarios are vague (e.g., "validates correctly" without naming inputs and expected outcomes), supplement from the unit's own context before writing tests:
+   **測試場景完整性** — 為承載特性之單元撰測試前，查計劃之 `Test scenarios` 是否涵蓋本單元所有適用類別。若類別缺失或場景模糊（如 "validates correctly" 未列輸入與預期結果），以單元自身上下文補充後再撰測試：
 
-   | Category | When it applies | How to derive if missing |
+   | 類別 | 適用時機 | 缺失時如何推導 |
    |----------|----------------|------------------------|
-   | **Happy path** | Always for feature-bearing units | Read the unit's Goal and Approach for core input/output pairs |
-   | **Edge cases** | When the unit has meaningful boundaries (inputs, state, concurrency) | Identify boundary values, empty/nil inputs, and concurrent access patterns |
-   | **Error/failure paths** | When the unit has failure modes (validation, external calls, permissions) | Enumerate invalid inputs the unit should reject, permission/auth denials it should enforce, and downstream failures it should handle |
-   | **Integration** | When the unit crosses layers (callbacks, middleware, multi-service) | Identify the cross-layer chain and write a scenario that exercises it without mocks |
+   | **正常路徑** | 承載特性之單元恆適用 | 讀單元之 Goal 與 Approach 取核心輸入/輸出對 |
+   | **邊界情況** | 單元有意義邊界（輸入、狀態、並行） | 識別邊界值、空/nil 輸入、並行存取模式 |
+   | **錯誤/失敗路徑** | 單元有失敗模式（驗證、外部調用、權限） | 列舉單元應拒之無效輸入、應執行之權限/認證拒絕、應處理之下游失敗 |
+   | **集成** | 單元跨層（回調、中間件、多服務） | 識別跨層鏈，撰不用 mock 之場景驅動之 |
 
-   **System-Wide Test Check** — Before marking a task done, pause and ask:
+   **系統全域測試檢查** — 標任務完成前，暫停自問：
 
-   | Question | What to do |
+   | 問題 | 所為 |
    |----------|------------|
-   | **What fires when this runs?** Callbacks, middleware, observers, event handlers — trace two levels out from your change. | Read the actual code (not docs) for callbacks on models you touch, middleware in the request chain, `after_*` hooks. |
-   | **Do my tests exercise the real chain?** If every dependency is mocked, the test proves your logic works *in isolation* — it says nothing about the interaction. | Write at least one integration test that uses real objects through the full callback/middleware chain. No mocks for the layers that interact. |
-   | **Can failure leave orphaned state?** If your code persists state (DB row, cache, file) before calling an external service, what happens when the service fails? Does retry create duplicates? | Trace the failure path with real objects. If state is created before the risky call, test that failure cleans up or that retry is idempotent. |
-   | **What other interfaces expose this?** Mixins, DSLs, alternative entry points (Agent vs Chat vs ChatMethods). | Grep for the method/behavior in related classes. If parity is needed, add it now — not as a follow-up. |
-   | **Do error strategies align across layers?** Retry middleware + application fallback + framework error handling — do they conflict or create double execution? | List the specific error classes at each layer. Verify your rescue list matches what the lower layer actually raises. |
+   | **此運行時何者觸發？** 回調、中間件、觀察者、事件處理器——自變更向外追蹤二層。 | 讀實際程式碼（非文檔）以查所觸模型之回調、請求鏈中間件、`after_*` 鉤子。 |
+   | **測試是否驅動真實鏈？** 若每個依賴皆 mock，測試僅證邏輯*孤立可用*——對交互毫無所言。 | 至少撰一集成測試以真實物件貫穿完整回調/中間件鏈。交互層不用 mock。 |
+   | **失敗能否留孤兒狀態？** 若程式碼於調用外部服務前持久化狀態（DB 行、快取、檔案），服務失敗時如何？重試是否生重複？ | 以真實物件追蹤失敗路徑。若狀態於風險調用前建立，測試失敗清理或重試冪等性。 |
+   | **其他介面是否暴露此功能？** Mixin、DSL、替代入口（Agent vs Chat vs ChatMethods）。 | 於相關類中搜尋方法/行為。若需平價，即時加——非作後續。 |
+   | **各層錯誤策略是否一致？** 重試中間件 + 應用後備 + 框架錯誤處理——是否衝突或致雙重執行？ | 列各層之具體錯誤類。驗證 rescue 清單匹配下層實際所拋。 |
 
-   **When to skip:** Leaf-node changes with no callbacks, no state persistence, no parallel interfaces. If the change is purely additive (new helper method, new view partial), the check takes 10 seconds and the answer is "nothing fires, skip."
+   **何時略：** 葉節點變更，無回調、無狀態持久化、無平行介面。若變更純增量（新輔助方法、新視圖局部），檢查耗時十秒，答案為「無觸發，略。」
 
-   **When this matters most:** Any change that touches models with callbacks, error handling with fallback/retry, or functionality exposed through multiple interfaces.
+   **何時最關鍵：** 任何觸及有回調之模型、含後備/重試之錯誤處理、或多介面暴露之功能的變更。
 
 
-2. **Incremental Commits**
+2. **增量提交**
 
-   After completing each task, evaluate whether to create an incremental commit:
+   每任務完成後，評估是否建增量提交：
 
-   | Commit when... | Don't commit when... |
+   | 提交當... | 不提交當... |
    |----------------|---------------------|
-   | Logical unit complete (model, service, component) | Small part of a larger unit |
-   | Tests pass + meaningful progress | Tests failing |
-   | About to switch contexts (backend → frontend) | Purely scaffolding with no behavior |
-   | About to attempt risky/uncertain changes | Would need a "WIP" commit message |
+   | 邏輯單元完成（模型、服務、元件） | 較大單元之小部分 |
+   | 測試通過 + 有意義進展 | 測試失敗 |
+   | 將切換上下文（後端 → 前端） | 純腳手架無行為 |
+   | 將嘗試風險/不確定變更 | 需要 "WIP" 提交訊息 |
 
-   **Heuristic:** "Can I write a commit message that describes a complete, valuable change? If yes, commit. If the message would be 'WIP' or 'partial X', wait."
+   **經驗法則：** 「能撰述描述完整、有價值變更之提交訊息乎？能，則提交。訊息將為 'WIP' 或 'partial X'，則候。」
 
-   If the plan has Implementation Units, use them as a starting guide for commit boundaries — but adapt based on what you find during implementation. A unit might need multiple commits if it's larger than expected, or small related units might land together. Use each unit's Goal to inform the commit message.
+   若計劃有實現單元，以之為提交邊界之初導——然依實施所見調整。單元或較預期為大而需多次提交，或相關小單元可合併。以每單元之 Goal 指導提交訊息。
 
-   **Commit workflow:**
+   **提交工作流：**
    ```bash
    # 1. Verify tests pass (use project's test command)
    # Examples: bin/rails test, npm test, pytest, go test, etc.
@@ -307,111 +307,111 @@ Determine how to proceed based on what was provided in `<input_document>`.
    git commit -m "feat(scope): description of this unit"
    ```
 
-   **Handling merge conflicts:** If conflicts arise during rebasing or merging, resolve them immediately. Incremental commits make conflict resolution easier since each commit is small and focused.
+   **處理合併衝突：** 變基或合併時若生衝突，立即解決。增量提交使衝突解決更易，因每提交小而聚焦。
 
-   **Note:** Incremental commits use clean conventional messages without attribution footers. The final Phase 4 commit/PR includes the full attribution.
+   **註：** 增量提交用簡潔 convention 訊息，不含歸屬頁腳。最終階段四提交/PR 含完整歸屬。
 
-   **Parallel subagent mode:** When units run as parallel subagents, the subagents do not commit — the orchestrator handles staging and committing after the entire parallel batch completes (see Parallel subagent constraints in Phase 1 Step 4). The commit guidance in this section applies to inline and serial execution, and to the orchestrator's commit decisions after parallel batch completion.
+   **並行子代理模式：** 單元以並行子代理運行時，子代理不提交——編排者於整個並行批次完成後處理暫存與提交（見階段一步驟四之並行子代理約束）。本節提交指引適用於內聯及串行執行，以及並行批次完成後編排者之提交決策。
 
-3. **Follow Existing Patterns**
+3. **循既有模式**
 
-   - The plan should reference similar code - read those files first
-   - Match naming conventions exactly
-   - Reuse existing components where possible
-   - Follow project coding standards (see AGENTS.md; use CLAUDE.md only if the repo still keeps a compatibility shim)
-   - When in doubt, grep for similar implementations
+   - 計劃應引用類似程式碼——先讀那些檔案
+   - 精確匹配命名慣例
+   - 盡可能復用既有元件
+   - 循專案編碼標準（見 AGENTS.md；若倉庫仍保留相容墊片方用 CLAUDE.md）
+   - 疑則搜尋類似實現
 
-4. **Test Continuously**
+4. **持續測試**
 
-   - Run relevant tests after each significant change
-   - Don't wait until the end to test
-   - Fix failures immediately
-   - Add new tests for new behavior, update tests for changed behavior, remove tests for deleted behavior
-   - **Unit tests with mocks prove logic in isolation. Integration tests with real objects prove the layers work together.** If your change touches callbacks, middleware, or error handling — you need both.
+   - 每顯著變更後跑相關測試
+   - 勿待末尾方測
+   - 失敗即修
+   - 新行為加新測試、變更行為改測試、刪除行為移測試
+   - **帶 mock 之單元測試證邏輯孤立可用。以真實物件之集成測試證各層協作。** 若變更觸及回調、中間件、或錯誤處理——兩者皆需。
 
-5. **Simplify as You Go**
+5. **隨行簡化**
 
-   After completing a cluster of related implementation units (or every 2-3 units), review recently changed files for simplification opportunities — consolidate duplicated patterns, extract shared helpers, and improve code reuse and efficiency. This is especially valuable when using subagents, since each agent works with isolated context and can't see patterns emerging across units.
+   完成一組相關實現單元（或每二三單元）後，審閱近期變更檔案尋簡化之機——合併重複模式、抽取共享輔助、改善程式碼復用與效率。使用子代理時尤為重要，因每代理以隔離上下文工作，無法察覺跨單元浮現之模式。
 
-   Don't simplify after every single unit — early patterns may look duplicated but diverge intentionally in later units. Wait for a natural phase boundary or when you notice accumulated complexity.
+   勿於每單元後即簡化——早期模式或看似重複而於後續單元中刻意分化。俟自然階段邊界或察覺累積複雜度時方行。
 
-   If a `/simplify` skill or equivalent is available, use it. Otherwise, review the changed files yourself for reuse and consolidation opportunities.
+   若有 `/simplify` 技能或等價工具可用，用之。否則自行審閱變更檔案尋復用與整合之機。
 
-6. **Figma Design Sync** (if applicable)
+6. **Figma 設計同步**（若適用）
 
-   For UI work with Figma designs:
+   UI 工作有 Figma 設計時：
 
-   - Implement components following design specs
-   - Use ce-figma-design-sync agent iteratively to compare
-   - Fix visual differences identified
-   - Repeat until implementation matches design
+   - 依設計規格實施元件
+   - 迭代使用 ce-figma-design-sync 代理比對
+   - 修復所見視覺差異
+   - 重複至實現匹配設計
 
-7. **Frontend Design Guidance** (if applicable)
+7. **前端設計指引**（若適用）
 
-   For UI tasks without a Figma design -- where the implementation touches view, template, component, layout, or page files, creates user-visible routes, or the plan contains explicit UI/frontend/design language:
+   無 Figma 設計之 UI 任務——實現觸及視圖、模板、元件、佈局或頁面檔案，創建用戶可見路由，或計劃含明確 UI/前端/設計語言時：
 
-   - Load the `ce-frontend-design` skill before implementing
-   - Follow its detection, guidance, and verification flow
-   - If the skill produced a verification screenshot, it satisfies Phase 4's screenshot requirement -- no need to capture separately. If the skill fell back to mental review (no browser access), Phase 4's screenshot capture still applies
+   - 實施前載入 `ce-frontend-design` 技能
+   - 循其偵測、指引與驗證流程
+   - 若技能產生驗證截圖，即滿足階段四之截圖要求——無需另取。若技能退回心智審閱（無瀏覽器訪問），階段四之截圖捕獲仍適用
 
-8. **Track Progress**
-   - Keep the task list updated as you complete tasks
-   - Note any blockers or unexpected discoveries
-   - Create new tasks if scope expands
-   - Keep user informed of major milestones
+8. **追蹤進度**
+   - 任務完成時更新任務清單
+   - 記任何阻塞或意外發現
+   - 範圍擴展時建新任務
+   - 重大里程碑告知用戶
 
-### Phase 3-4: Quality Check and Ship It
+### 階段三至四：品質檢查與交付
 
-When all Phase 2 tasks are complete and execution transitions to quality check, read `references/shipping-workflow.md` for the full shipping workflow: quality checks, code review, final validation, PR creation, and notification.
-
----
-
-## Codex Delegation Mode
-
-When `delegation_active` is true after argument parsing, read `references/codex-delegation-workflow.md` for the complete delegation workflow: pre-checks, batching, prompt template, execution loop, and result classification.
+所有階段二任務完成、執行轉入品質檢查時，讀 `references/shipping-workflow.md` 獲完整交付工作流：品質檢查、碼審、最終驗證、PR 創建及通知。
 
 ---
 
-## Key Principles
+## Codex 委託模式
 
-### Start Fast, Execute Faster
+參數解析後 `delegation_active` 為真時，讀 `references/codex-delegation-workflow.md` 獲完整委託工作流：預檢查、批量、提示模板、執行循環及結果分類。
 
-- Get clarification once at the start, then execute
-- Don't wait for perfect understanding - ask questions and move
-- The goal is to **finish the feature**, not create perfect process
+---
 
-### The Plan is Your Guide
+## 核心原則
 
-- Work documents should reference similar code and patterns
-- Load those references and follow them
-- Don't reinvent - match what exists
+### 速啟速行
 
-### Test As You Go
+- 開始時釐清一次，隨即執行
+- 勿候完美理解——邊問邊行
+- 目標為**完成特性**，非創建完美流程
 
-- Run tests after each change, not at the end
-- Fix failures immediately
-- Continuous testing prevents big surprises
+### 計劃為指南
 
-### Quality is Built In
+- 工作文檔應引用類似程式碼與模式
+   - 載入引用並從之
+   - 勿重新發明——匹配既有者
 
-- Follow existing patterns
-- Write tests for new code
-- Run linting before pushing
-- Review every change — inline for simple additive work, full review for everything else
+### 隨行測試
 
-### Ship Complete Features
+- 每次變更後跑測試，非待末尾
+- 失敗即修
+- 持續測試防大驚
 
-- Mark all tasks completed before moving on
-- Don't leave features 80% done
-- A finished feature that ships beats a perfect feature that doesn't
+### 品質內建
 
-## Common Pitfalls to Avoid
+- 循既有模式
+- 為新程式碼撰測試
+- 推送前跑 lint
+- 審閱每項變更——簡單增量工作行內審、餘者全面審
 
-- **Analysis paralysis** - Don't overthink, read the plan and execute
-- **Skipping clarifying questions** - Ask now, not after building wrong thing
-- **Ignoring plan references** - The plan has links for a reason
-- **Testing at the end** - Test continuously or suffer later
-- **Forgetting to track progress** - Update task status as you go or lose track of what's done
-- **80% done syndrome** - Finish the feature, don't move on early
-- **Skipping review** - Every change gets reviewed; only the depth varies
-- **Re-scoping the plan into human-time phases** - The plan's Implementation Units define the scope of execution. Do not estimate human-hours per unit, propose multi-day breakdowns, or ask the user to pick a subset of units for "this session". Agents execute at agent speed, and context-window pressure is addressed by subagent dispatch (Phase 1 Step 4), not by phased sessions. If a plan-file input is genuinely too large for a single execution, say so plainly and suggest the user return to `/ce-plan` to reduce scope — don't invent session phases as a workaround. For bare-prompt input, Phase 0's Large routing already handles oversized work
+### 交付完整特性
+
+- 所有任務完成後方移
+- 勿留特性八成完成
+- 完成而交付之特性，勝於完美而未交者
+
+## 常見陷阱
+
+- **分析癱瘓** — 勿過思，讀計劃即行
+- **略釐清之問** — 今問，勝過誤建後問
+- **忽視計劃引用** — 計劃有連結，其來有自
+- **末尾方測** — 持續測試或後患
+- **忘追蹤進度** — 隨行更新任務狀態，否則不知何者已畢
+- **八成完成症候** — 完成特性，勿提前移
+- **略審閱** — 每項變更皆受審；僅深度有別
+- **將計劃重劃為人類時間階段** — 計劃之實現單元定義執行範圍。勿估人類工時/單元、提多日拆分、或請用戶選「本次會話」之子集。代理以代理速度執行，上下文窗口壓力以子代理分派（階段一步驟四）處理，非以分階段會話。若計劃檔輸入確實過大，坦言之並建用戶回 `/ce-plan` 縮範圍——勿捏造會話階段為變通。裸提示輸入時，階段零之大型路由已處理過大工作

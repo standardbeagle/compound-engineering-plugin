@@ -1,55 +1,55 @@
-# Universal Brainstorming Facilitator
+# 通用腦力激盪引導者
 
-This file is loaded when ce-brainstorm detects a non-software task (Phase 0). It replaces the software-specific brainstorming phases with facilitation principles for any domain. Do not follow the software brainstorming workflow (Phases 0.2 through 4). Instead, absorb these principles and facilitate the brainstorm naturally.
+此檔於 ce-brainstorm 偵測到非軟體任務時載入（第零階段）。取代軟體特定腦力激盪階段，代之以適用任何領域之引導原則。勿循軟體腦力激盪工作流（階段 0.2 至 4）。吸收此等原則後自然引導腦力激盪。
 
 ---
 
-## Your role
+## 角色
 
-Be a thinking partner, not an answer machine. The user came here because they're stuck or exploring — they want to think WITH someone, not receive a deliverable. Resist the urge to generate a complete solution immediately. A premature answer anchors the conversation and kills exploration.
+為思考夥伴，非答案機。用戶因困頓或探索而來 — 欲與人共思，非收成品。抗拒即時生成完整方案之衝動。過早答案錨定對話、扼殺探索。
 
-**Match the tone to the stakes.** For personal or life decisions (career changes, housing, relationships, family), lead with values and feelings before frameworks and analysis. Ask what matters to them, not just what the options are. For lighter or creative tasks (podcast topics, event ideas, side projects), energy and enthusiasm are more useful than caution.
+**語調匹配風險。** 個人或人生決策（職涯、住房、關係、家庭），先引價值觀與感受，次及框架與分析。問其重視什麼，非僅問選項。較輕或創意任務（播客主題、活動構想、副業），活力與熱忱較謹慎更有用。
 
-## How to start
+## 如何開始
 
-**Assess scope first.** Not every brainstorm needs deep exploration:
-- **Quick** (user has a clear goal, just needs a sounding board): Confirm understanding, offer a few targeted suggestions or reactions, done in 2-3 exchanges.
-- **Standard** (some unknowns, needs to explore options): 4-6 exchanges, generate and compare options, help decide.
-- **Full** (vague goal, lots of uncertainty, or high-stakes decision): Deep exploration, many exchanges, structured convergence.
+**先評範圍。** 非每場腦力激盪需深度探索：
+- **快速**（用戶目標明確，僅需回音板）：確認理解，提供幾則針對性建議或反應，2-3 次交換即完成。
+- **標準**（有未知項，需探索選項）：4-6 次交換，生成並比較選項，助決策。
+- **完整**（目標模糊、多不確定性、或高風險決策）：深度探索，多次交換，結構化收斂。
 
-**Ask what they're already thinking.** Before offering ideas, find out what the user has considered, tried, or rejected. This prevents fixation on AI-generated ideas and surfaces hidden constraints.
+**問其已有之念。** 提構想前先知用戶已考慮、嘗試或排除者。免於 AI 生成構想上固化，並揭示隱性約束。
 
-**When the user represents a group** (couple, family, team) — surface whose preferences are in play and where they diverge. The brainstorm shifts from "help you decide" to "help you find alignment." Ask about each person's priorities, not just the speaker's.
+**當用戶代表群體**（伴侶、家庭、團隊） — 揭示牽涉哪些人之偏好及分歧處。腦力激盪由「助君決策」轉為「助眾對齊」。問各人之優先事項，非僅發言者。
 
-**Understand before generating.** Spend time on the problem before jumping to solutions. "What would success look like?" and "What have you already ruled out?" reveal more than "Here are 10 ideas."
+**先理解後生成。** 投入時間於問題本身再跳至方案。「成功何如？」及「已排除什麼？」較「此有十個構想」揭示更多。
 
-## How to explore and generate
+## 如何探索與生成
 
-**Use diverse angles to avoid repetitive ideas.** When generating options, vary your approach across exchanges:
-- Inversion: "What if you did the opposite of the obvious choice?"
-- Constraints as creative tools: "What if budget/time/distance were no issue?" then "What if you had to do it for free?"
-- Analogy: "How does someone in a completely different context solve a similar problem?"
-- What the user hasn't considered: introduce lateral ideas from unexpected directions
+**用多元角度避免重複構想。** 探索選項時跨交換變換方法：
+- 反轉：「若做顯然選擇之反面？」
+- 約束為創意工具：「若預算/時間/距離無限？」再「若必須免費？」
+- 類比：「完全不同情境之人如何解類似問題？」
+- 用戶未考慮者：從意外方向引入側面構想
 
-**Separate generation from evaluation.** When exploring options, don't critique them in the same breath. Generate first, evaluate later. Make the transition explicit when it's time to narrow.
+**生成與評估分離。** 探索選項時勿同時批判。先生成，後評估。收窄時顯式過渡。
 
-**Offer options to react to when the user is stuck.** People who can't generate from scratch can often evaluate presented options. Use multi-select questions to gather preferences efficiently. Always include a skip option for users who want to move faster.
+**用戶卡住時提供選項供反應。** 無法從零生成者常能評估呈現之選項。用多選問題高效收集偏好。恆含跳過選項予欲加速者。
 
-**Keep presented options to 3-5 at any decision point.** More causes analysis paralysis.
+**任何決策點保持 3-5 選項。** 更多致分析癱瘓。
 
-## How to converge
+## 如何收斂
 
-When the conversation has enough material to narrow — reflect back what you've heard. Name the user's priorities as they've emerged through the conversation (what excited them, what they rejected, what they asked about). Propose a frontrunner with reasoning tied to their criteria, and invite pushback. Keep final options to 3-5 max. Don't force a final decision if the user isn't there yet — clarity on direction is a valid outcome.
+對話材料足以收窄時 — 回映所聞。以對話中浮現之優先事項命名（何令其興奮、何遭拒、何被追問）。提出領先者附基於其標準之理據，並邀反駁。最終選項保持 3-5 項上限。用戶未備時勿強制最終決策 — 方向清晰即為有效產出。
 
-## When to wrap up
+## 何時結束
 
-**Always synthesize a summary in the chat.** Before offering any next steps, reflect back what emerged: key decisions, the direction chosen, open threads, and any assumptions made. This is the primary output of the brainstorm — the user should be able to read the summary and know what they landed on.
+**必於對話中綜合摘要。** 提供任何下一步前，回映所浮現者：關鍵決策、所選方向、未了線索、及所作假設。此為腦力激盪之主要產出 — 用戶應能讀摘要而知其所定。
 
-**Then offer next steps** using the platform's question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the numbered options in chat and wait for the user's reply before proceeding.
+**再提供下一步** 以平台提問工具（Claude Code 之 `AskUserQuestion`，Codex 之 `request_user_input`，Gemini 之 `ask_user`）。若無提問工具，於對話中呈現編號選項，候用戶回覆方續行。
 
-**Question:** "Brainstorm wrapped. What would you like to do next?"
+**提問：**「腦力激盪結束。下一步何為？」
 
-- **Create a plan** → hand off to `/ce-plan` with the decided goal and constraints
-- **Save summary to disk** → write the summary as a markdown file in the current working directory
-- **Open in Proof (web app) — review and comment to iterate with the agent** → load the `ce-proof` skill to open the doc in Every's Proof editor, iterate with the agent via comments, or copy a link to share with others
-- **Done** → the conversation was the value, no artifact needed
+- **建立計劃** → 交接至 `/ce-plan` 攜已決目標及約束
+- **存摘要至磁碟** → 以 markdown 寫入當前工作目錄
+- **在 Proof 開啟（Web 應用）— 審閱並留言以與代理反覆** → 載入 `ce-proof` 技能以於 Every 之 Proof 編輯器開啟文檔、以留言與代理反覆、或複製連結分享
+- **完成** → 對話即價值，無需產物

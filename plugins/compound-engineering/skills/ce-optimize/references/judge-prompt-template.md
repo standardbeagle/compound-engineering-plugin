@@ -1,17 +1,17 @@
-# Judge Evaluation Prompt Template
+# 評審評估提示模板
 
-This template is used by the orchestrator to dispatch batched LLM-as-judge evaluation calls. Each judge sub-agent evaluates a batch of sampled output items and returns structured JSON scores.
+編排器使用此模板分派批次 LLM-as-judge 評估呼叫。各評審子代理評估一批抽樣輸出項目並回傳結構化 JSON 分數。
 
-The orchestrator:
-1. Reads the experiment's output
-2. Selects samples per the stratification config (using fixed seed)
-3. Groups samples into batches of `judge.batch_size`
-4. Dispatches `ceil(sample_size / batch_size)` parallel sub-agents using this template
-5. Aggregates returned JSON scores
+編排器：
+1. 讀取實驗輸出
+2. 依分層配置選取樣本（使用固定種子）
+3. 將樣本分組為 `judge.batch_size` 大小之批次
+4. 使用此模板分派 `ceil(sample_size / batch_size)` 個並行子代理
+5. 聚合回傳之 JSON 分數
 
 ---
 
-## Item Evaluation Template
+## 項目評估模板
 
 ```
 You are a quality judge evaluating output items for an optimization experiment.
@@ -50,7 +50,7 @@ Rules:
 </output-contract>
 ```
 
-## Singleton Evaluation Template
+## 單例評估模板
 
 ```
 You are a quality judge evaluating singleton items -- items that are currently NOT in any group/cluster.
@@ -91,20 +91,20 @@ Rules:
 </output-contract>
 ```
 
-## Variable Reference
+## 變數參考
 
-| Variable | Source | Description |
-|----------|--------|-------------|
-| `{rubric}` | Spec `metric.judge.rubric` | User-defined scoring rubric |
-| `{items_json}` | Sampled output items | JSON array of items to evaluate (one batch worth) |
-| `{singleton_rubric}` | Spec `metric.judge.singleton_rubric` | User-defined rubric for singleton evaluation |
-| `{singletons_json}` | Sampled singleton items | JSON array of singleton items to evaluate |
-| `{cluster_summaries}` | Experiment output | Summary of existing clusters (titles/themes) for singleton reference |
+| 變數 | 來源 | 描述 |
+|------|------|------|
+| `{rubric}` | 規格 `metric.judge.rubric` | 用戶定義之評分標準 |
+| `{items_json}` | 抽樣輸出項目 | 待評估項目之 JSON 陣列（一批） |
+| `{singleton_rubric}` | 規格 `metric.judge.singleton_rubric` | 用戶定義之單例評估標準 |
+| `{singletons_json}` | 抽樣單例項目 | 待評估單例項目之 JSON 陣列 |
+| `{cluster_summaries}` | 實驗輸出 | 現有集群之摘要（標題/主題）供單例參考 |
 
-## Notes
+## 備註
 
-- Designed for Haiku by default -- prompts are concise and well-structured for smaller models
-- The rubric is part of the immutable measurement harness -- the experiment agent cannot modify it
-- The `ambiguous` flag on items helps the orchestrator identify noisy evaluations without forcing bad scores
-- For singleton evaluation, the orchestrator provides cluster summaries (not full contents) to keep judge context lean
-- Each sub-agent evaluates one batch independently -- sub-agents do not see each other's results
+- 預設設計適用 Haiku——提示精簡且結構良好，適合較小模型
+- 評分標準為不可變量測線束之一部分——實驗代理無法修改
+- 項目上之 `ambiguous` 旗標幫助編排器識別噪聲評估，無需強制低分
+- 單例評估中，編排器提供集群摘要（非完整內容）以保持評審上下文精簡
+- 各子代理獨立評估一批——子代理間不可見彼此結果

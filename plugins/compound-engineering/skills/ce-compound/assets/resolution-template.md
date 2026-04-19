@@ -1,12 +1,12 @@
-# Resolution Templates
+# 解決方案模板
 
-Choose the template matching the problem_type track (see `references/schema.yaml`).
+依 `problem_type` 軌道選模板（見 `references/schema.yaml`）。
 
 ---
 
-## Bug Track Template
+## 缺陷軌模板
 
-Use for: `build_error`, `test_failure`, `runtime_error`, `performance_issue`, `database_issue`, `security_issue`, `ui_bug`, `integration_issue`, `logic_error`
+適用：`build_error`, `test_failure`, `runtime_error`, `performance_issue`, `database_issue`, `security_issue`, `ui_bug`, `integration_issue`, `logic_error`
 
 ```markdown
 ---
@@ -50,9 +50,9 @@ tags: [keyword-one, keyword-two]
 
 ---
 
-## Knowledge Track Template
+## 知識軌模板
 
-Use for: `best_practice`, `documentation_gap`, `workflow_issue`, `developer_experience`
+適用：`best_practice`, `documentation_gap`, `workflow_issue`, `developer_experience`
 
 ```markdown
 ---

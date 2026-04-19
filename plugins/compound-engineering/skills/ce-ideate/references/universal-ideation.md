@@ -1,63 +1,63 @@
-# Universal Ideation Facilitator
+# 通用構思引導
 
-This file is loaded when ce-ideate detects an elsewhere-mode topic with no software surface at all — naming (independent of product), narrative writing, personal decisions, non-digital business strategy, physical-product design. Topics that concern a software artifact (page, app, feature, flow, product) are routed to elsewhere-software and do not load this file, even when the ideas are about copy, UX, or visual design for that artifact.
+當 ce-ideate 偵測到其他模式主題完全無軟體介面時載入此文——命名（獨立於產品）、敘事寫作、個人決策、非數位商業策略、實體產品設計。涉及軟體產物（頁面、應用、功能、流程、產品）之主題路由至 elsewhere-software，不載入此文，即使構想關乎該產物之文案、UX 或視覺設計。
 
-Phase 1 elsewhere-mode grounding runs before this reference takes over — user-context synthesis and web-research feed the facilitation below. Learnings-researcher is skipped by default for elsewhere-non-software since the CWD's `docs/solutions/` almost always contains engineering patterns that do not transfer to non-digital topics. What this file replaces is Phase 2's software-flavored frame dispatch and the post-ideation wrap-up; the repo-specific codebase scan never runs in elsewhere mode. Absorb these principles and facilitate ideation in the topic's native domain, using the Phase 1 grounding summary as input.
+第一階段其他模式立基於此文接手前運行——用戶上下文綜合及網路研究為下方引導提供素材。learnings-researcher 對 elsewhere-non-software 預設跳過，因 CWD 之 `docs/solutions/` 幾乎恆含不適用於非數位主題之工程模式。此文取代者為第二階段之軟體風格框架分派及構思後收尾；倉庫特定之程式碼庫掃描從不於其他模式中運行。吸收以下原則，以第一階段立基摘要為輸入，於主題之原生領域中引導構思。
 
-The mechanism that makes ideation good — generate many, critique adversarially, present survivors with reasons — is preserved. Only the framing of the work changes.
+使構思優質之機制——生成多則、對抗批判、附理由呈現存活者——已保留。僅工作之框架改變。
 
 ---
 
-## Your role
+## 角色
 
-Be a divergent thinking partner, not a delivery service. The user came here for a stronger candidate set than they could generate alone, not a single recommendation. Resist the urge to converge early. A premature favorite anchors the conversation and crowds out better candidates that have not surfaced yet.
+做發散思考夥伴，非交付服務。用戶來此為獲得優於獨自生成之候選集，非單一推薦。抗拒提前收斂。過早之偏好錨定對話，排擠尚未浮現之更佳候選。
 
-Match the tone to the stakes. For business or product decisions (pricing, positioning, roadmap), lead with constraints and tradeoffs. For creative work (naming, narrative, visual concepts), lead with energy and range. For personal decisions, lead with values before mechanics.
+語氣匹配風險等級。商業或產品決策（定價、定位、路線圖）以約束與取捨為先。創意工作（命名、敘事、視覺概念）以活力與範圍為先。個人決策以價值觀先於機制。
 
-## How to start
+## 如何開始
 
-Match depth to scope:
+深度匹配範圍：
 
-- **Quick** — the user wants a starter set right now. Generate one round, critique briefly, present 3-5 survivors, done.
-- **Standard** — light intake (one or two questions), one round of generation, adversarial critique, present 5-7 survivors.
-- **Full** — rich intake, multiple frames in parallel, deep critique, present 5-7 survivors with strong rationale.
+- **快速** —— 用戶即刻需要入門集。生成一輪，簡短批判，呈現 3-5 則存活者，完成。
+- **標準** —— 輕量詢問（一兩個問題），一輪生成，對抗批判，呈現 5-7 則存活者。
+- **完整** —— 豐富詢問，多框架並行，深度批判，呈現 5-7 則附強理據之存活者。
 
-Apply the discrimination test before asking anything. Would swapping one piece of the user's stated context for a contrasting alternative materially change which ideas survive? If yes, the context is load-bearing — proceed. If no, ask 1-3 narrowly chosen questions, building on what the user already provided rather than starting from a template. After each answer, re-apply the test before asking another. Stop on dismissive responses ("idk just go") and treat genuine "no constraint" answers as real answers.
+詢問前先套用區分測試。將用戶所陳述上下文之一部分替換為對比替代方案，會實質改變哪些構想存活嗎？若是，上下文為承載關鍵——繼續。若否，提出 1-3 個精準問題，基於用戶已提供者建構而非從模板開始。每次回答後重新套用測試再問下一個。於敷衍回應（"idk just go"）停止，將真誠之「無約束」答案視為真實答案。
 
-**Grounding freshness.** Phase 1 elsewhere-mode grounding (user-context synthesis + web-research by default; learnings skipped for non-software, see SKILL.md Phase 1) has already run before this reference takes over, and its outputs feed the generation below. If intake answers here materially refine the topic or constraints — new scope, different audience, a domain shift that the original grounding did not cover — re-dispatch the affected Phase 1 agents on the refined topic before generating ideas. The guardrail mirrors SKILL.md Phase 0.4's rule that mode and grounding re-evaluate when intake changes the scope to be acted on; ranking against stale grounding risks surfacing ideas fit to the wrong topic.
+**立基新鮮度。** 第一階段其他模式立基（用戶上下文綜合 + 網路研究預設；非軟體跳過 learnings，見 SKILL.md 第一階段）已於此文接手前運行，其輸出為下方生成之素材。若此處詢問之答案實質精煉主題或約束——新範圍、不同受眾、原始立基未涵蓋之領域轉換——在生成構想前重新分派受影響之第一階段代理於精煉後之主題。此護欄對映 SKILL.md 階段 0.4 之規則：當詢問改變待執行範圍時，模式及立基重新評估；以過時立基排序風險產出不適合主題之構想。
 
-When the user provides rich context up front (a paste, a brief, an existing draft), confirm understanding in one line and skip intake.
+當用戶事先提供豐富上下文（貼文、簡報、既有草稿），以一行確認理解並跳過詢問。
 
-## How to generate
+## 如何生成
 
-Generate the full candidate list before critiquing any idea. Use the same six frames as software ideation, described in domain-agnostic language. Each frame is a **starting bias, not a constraint** — follow promising threads across frames.
+批判任何構想前先生成完整候選列表。使用與軟體構思相同之六框架，以領域通用語言描述。各框架為**起始偏向，非約束**——跨框架追隨有希望之線索。
 
-- **Pain and friction** — what is consistently annoying, slow, or broken in the current state of the topic? Generate ideas that remove or reduce that friction.
-- **Inversion, removal, automation** — what would happen if a step were inverted, removed entirely, or automated away? The result is often a candidate even if the inversion itself is unrealistic.
-- **Assumption-breaking and reframing** — what is being treated as fixed that is actually a choice? Reframe the problem one level up or sideways.
-- **Leverage and compounding** — what choices, once made, make many future moves cheaper or stronger? Look for second-order effects.
-- **Cross-domain analogy** — how do completely different fields solve a structurally similar problem? The grounding domain is the user's topic; the analogy domain is anywhere else (other industries, biology, games, infrastructure, history). Push past the obvious analogy to non-obvious ones.
-- **Constraint-flipping** — invert the obvious constraint to its opposite or extreme. What if the budget were 10x or 0? What if there were one constraint instead of ten, or ten instead of one? Use the resulting design as a candidate even if the flip itself is not realistic.
+- **痛點與摩擦** —— 當前主題狀態中持續令人煩躁、緩慢或損壞者為何？生成移除或減少該摩擦之構想。
+- **反轉、移除、自動化** —— 若某步驟被反轉、完全移除或自動化會如何？結果即使反轉本身不切實際，亦常為候選。
+- **假設打破與重新框架** —— 何者被視為固定實為選擇？將問題上提一層或側移重新框架。
+- **槓桿與複利** —— 哪些選擇一旦做出，使眾多後續行動更便宜或更強？尋找二階效應。
+- **跨領域類比** —— 完全不同之領域如何解決結構相似之問題？立基領域為用戶之主題；類比領域為任何他處（其他產業、生物學、遊戲、基礎設施、歷史）。超越顯而易見之類比至非顯而易見者。
+- **約束翻轉** —— 將顯而易見之約束反轉為其對立面或極端。若預算為 10 倍或 0 會如何？若只有一個約束而非十個，或十個而非一個會如何？即使翻轉本身不切實際，以結果設計作為候選。
 
-Aim for 5-8 ideas per frame. After generating, merge and dedupe; scan for cross-cutting combinations (3-5 additions at most).
+每框架目標 5-8 則構想。生成後合併去重；掃描跨框架組合（至多 3-5 則添加）。
 
-## How to converge
+## 如何收斂
 
-Apply adversarial critique. For each candidate, write a one-line reason if rejected. Score survivors using a consistent rubric weighing: groundedness in stated context, expected value, novelty, pragmatism, leverage, implementation burden, and overlap with stronger candidates.
+套用對抗批判。每則候選若被拒，寫一行原因。以一致評分標準為存活者評分，權衡：立基於所陳述上下文之程度、預期價值、新穎性、實用性、槓桿效應、實施負擔、與更強候選之重疊。
 
-Target 5-7 survivors by default. If too many survive, run a second stricter pass. If fewer than five survive, report that honestly rather than lowering the bar.
+預設目標 5-7 則存活者。存活過多時進行第二輪更嚴格篩選。少於五則存活時誠實回報，而非降低標準。
 
-## When to wrap up
+## 何時收尾
 
-Present survivors before any persistence. For each: title, description, rationale, downsides, confidence, complexity. Then a brief rejection summary so the user can see what was considered and cut.
+在任何持久化前呈現存活者。各則含：標題、描述、理據、缺點、信心、複雜度。隨後附簡短拒絕摘要，使用戶可知曉何者被考慮且被剔除。
 
-Persistence is opt-in. The terminal review loop is a complete ideation cycle. Refinement happens in conversation with no file or network cost. Persistence triggers only when the user explicitly chooses to save, share, or hand off.
+持久化為選擇性。終端審閱循環為完整構思週期。精煉於對話中進行，無檔案或網路成本。持久化僅於用戶明確選擇儲存、分享或交接時觸發。
 
-Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini) — or numbered options in chat as a fallback — and offer four choices:
+使用平台之阻斷式提問工具（Claude Code 之 `AskUserQuestion`，Codex 之 `request_user_input`，Gemini 之 `ask_user`）——或聊天中編號選項作為後備——提供四個選項：
 
-- **Refine the ideation in conversation (or stop here — no save)** — add ideas, re-evaluate, or deepen analysis without writing anything. Ending the conversation at any point after this pick is a valid no-save exit.
-- **Open and iterate in Proof** — invoke the Proof HITL review path per the §6.2 contract in `references/post-ideation-workflow.md`: upload the survivors to Proof (rendered to a temp file since no local file is written in non-software elsewhere mode), iterate via comments, and exit cleanly with the Proof URL as the canonical record on successful return. Proof iteration is typically the terminal act in this mode, so the flow does not force another menu choice afterward. Only an `aborted` status returns to this menu. On persistent Proof failure, apply the §6.5 Proof Failure Ladder from `references/post-ideation-workflow.md` so the iteration attempt is not stranded without recovery.
-- **Brainstorm a selected idea** — go deeper on one idea through dialogue. Unlike repo mode, this is not the first step of an implementation chain — there is no `ce-plan` → `ce-work` after; `ce-brainstorm` in universal mode develops the idea further (e.g., expands a name into a brand brief, a plot into an outline, a decision into a weighed framework) and ends there. Persist first per the §6.3 contract in `references/post-ideation-workflow.md`: save the survivors to Proof (the elsewhere-mode default) or to `docs/ideation/` when the user explicitly asked for a local file, mark the chosen idea as `Explored`, then load `ce-brainstorm` with that idea as the seed. On a successful Proof return (`proceeded` or `done_for_now`), continue into the brainstorm handoff per §5.2's caller-aware return rule; on `aborted`, return to this menu without handing off. On persistent Proof failure, apply the §6.5 Proof Failure Ladder before ending so the brainstorm seed is preserved through a local-save fallback.
-- **Save and end** — share the survivors to Proof (the elsewhere-mode default) and end. Use `docs/ideation/` instead only when the user explicitly asks for a local file. On Proof failure (including after the single orchestrator-side retry), apply the §6.5 Proof Failure Ladder from `references/post-ideation-workflow.md` — surface the local-save fallback menu (custom path or skip) before ending so the user is not stranded without a recovery path.
+- **在對話中精煉構思（或就此停止——不儲存）** —— 新增構想、重新評估或深化分析而不寫入任何內容。隨時結束對話即為有效之不儲存退出。
+- **在 Proof 中開啟並迭代** —— 依 `references/post-ideation-workflow.md` 中 §6.2 約定調用 Proof HITL 審閱路徑：上傳存活者至 Proof（渲染至臨時檔案，因非軟體其他模式不寫本地檔案），透過留言迭代，成功返回時以 Proof URL 為唯一記錄乾淨退出。Proof 迭代在此模式中通常為終端行為，故流程不於其後強加另一選單選項。僅 `aborted` 狀態返回此選單。持續 Proof 失敗時，套用 `references/post-ideation-workflow.md` 中 §6.5 Proof 失敗階梯，使迭代嘗試不致無恢復地擱置。
+- **腦力激盪所選構想** —— 透過對話深化一則構想。與倉庫模式不同，此非實施鏈之第一步——其後無 `ce-plan` → `ce-work`；通用模式之 `ce-brainstorm` 進一步發展構想（如將名稱擴展為品牌簡報、情節擴展為大綱、決策擴展為加權框架）後結束。先依 `references/post-ideation-workflow.md` 中 §6.3 約定持久化：將存活者儲存至 Proof（其他模式預設）或用戶明確要求時至 `docs/ideation/`，標記所選構想為 `Explored`，再以該構想為種子載入 `ce-brainstorm`。Proof 成功返回時（`proceeded` 或 `done_for_now`），依 §5.2 呼叫者感知返回規則繼續腦力激盪交接；`aborted` 時返回此選單而不交接。持續 Proof 失敗時，套用 §6.5 Proof 失敗階梯後結束，使腦力激盪種子透過本地儲存後備保留。
+- **儲存並結束** —— 將存活者分享至 Proof（其他模式預設）並結束。僅當用戶明確要求本地檔案時改用 `docs/ideation/`。Proof 失敗時（含單次編排器端重試後），套用 `references/post-ideation-workflow.md` 中 §6.5 Proof 失敗階梯——結束前呈現本地儲存後備選單（自訂路徑或跳過），使用戶不致無恢復路徑地擱置。
 
-No-save exit is supported without a dedicated menu option. Pick Refine and stop the conversation, or use the question tool's free-text escape to say so directly — persistence is opt-in and the terminal review loop is already a complete ideation cycle.
+不儲存退出無需專用選單選項。選擇精煉並停止對話，或使用提問工具之自由文字逃逸直接說明——持久化為選擇性，終端審閱循環已為完整構思週期。

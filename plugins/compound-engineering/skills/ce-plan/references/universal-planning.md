@@ -1,114 +1,114 @@
-# Universal Planning Workflow
+# 通用規劃工作流
 
-This file is loaded when ce-plan detects a non-software task (Phase 0.1b). It replaces the software-specific phases (0.2 through 5.1) with a domain-agnostic planning workflow.
+當 ce-plan 偵測到非軟體任務（階段 0.1b）時載入此文。以領域通用規劃工作流取代軟體特定階段（0.2 至 5.1）。
 
-## Before starting: verify classification
+## 開始前：驗證分類
 
-The detection stub in SKILL.md routes here for anything that isn't clearly software. Verify the classification is correct before proceeding:
+SKILL.md 中之偵測存根將任何非明確軟體之內容路由至此。繼續前驗證分類正確：
 
-- **Is this actually a software task?** The key distinction is task-type, not topic-domain. A study guide about Rust is non-software (producing educational content). A Rust library refactor is software (modifying code). If this is actually software, return to Phase 0.2 in the main SKILL.md.
-- **Is this a quick-help request, not a planning task?** Error messages, factual questions, and single-step tasks don't need a plan. Respond directly and exit. Examples: "zsh: command not found: brew", "what's the capital of France."
-- **Pipeline mode?** If invoked from LFG, SLFG, or any `disable-model-invocation` context: output "This is a non-software task. The LFG/SLFG pipeline requires ce-work, which only supports software tasks. Use `/ce-plan` directly for non-software planning." and stop.
+- **此實為軟體任務？** 關鍵區別在任務類型，非主題領域。關於 Rust 之學習指南為非軟體（產出教育內容）。Rust 函式庫重構為軟體（修改程式碼）。若實為軟體，返回主 SKILL.md 之階段 0.2。
+- **此為快速求助請求，非規劃任務？** 錯誤訊息、事實問題及單步任務不需要計劃。直接回應並退出。例："zsh: command not found: brew"，"what's the capital of France."
+- **管道模式？** 若從 LFG、SLFG 或任何 `disable-model-invocation` 上下文調用：輸出 "This is a non-software task. The LFG/SLFG pipeline requires ce-work, which only supports software tasks. Use `/ce-plan` directly for non-software planning." 並停止。
 
-Once past these checks, commit to producing a plan. Do not exit because the task looks like a "lookup" or "research question" — the user invoked `ce-plan` because they want a structured output.
+通過這些檢查後，承諾產出計劃。勿因任務看似「查找」或「研究問題」而退出——用戶調用 `ce-plan` 是因為其需要結構化輸出。
 
 ---
 
-## Step 1: Assess Ambiguity and Research Need
+## 步驟 1：評估歧義與研究需求
 
-Evaluate two things before planning:
+規劃前評估兩件事：
 
-**Would 1-3 quick questions meaningfully improve this plan?**
+**1-3 個快速問題能否實質改善此計劃？**
 
-- **Default: ask 1-3 questions** via Step 1b when the answers would change the plan's structure or content. Always include a final option like "Skip — just make the plan with reasonable assumptions" so the user can opt out instantly.
-- **Skip questions entirely** only when the request already specifies all major variables or the task is simple enough that reasonable assumptions cover it well.
+- **預設：** 答案會改變計劃結構或內容時，透過步驟 1b **提出 1-3 個問題**。恆含最終選項如「跳過——以合理假設製作計劃」使用戶可立即退出。
+- **僅當**請求已指定所有主要變數或任務足夠簡單至合理假設涵蓋良好時**完全跳過問題**。
 
-**Research need — does this plan depend on facts that change faster than training data?**
+**研究需求——此計劃是否依賴變化速度快於訓練資料之事實？**
 
-| Research need | Signals | Action |
-|--------------|---------|--------|
-| **None** | Generic, timeless, or conceptual plan (study curriculum methodology, project management approach, personal goal breakdown) | Skip research. Model knowledge is sufficient. After structuring the plan, offer: "I based this on general knowledge. Want me to search for [specific thing research would improve]?" — e.g., sourced recipes, current product recommendations, expert frameworks. Only if the user accepts. |
-| **Recommended** | Plan references specific locations, venues, dates, prices, schedules, seasonal availability, or current events — anything where stale information would break the plan (closed restaurants, changed prices, cancelled events, wrong seasonal dates). | Research before planning. Decompose into 2-5 focused research questions and dispatch parallel web searches. In Claude Code, use the Agent tool with `model: "haiku"` for each search to reduce cost. Collate findings before structuring the plan. |
+| 研究需求 | 信號 | 行動 |
+|---------|------|------|
+| **無** | 泛用、永恆或概念性計劃（學習課程方法論、專案管理方法、個人目標分解） | 跳過研究。模型知識足夠。結構化計劃後提議：「我基於通用知識製作。要我搜尋 [研究可改善之特定事物] 嗎？」——如：有來源之食譜、當前產品推薦、專家框架。僅當用戶接受。 |
+| **建議** | 計劃引用特定地點、場館、日期、價格、時間表、季節性供應或時事——任何過時資訊會破壞計劃之處（已關閉餐廳、已變價格、已取消活動、錯誤季節日期）。 | 規劃前研究。分解為 2-5 個聚焦研究問題並分派並行網路搜尋。Claude Code 中，各搜尋使用 Agent 工具搭配 `model: "haiku"` 以降低成本。結構化計劃前彙整發現。 |
 
-When research is recommended, do it — don't just offer. Stale recommendations (closed restaurants, rethemed attractions, outdated prices) are worse than no recommendations. The user invoked `/ce-plan` because they want a good plan, not a disclaimer about training data.
+建議研究時，執行之——而非僅提議。過時建議（已關閉餐廳、已改主題景點、過時價格）比無建議更糟。用戶調用 `/ce-plan` 是因為其需要好計劃，非訓練資料之免責聲明。
 
-**Research decomposition pattern:**
-1. Identify 2-5 independent research questions based on the task. Good questions target facts the model is least confident about: current prices, hours, availability, recent changes, seasonal specifics.
-2. Dispatch parallel research. Prefer user-named surfaces first per Core Principle 8 in SKILL.md; fall back to web search for questions those surfaces don't cover.
-3. Collate findings into a brief research summary before proceeding to planning.
+**研究分解模式：**
+1. 依任務識別 2-5 個獨立研究問題。好問題針對模型最不自信之事實：當前價格、營業時間、可用性、近期變更、季節細節。
+2. 分派並行研究。依 SKILL.md 核心原則 8 偏好用戶命名之介面；這些介面未涵蓋之問題回退至網路搜尋。
+3. 繼續規劃前將發現彙整為簡短研究摘要。
 
-Example for "plan a date night in Seattle this Saturday":
+「規劃本週六西雅圖約會之夜」之例：
 - "Best restaurants open late Saturday in Capitol Hill Seattle 2026"
 - "Events happening in Seattle [specific date]"
 - "Seattle waterfront current status and hours"
 
-## Step 1b: Focused Q&A
+## 步驟 1b：聚焦問答
 
-Ask up to 3 questions targeting the unknowns that would most change the plan. Use the platform's question tool when available (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Otherwise, present numbered options in chat and wait for the user's reply.
+提出至多 3 個問題，針對最可能改變計劃之未知項。可用時使用平台之提問工具（Claude Code 之 `AskUserQuestion`，Codex 之 `request_user_input`，Gemini 之 `ask_user`）。否則，於聊天中呈現編號選項並等候用戶回覆。
 
-**How to ask well:**
-- Offer informed options, not open-ended blanks. Instead of "When are you going?", try "Mid-week visits have 30-40% shorter lines — are you flexible on timing?" The question should give the user a frame of reference, not just extract information.
-- Use multi-select when several independent choices can be captured in one question. This is compact and respects the user's time.
-- Always include a final option like **"Skip — just make the plan with reasonable assumptions"** so the user can opt out at any point.
+**如何提好問題：**
+- 提供有依據之選項，非開放式空白。取代 "When are you going?"，試 "Mid-week visits have 30-40% shorter lines — are you flexible on timing?" 問題應提供用戶參考框架，而非僅提取資訊。
+- 多個獨立選擇可在一個問題中捕獲時使用多選。緊湊且尊重用戶時間。
+- 恆含最終選項如 **「跳過——以合理假設製作計劃」** 使用戶可隨時退出。
 
-Focus on the unknowns specific to this task that would change what the plan recommends or how it's structured. Do not ask more than 3 — after that, proceed with assumptions for anything remaining.
+聚焦於此任務特定之未知項——這些未知項會改變計劃建議或結構者。不超過 3 個——超過後以假設處理剩餘項目。
 
-## Step 2: Structure the Plan
+## 步驟 2：結構化計劃
 
-Create a structured plan guided by these quality principles. Do NOT use the software plan template (implementation units, test scenarios, file paths, etc.).
+以這些品質原則引導建立結構化計劃。**勿**使用軟體計劃模板（實施單元、測試場景、檔案路徑等）。
 
-### Format: when to prescribe vs. present options
+### 格式：何時指定 vs 呈現選項
 
-Not every plan should be a single linear path. Match the format to the task:
+非所有計劃應為單一線性路徑。格式匹配任務：
 
-| Task type | Best format | Why |
-|-----------|------------|-----|
-| **High personal preference** (food, entertainment, activities, gifts) | Curated options per category — present 2-3 choices and let the user compose | Preferences vary; a single pick may miss. Options respect the user's taste. |
-| **Logical sequence** (study plan, project timeline, multi-day trip logistics) | Single prescriptive path with clear ordering | Sequencing matters; options at each step create decision paralysis. |
-| **Hybrid** (event with fixed structure but variable details) | Fixed structure with choice points marked | The skeleton is set but specific vendors/venues/activities are options. |
+| 任務類型 | 最佳格式 | 原因 |
+|---------|---------|------|
+| **高個人偏好**（食物、娛樂、活動、禮物） | 各類別策劃選項——呈現 2-3 個選擇讓用戶組合 | 偏好各異；單一選擇可能錯失。選項尊重用戶品味。 |
+| **邏輯序列**（學習計劃、專案時間表、多日旅行後勤） | 帶明確排序之單一指定路徑 | 排序重要；各步驟之選項造成決策癱瘓。 |
+| **混合**（有固定結構但細節可變之活動） | 標記選擇點之固定結構 | 骨架固定但特定供應商/場地/活動為選項。 |
 
-Example: A date night plan should present 2-3 restaurant options, 2-3 activity options, and a suggested flow — not pick one restaurant and build the whole evening around it. A study plan should prescribe a single weekly progression — not present 3 different curricula to choose from.
+例：約會之夜計劃應呈現 2-3 個餐廳選項、2-3 個活動選項及建議流程——非選一間餐廳圍繞其建構整個晚上。學習計劃應指定單一每週進度——非呈現 3 種不同課程供選擇。
 
-### Formatting: bullets over prose
+### 格式化：條列優先於散文
 
-- Prefer bullets and tables for actionable content (steps, options, logistics, budgets)
-- Use prose only for context, rationale, or explanations that connect the dots
-- Plans are for scanning and executing, not reading cover-to-cover
+- 可操作內容（步驟、選項、後勤、預算）偏好條列及表格
+- 僅上下文、理據或連接要點之解釋使用散文
+- 計劃供掃描及執行，非從頭讀到尾
 
-### Quality principles
+### 品質原則
 
-- **Actionable steps**: Each step is specific enough to execute without further research
-- **Sequenced by dependency**: Steps are in the right order, with dependencies noted
-- **Time-aware**: When relevant, include timing, durations, deadlines, or phases
-- **Resource-identified**: Specify what's needed — tools, materials, people, budget, locations
-- **Contingency-aware**: For important decisions, note alternatives or what to do if plans change
-- **Appropriately detailed**: Match detail to task complexity. A weekend trip needs less structure than a 3-month curriculum. A dinner plan should be concise, not a 200-line document.
-- **Domain-appropriate format**: Choose a structure that fits the domain:
-  - Itinerary for travel (day-by-day, with times and locations)
-  - Syllabus or curriculum for study plans (topics, resources, milestones)
-  - Runbook for events (timeline, responsibilities, logistics)
-  - Project plan for business or operational tasks (phases, owners, deliverables)
-  - Research plan for investigations (questions, methods, sources)
-  - Options menu for preference-driven tasks (curated picks per category)
+- **可操作步驟**：各步驟足夠具體以無需進一步研究即可執行
+- **依依賴排序**：步驟順序正確，附依賴說明
+- **時間感知**：相關時包含時機、持續時間、截止日期或階段
+- **資源識別**：指定所需——工具、材料、人員、預算、地點
+- **偶發性感知**：重要決策注明替代方案或計劃變更時之應對
+- **適當詳細**：細節匹配任務複雜度。週末旅行比三個月課程需要更少結構。晚餐計劃應精簡，非 200 行文檔。
+- **領域適當格式**：選擇適合領域之結構：
+  - 旅行用行程（逐日，附時間及地點）
+  - 學習計劃用教學大綱或課程（主題、資源、里程碑）
+  - 活動用運行手冊（時間線、責任、後勤）
+  - 商業或運營任務用專案計劃（階段、負責人、交付物）
+  - 調查用研究計劃（問題、方法、來源）
+  - 偏好驅動任務用選項菜單（各類別策劃選擇）
 
-## Step 3: Save or Share
+## 步驟 3：儲存或分享
 
-After structuring the plan, ask the user how they want to receive it using the platform's question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Otherwise, present numbered options in chat.
+結構化計劃後，以平台之提問工具詢問用戶如何接收（Claude Code 之 `AskUserQuestion`，Codex 之 `request_user_input`，Gemini 之 `ask_user`）。否則，於聊天中呈現編號選項。
 
-**Question:** "Plan ready. How would you like to receive it?"
+**問題：** "Plan ready. How would you like to receive it?"
 
-**Options:**
+**選項：**
 
-1. **Save to disk** — Write the plan as a markdown file. Ask where:
-   - `docs/plans/` (only show if this directory exists)
-   - Current working directory
-   - `/tmp`
-   - A custom path
-   - Use filename convention: `YYYY-MM-DD-<descriptive-name>-plan.md`
-   - Start the document with a `# Title` heading, followed by `Created: YYYY-MM-DD` on the next line. No YAML frontmatter.
+1. **儲存至磁碟** —— 將計劃寫為 markdown 檔案。詢問位置：
+    - `docs/plans/`（僅此目錄存在時顯示）
+    - 當前工作目錄
+    - `/tmp`
+    - 自訂路徑
+    - 使用檔名慣例：`YYYY-MM-DD-<descriptive-name>-plan.md`
+    - 文檔以 `# Title` 標題開頭，下一行為 `Created: YYYY-MM-DD`。無 YAML frontmatter。
 
-2. **Open in Proof (web app) — review and comment to iterate with the agent** — Open the doc in Every's Proof editor, iterate with the agent via comments, or copy a link to share with others. Load the `ce-proof` skill to create and open the document.
+2. **在 Proof 中開啟（網頁應用）—— 審閱並留言以與代理迭代** —— 在 Every 之 Proof 編輯器中開啟文檔，透過留言與代理迭代，或複製連結分享他人。載入 `ce-proof` 技能以建立並開啟文檔。
 
-3. **Save to disk AND open in Proof** — Do both: write the markdown file to disk and open the doc in Proof for review.
+3. **儲存至磁碟並在 Proof 中開啟** —— 兩者皆做：寫入 markdown 檔案至磁碟並在 Proof 中開啟文檔以供審閱。
 
-Do not offer `/ce-work` (software-only) or issue creation (not applicable to non-software plans).
+不提供 `/ce-work`（僅限軟體）或議題建立（不適用於非軟體計劃）。

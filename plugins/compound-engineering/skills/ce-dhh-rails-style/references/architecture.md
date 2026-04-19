@@ -1,9 +1,9 @@
-# Architecture - DHH Rails Style
+# 架構 — DHH Rails風
 
 <routing>
-## Routing
+## 路由
 
-Everything maps to CRUD. Nested resources for related actions:
+萬物歸CRUD。關聯動作用巢狀資源：
 
 ```ruby
 Rails.application.routes.draw do
@@ -19,28 +19,28 @@ Rails.application.routes.draw do
 end
 ```
 
-**Verb-to-noun conversion:**
-| Action | Resource |
-|--------|----------|
+**動詞轉名詞：**
+| 動作 | 資源 |
+|------|------|
 | close a card | `card.closure` |
 | watch a board | `board.watching` |
 | mark as golden | `card.goldness` |
 | archive a card | `card.archival` |
 
-**Shallow nesting** - avoid deep URLs:
+**淺層巢狀** — 免深URL：
 ```ruby
 resources :boards do
   resources :cards, shallow: true  # /boards/:id/cards, but /cards/:id
 end
 ```
 
-**Singular resources** for one-per-parent:
+**單數資源** — 每父唯一：
 ```ruby
 resource :closure   # not resources
 resource :goldness
 ```
 
-**Resolve for URL generation:**
+**resolve生成URL：**
 ```ruby
 # config/routes.rb
 resolve("Comment") { |comment| [comment.card, anchor: dom_id(comment)] }
@@ -50,9 +50,9 @@ resolve("Comment") { |comment| [comment.card, anchor: dom_id(comment)] }
 </routing>
 
 <multi_tenancy>
-## Multi-Tenancy (Path-Based)
+## 多租戶（路徑式）
 
-**Middleware extracts tenant** from URL prefix:
+**中介層自URL前綴萃取租戶：**
 
 ```ruby
 # lib/tenant_extractor.rb
@@ -72,7 +72,7 @@ class TenantExtractor
 end
 ```
 
-**Cookie scoping** per tenant:
+**Cookie依租戶隔離：**
 ```ruby
 # Cookies scoped to tenant path
 cookies.signed[:session_id] = {
@@ -81,7 +81,7 @@ cookies.signed[:session_id] = {
 }
 ```
 
-**Background job context** - serialize tenant:
+**背景作業上下文** — 序列化租戶：
 ```ruby
 class ApplicationJob < ActiveJob::Base
   around_perform do |job, block|
@@ -90,7 +90,7 @@ class ApplicationJob < ActiveJob::Base
 end
 ```
 
-**Recurring jobs** must iterate all tenants:
+**定期作業** 須遍歷所有租戶：
 ```ruby
 class DailyDigestJob < ApplicationJob
   def perform
@@ -103,7 +103,7 @@ class DailyDigestJob < ApplicationJob
 end
 ```
 
-**Controller security** - always scope through tenant:
+**控制器安全** — 恆經租戶限域：
 ```ruby
 # Good - scoped through user's accessible records
 @card = Current.user.accessible_cards.find(params[:id])
@@ -114,9 +114,9 @@ end
 </multi_tenancy>
 
 <authentication>
-## Authentication
+## 認證
 
-Custom passwordless magic link auth (~150 lines total):
+自製無密碼magic link認證（約150行）：
 
 ```ruby
 # app/models/session.rb
@@ -141,13 +141,13 @@ class MagicLink < ApplicationRecord
 end
 ```
 
-**Why not Devise:**
-- ~150 lines vs massive dependency
-- No password storage liability
-- Simpler UX for users
-- Full control over flow
+**何以不用Devise：**
+- ~150行 vs 龐大依賴
+- 無密碼儲存風險
+- UX更簡
+- 完全掌控流程
 
-**Bearer token** for APIs:
+**Bearer token** 供API：
 ```ruby
 module Authentication
   extend ActiveSupport::Concern
@@ -171,9 +171,9 @@ end
 </authentication>
 
 <background_jobs>
-## Background Jobs
+## 背景作業
 
-Jobs are shallow wrappers calling model methods:
+作業乃薄殼，呼叫model方法：
 
 ```ruby
 class NotifyWatchersJob < ApplicationJob
@@ -183,9 +183,9 @@ class NotifyWatchersJob < ApplicationJob
 end
 ```
 
-**Naming convention:**
-- `_later` suffix for async: `card.notify_watchers_later`
-- `_now` suffix for immediate: `card.notify_watchers_now`
+**命名慣例：**
+- `_later` 後綴表非同步：`card.notify_watchers_later`
+- `_now` 後綴表立即：`card.notify_watchers_now`
 
 ```ruby
 module Watchable
@@ -205,18 +205,18 @@ module Watchable
 end
 ```
 
-**Database-backed** with Solid Queue:
-- No Redis required
-- Same transactional guarantees as your data
-- Simpler infrastructure
+**資料庫為後端** with Solid Queue：
+- 無需Redis
+- 與資料同享事務保證
+- 基礎設施更簡
 
-**Transaction safety:**
+**事務安全：**
 ```ruby
 # config/application.rb
 config.active_job.enqueue_after_transaction_commit = true
 ```
 
-**Error handling** by type:
+**錯誤處理** 依型別：
 ```ruby
 class DeliveryJob < ApplicationJob
   # Transient errors - retry with backoff
@@ -231,7 +231,7 @@ class DeliveryJob < ApplicationJob
 end
 ```
 
-**Batch processing** with continuable:
+**批次處理** with continuable：
 ```ruby
 class ProcessCardsJob < ApplicationJob
   include ActiveJob::Continuable
@@ -247,9 +247,9 @@ end
 </background_jobs>
 
 <database_patterns>
-## Database Patterns
+## 資料庫模式
 
-**UUIDs as primary keys** (time-sortable UUIDv7):
+**UUID為主鍵**（時間可排序UUIDv7）：
 ```ruby
 # migration
 create_table :cards, id: :uuid do |t|
@@ -257,9 +257,9 @@ create_table :cards, id: :uuid do |t|
 end
 ```
 
-Benefits: No ID enumeration, distributed-friendly, client-side generation.
+益處：無ID列舉、利於分散式、可客戶端生成。
 
-**State as records** (not booleans):
+**狀態即記錄**（非布林值）：
 ```ruby
 # Instead of closed: boolean
 class Card::Closure < ApplicationRecord
@@ -272,7 +272,7 @@ Card.joins(:closure)          # closed
 Card.where.missing(:closure)  # open
 ```
 
-**Hard deletes** - no soft delete:
+**硬刪除** — 無軟刪除：
 ```ruby
 # Just destroy
 card.destroy!
@@ -281,9 +281,9 @@ card.destroy!
 card.record_event(:deleted, by: Current.user)
 ```
 
-Simplifies queries, uses event logs for auditing.
+簡化查詢，以事件日誌稽核。
 
-**Counter caches** for performance:
+**計數快取** 以增效：
 ```ruby
 class Comment < ApplicationRecord
   belongs_to :card, counter_cache: true
@@ -292,7 +292,7 @@ end
 # card.comments_count available without query
 ```
 
-**Account scoping** on every table:
+**帳戶限域** 每表必加：
 ```ruby
 class Card < ApplicationRecord
   belongs_to :account
@@ -302,9 +302,9 @@ end
 </database_patterns>
 
 <current_attributes>
-## Current Attributes
+## Current屬性
 
-Use `Current` for request-scoped state:
+以`Current`承載請求域狀態：
 
 ```ruby
 # app/models/current.rb
@@ -320,7 +320,7 @@ class Current < ActiveSupport::CurrentAttributes
 end
 ```
 
-Set in controller:
+設於控制器：
 ```ruby
 class ApplicationController < ActionController::Base
   before_action :set_current_request
@@ -334,7 +334,7 @@ class ApplicationController < ActionController::Base
 end
 ```
 
-Use throughout app:
+全應用可用：
 ```ruby
 class Card < ApplicationRecord
   belongs_to :creator, default: -> { Current.user }
@@ -343,21 +343,21 @@ end
 </current_attributes>
 
 <caching>
-## Caching
+## 快取
 
-**HTTP caching** with ETags:
+**HTTP快取** 以ETags：
 ```ruby
 fresh_when etag: [@card, Current.user.timezone]
 ```
 
-**Fragment caching:**
+**片段快取：**
 ```erb
 <% cache card do %>
   <%= render card %>
 <% end %>
 ```
 
-**Russian doll caching:**
+**俄羅斯娃娃快取：**
 ```erb
 <% cache @board do %>
   <% @board.cards.each do |card| %>
@@ -368,30 +368,30 @@ fresh_when etag: [@card, Current.user.timezone]
 <% end %>
 ```
 
-**Cache invalidation** via `touch: true`:
+**快取失效** 以`touch: true`：
 ```ruby
 class Card < ApplicationRecord
   belongs_to :board, touch: true
 end
 ```
 
-**Solid Cache** - database-backed:
-- No Redis required
-- Consistent with application data
-- Simpler infrastructure
+**Solid Cache** — 資料庫為後端：
+- 無需Redis
+- 與應用資料一致
+- 基礎設施更簡
 </caching>
 
 <configuration>
-## Configuration
+## 配置
 
-**ENV.fetch with defaults:**
+**ENV.fetch附預設值：**
 ```ruby
 # config/application.rb
 config.active_job.queue_adapter = ENV.fetch("QUEUE_ADAPTER", "solid_queue").to_sym
 config.cache_store = ENV.fetch("CACHE_STORE", "solid_cache").to_sym
 ```
 
-**Multiple databases:**
+**多資料庫：**
 ```yaml
 # config/database.yml
 production:
@@ -408,12 +408,12 @@ production:
     migrations_paths: db/cache_migrate
 ```
 
-**Switch between SQLite and MySQL via ENV:**
+**以ENV切換SQLite與MySQL：**
 ```ruby
 adapter = ENV.fetch("DATABASE_ADAPTER", "sqlite3")
 ```
 
-**CSP extensible via ENV:**
+**CSP以ENV擴充：**
 ```ruby
 config.content_security_policy do |policy|
   policy.default_src :self
@@ -423,9 +423,9 @@ end
 </configuration>
 
 <testing>
-## Testing
+## 測試
 
-**Minitest**, not RSpec:
+**Minitest**，非RSpec：
 ```ruby
 class CardTest < ActiveSupport::TestCase
   test "closing a card creates a closure" do
@@ -439,7 +439,7 @@ class CardTest < ActiveSupport::TestCase
 end
 ```
 
-**Fixtures** instead of factories:
+**Fixtures** 代工廠：
 ```yaml
 # test/fixtures/cards.yml
 one:
@@ -453,7 +453,7 @@ two:
   creator: bob
 ```
 
-**Integration tests** for controllers:
+**整合測試** 測控制器：
 ```ruby
 class CardsControllerTest < ActionDispatch::IntegrationTest
   test "closing a card" do
@@ -468,15 +468,15 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
 end
 ```
 
-**Tests ship with features** - same commit, not TDD-first but together.
+**測試隨功能交付** — 同一commit，非TDD先行，乃同步。
 
-**Regression tests for security fixes** - always.
+**安全修復恆附回歸測試** — 必也。
 </testing>
 
 <events>
-## Event Tracking
+## 事件追蹤
 
-Events are the single source of truth:
+事件為唯一真相源：
 
 ```ruby
 class Event < ApplicationRecord
@@ -487,7 +487,7 @@ class Event < ApplicationRecord
 end
 ```
 
-**Eventable concern:**
+**Eventable關切：**
 ```ruby
 module Eventable
   extend ActiveSupport::Concern
@@ -506,13 +506,13 @@ module Eventable
 end
 ```
 
-**Webhooks driven by events** - events are the canonical source.
+**Webhooks由事件驅動** — 事件為正源。
 </events>
 
 <email_patterns>
-## Email Patterns
+## 電郵模式
 
-**Multi-tenant URL helpers:**
+**多租戶URL輔助：**
 ```ruby
 class ApplicationMailer < ActionMailer::Base
   def default_url_options
@@ -525,7 +525,7 @@ class ApplicationMailer < ActionMailer::Base
 end
 ```
 
-**Timezone-aware delivery:**
+**時區感知投遞：**
 ```ruby
 class NotificationMailer < ApplicationMailer
   def daily_digest(user)
@@ -538,13 +538,13 @@ class NotificationMailer < ApplicationMailer
 end
 ```
 
-**Batch delivery:**
+**批次投遞：**
 ```ruby
 emails = users.map { |user| NotificationMailer.digest(user) }
 ActiveJob.perform_all_later(emails.map(&:deliver_later))
 ```
 
-**One-click unsubscribe (RFC 8058):**
+**一鍵退訂（RFC 8058）：**
 ```ruby
 class ApplicationMailer < ActionMailer::Base
   after_action :set_unsubscribe_headers
@@ -559,9 +559,9 @@ end
 </email_patterns>
 
 <security_patterns>
-## Security Patterns
+## 安全模式
 
-**XSS prevention** - escape in helpers:
+**防XSS** — 於helper中轉義：
 ```ruby
 def formatted_content(text)
   # Escape first, then mark safe
@@ -569,7 +569,7 @@ def formatted_content(text)
 end
 ```
 
-**SSRF protection:**
+**防SSRF：**
 ```ruby
 # Resolve DNS once, pin the IP
 def fetch_safely(url)
@@ -589,7 +589,7 @@ def private_ip?(ip)
 end
 ```
 
-**Content Security Policy:**
+**Content Security Policy：**
 ```ruby
 # config/initializers/content_security_policy.rb
 Rails.application.configure do
@@ -604,7 +604,7 @@ Rails.application.configure do
 end
 ```
 
-**ActionText sanitization:**
+**ActionText淨化：**
 ```ruby
 # config/initializers/action_text.rb
 Rails.application.config.after_initialize do
@@ -616,9 +616,9 @@ end
 </security_patterns>
 
 <active_storage>
-## Active Storage Patterns
+## Active Storage模式
 
-**Variant preprocessing:**
+**變體預處理：**
 ```ruby
 class User < ApplicationRecord
   has_one_attached :avatar do |attachable|
@@ -628,13 +628,13 @@ class User < ApplicationRecord
 end
 ```
 
-**Direct upload expiry** - extend for slow connections:
+**直接上傳效期** — 延長以應慢連線：
 ```ruby
 # config/initializers/active_storage.rb
 Rails.application.config.active_storage.service_urls_expire_in = 48.hours
 ```
 
-**Avatar optimization** - redirect to blob:
+**頭像最佳化** — 重導至blob：
 ```ruby
 def show
   expires_in 1.year, public: true
@@ -642,7 +642,7 @@ def show
 end
 ```
 
-**Mirror service** for migrations:
+**鏡像服務** 供遷移：
 ```yaml
 # config/storage.yml
 production:

@@ -1,32 +1,32 @@
 ---
 name: ce-test-xcode
-description: "Build and test iOS apps on simulator using XcodeBuildMCP. Use after making iOS code changes, before creating a PR, or when verifying app behavior and checking for crashes on simulator."
+description: "使用 XcodeBuildMCP 在模擬器上建構並測試 iOS 應用。適用於修改 iOS 程式碼後、建立 PR 前或驗證應用行為及檢查模擬器崩潰。"
 argument-hint: "[scheme name or 'current' to use default]"
 disable-model-invocation: true
 ---
 
-# Xcode Test Skill
+# Xcode 測試技能
 
-Build, install, and test iOS apps on the simulator using XcodeBuildMCP. Captures screenshots, logs, and verifies app behavior.
+使用 XcodeBuildMCP 在模擬器上建構、安裝並測試 iOS 應用。擷取截圖、日誌並驗證應用行為。
 
-## Prerequisites
+## 前置條件
 
-- Xcode installed with command-line tools
-- XcodeBuildMCP MCP server connected
-- Valid Xcode project or workspace
-- At least one iOS Simulator available
+- 已安裝 Xcode 含命令列工具
+- XcodeBuildMCP MCP 伺服器已連線
+- 有效之 Xcode 專案或 workspace
+- 至少一個 iOS 模擬器可用
 
-## Workflow
+## 工作流
 
-### 0. Verify XcodeBuildMCP is Available
+### 0. 驗證 XcodeBuildMCP 可用
 
-Check that the XcodeBuildMCP MCP server is connected by calling its `list_simulators` tool.
+呼叫其 `list_simulators` 工具以檢查 XcodeBuildMCP MCP 伺服器是否已連線。
 
-MCP tool names vary by platform:
-- Claude Code: `mcp__xcodebuildmcp__list_simulators`
-- Other platforms: use the equivalent MCP tool call for the `XcodeBuildMCP` server's `list_simulators` method
+MCP 工具名稱依平台而異：
+- Claude Code：`mcp__xcodebuildmcp__list_simulators`
+- 其他平台：使用 `XcodeBuildMCP` 伺服器之 `list_simulators` 方法的等效 MCP 工具呼叫
 
-If the tool is not found or errors, inform the user they need to add the XcodeBuildMCP MCP server:
+若工具未找到或出錯，告知用戶需添加 XcodeBuildMCP MCP 伺服器：
 
 ```
 XcodeBuildMCP not installed
@@ -41,76 +41,76 @@ Then add "XcodeBuildMCP" as an MCP server in your agent configuration
 and restart your agent.
 ```
 
-Do NOT proceed until XcodeBuildMCP is confirmed working.
+XcodeBuildMCP 確認可用前勿繼續。
 
-### 1. Discover Project and Scheme
+### 1. 發現專案與 Scheme
 
-Call XcodeBuildMCP's `discover_projs` tool to find available projects, then `list_schemes` with the project path to get available schemes.
+呼叫 XcodeBuildMCP 之 `discover_projs` 工具尋找可用專案，再以專案路徑呼叫 `list_schemes` 取得可用 scheme。
 
-If an argument was provided, use that scheme name. If "current", use the default/last-used scheme.
+若提供了參數，使用該 scheme 名稱。若為 "current"，使用預設/最近使用之 scheme。
 
-### 2. Boot Simulator
+### 2. 啟動模擬器
 
-Call `list_simulators` to find available simulators. Boot the preferred simulator (iPhone 15 Pro recommended) using `boot_simulator` with the simulator's UUID.
+呼叫 `list_simulators` 尋找可用模擬器。以模擬器之 UUID 使用 `boot_simulator` 啟動偏好模擬器（推薦 iPhone 15 Pro）。
 
-Wait for the simulator to be ready before proceeding.
+等待模擬器就緒後方繼續。
 
-### 3. Build the App
+### 3. 建構應用
 
-Call `build_ios_sim_app` with the project path and scheme name.
+以專案路徑與 scheme 名稱呼叫 `build_ios_sim_app`。
 
-**On failure:**
-- Capture build errors
-- Create a P1 todo for each build error
-- Report to user with specific error details
+**失敗時：**
+- 擷取建構錯誤
+- 為每個建構錯誤建立 P1 待辦
+- 向用戶回報具體錯誤細節
 
-**On success:**
-- Note the built app path for installation
-- Proceed to step 4
+**成功時：**
+- 記錄已建構之應用路徑供安裝用
+- 進入步驟四
 
-### 4. Install and Launch
+### 4. 安裝與啟動
 
-1. Call `install_app_on_simulator` with the built app path and simulator UUID
-2. Call `launch_app_on_simulator` with the bundle ID and simulator UUID
-3. Call `capture_sim_logs` with the simulator UUID and bundle ID to start log capture
+1. 以已建構之應用路徑與模擬器 UUID 呼叫 `install_app_on_simulator`
+2. 以 bundle ID 與模擬器 UUID 呼叫 `launch_app_on_simulator`
+3. 以模擬器 UUID 與 bundle ID 呼叫 `capture_sim_logs` 開始日誌擷取
 
-### 5. Test Key Screens
+### 5. 測試關鍵畫面
 
-For each key screen in the app:
+應用中每個關鍵畫面：
 
-**Take screenshot:**
-Call `take_screenshot` with the simulator UUID and a descriptive filename (e.g., `screen-home.png`).
+**截圖：**
+以模擬器 UUID 及描述性檔名（如 `screen-home.png`）呼叫 `take_screenshot`。
 
-**Review screenshot for:**
-- UI elements rendered correctly
-- No error messages visible
-- Expected content displayed
-- Layout looks correct
+**審查截圖：**
+- UI 元素正確渲染
+- 無可見錯誤訊息
+- 顯示預期內容
+- 佈局看起來正確
 
-**Check logs for errors:**
-Call `get_sim_logs` with the simulator UUID. Look for:
-- Crashes
-- Exceptions
-- Error-level log messages
-- Failed network requests
+**檢查日誌中之錯誤：**
+以模擬器 UUID 呼叫 `get_sim_logs`。尋找：
+- 崩潰
+- 異常
+- 錯誤級日誌訊息
+- 失敗之網路請求
 
-**Known automation limitation — SwiftUI Text links:**
-Simulated taps (via XcodeBuildMCP or any simulator automation tool) do not trigger gesture recognizers on SwiftUI `Text` views with inline `AttributedString` links. Taps report success but have no effect. This is a platform limitation — inline links are not exposed as separate elements in the accessibility tree. When a tap on a Text link has no visible effect, prompt the user to tap manually in the simulator. If the target URL is known, `xcrun simctl openurl <device> <URL>` can open it directly as a fallback.
+**已知自動化限制——SwiftUI Text 連結：**
+模擬點擊（透過 XcodeBuildMCP 或任何模擬器自動化工具）不會觸發 SwiftUI `Text` 視圖中行內 `AttributedString` 連結之手勢識別器。點擊回報成功但無效果。此為平台限制——行內連結未作為獨立元素暴露於無障礙樹中。當 Text 連結上的點擊無可見效果時，提示用戶在模擬器上手動點擊。若目標 URL 已知，`xcrun simctl openurl <device> <URL>` 可作為後備直接開啟。
 
-### 6. Human Verification (When Required)
+### 6. 人工驗證（需要時）
 
-Pause for human input when testing touches flows that require device interaction.
+測試觸及需要裝置互動之流程時暫停等待人工輸入。
 
-| Flow Type | What to Ask |
+| 流程類型 | 該問什麼 |
 |-----------|-------------|
 | Sign in with Apple | "Please complete Sign in with Apple on the simulator" |
-| Push notifications | "Send a test push and confirm it appears" |
-| In-app purchases | "Complete a sandbox purchase" |
-| Camera/Photos | "Grant permissions and verify camera works" |
-| Location | "Allow location access and verify map updates" |
-| SwiftUI Text links | "Please tap on [element description] manually — automated taps cannot trigger inline text links" |
+| 推送通知 | "Send a test push and confirm it appears" |
+| 應用內購買 | "Complete a sandbox purchase" |
+| 相機/照片 | "Grant permissions and verify camera works" |
+| 定位 | "Allow location access and verify map updates" |
+| SwiftUI Text 連結 | "Please tap on [element description] manually — automated taps cannot trigger inline text links" |
 
-Ask the user (using the platform's question tool — e.g., `AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini — or present numbered options and wait):
+詢問用戶（使用平台之提問工具——如 Claude Code 之 `AskUserQuestion`、Codex 之 `request_user_input`、Gemini 之 `ask_user`——或呈現編號選項並等候）：
 
 ```
 Human Verification Needed
@@ -124,16 +124,16 @@ Did it work correctly?
 2. No - describe the issue
 ```
 
-### 7. Handle Failures
+### 7. 處理失敗
 
-When a test fails:
+測試失敗時：
 
-1. **Document the failure:**
-   - Take screenshot of error state
-   - Capture console logs
-   - Note reproduction steps
+1. **記錄失敗：**
+   - 截取錯誤狀態之截圖
+   - 擷取主控台日誌
+   - 記錄重現步驟
 
-2. **Ask the user how to proceed:**
+2. **詢問用戶如何繼續：**
 
    ```
    Test Failed: [screen/feature]
@@ -147,13 +147,13 @@ When a test fails:
    3. Skip - Continue testing other screens
    ```
 
-3. **If "Fix now":** investigate, propose a fix, rebuild and retest
-4. **If "Create todo":** load the `ce-todo-create` skill and create a todo with priority p1 and description `xcode-{description}`, continue
-5. **If "Skip":** log as skipped, continue
+3. **若 "Fix now"：** 調查、提出修復、重建並重新測試
+4. **若 "Create todo"：** 載入 `ce-todo-create` 技能並建立優先序 p1、描述 `xcode-{description}` 之待辦，繼續
+5. **若 "Skip"：** 記錄為已跳過，繼續
 
-### 8. Test Summary
+### 8. 測試摘要
 
-After all tests complete, present a summary:
+所有測試完成後，呈現摘要：
 
 ```markdown
 ## Xcode Test Results
@@ -189,14 +189,14 @@ After all tests complete, present a summary:
 ### Result: [PASS / FAIL / PARTIAL]
 ```
 
-### 9. Cleanup
+### 9. 清理
 
-After testing:
+測試後：
 
-1. Call `stop_log_capture` with the simulator UUID
-2. Optionally call `shutdown_simulator` with the simulator UUID
+1. 以模擬器 UUID 呼叫 `stop_log_capture`
+2. 可選以模擬器 UUID 呼叫 `shutdown_simulator`
 
-## Quick Usage Examples
+## 快速使用範例
 
 ```bash
 # Test with default scheme
@@ -209,6 +209,6 @@ After testing:
 /ce-test-xcode current
 ```
 
-## Integration with ce-code-review
+## 與 ce-code-review 之整合
 
-When reviewing PRs that touch iOS code, the `ce-code-review` workflow can spawn an agent to run this skill, build on the simulator, test key screens, and check for crashes.
+審查觸及 iOS 程式碼之 PR 時，`ce-code-review` 工作流可分派代理執行此技能、在模擬器上建構、測試關鍵畫面並檢查崩潰。

@@ -1,56 +1,56 @@
 ---
 name: ce-todo-resolve
-description: Use when batch-resolving approved todos, especially after code review or triage sessions
+description: 批次解決已批准之待辦事項時使用，尤適用於碼審或分類會議之後
 argument-hint: "[optional: specific todo ID or pattern]"
 ---
 
-Resolve approved todos using parallel processing, document lessons learned, then clean up.
+以並行處理解決已批准之待辦事項，記錄所學經驗，再行清理。
 
-Only `ready` todos are resolved. `pending` todos are skipped — they haven't been triaged yet. If pending todos exist, list them at the end so the user knows what was left behind.
+僅解決 `ready` 待辦。`pending` 待辦跳過——尚未經分類。若有 pending 待辦存在，於末尾列出，俾用戶知悉遺留項目。
 
-## Workflow
+## 工作流
 
-### 1. Analyze
+### 一、分析
 
-Scan `.context/compound-engineering/todos/*.md` and legacy `todos/*.md`. Partition by status:
+掃描 `.context/compound-engineering/todos/*.md` 及舊版 `todos/*.md`。依狀態分類：
 
-- **`ready`** (status field or `-ready-` in filename): resolve these.
-- **`pending`**: skip. Report them at the end.
-- **`complete`**: ignore, already done.
+- **`ready`**（status 欄位或檔名含 `-ready-`）：解決此類。
+- **`pending`**：跳過。於末尾回報。
+- **`complete`**：忽略，已完成。
 
-If a specific todo ID or pattern was passed as an argument, filter to matching todos only (still must be `ready`).
+若傳入特定待辦 ID 或模式作為參數，僅篩選符合者（仍須為 `ready`）。
 
-Residual actionable work from `ce-code-review mode:autofix` after its `safe_auto` pass will already be `ready`.
+`ce-code-review mode:autofix` 之 `safe_auto` 階段後之殘餘可行工作已為 `ready`。
 
-Skip any todo that recommends deleting, removing, or gitignoring files in `docs/brainstorms/`, `docs/plans/`, or `docs/solutions/` — these are intentional pipeline artifacts.
+跳過任何建議刪除、移除或 gitignore `docs/brainstorms/`、`docs/plans/`、`docs/solutions/` 中檔案之待辦——此為刻意之管線產物。
 
-### 2. Plan
+### 二、規劃
 
-Create a task list grouped by type (e.g., `TaskCreate` in Claude Code, `update_plan` in Codex). Analyze dependencies -- items that others depend on run first. Output a mermaid diagram showing execution order and parallelism.
+依類型分組建立任務列表（如 Claude Code 之 `TaskCreate`、Codex 之 `update_plan`）。分析依賴關係——被依賴之項目先執行。輸出 mermaid 圖表顯示執行順序與並行性。
 
-### 3. Implement (PARALLEL)
+### 三、實作（並行）
 
-Spawn a `workflow:ce-pr-comment-resolver` agent per item. Prefer parallel; fall back to sequential respecting dependency order.
+每個項目分派一個 `workflow:ce-pr-comment-resolver` 代理。偏好並行；備用串行，遵循依賴順序。
 
-**Batching:** 1-4 items: direct parallel returns. 5+ items: batches of 4, each returning only a short status summary (todo handled, files changed, tests run/skipped, blockers).
+**批次策略：** 1-4 項：直接並行回傳。5 項以上：每批 4 項，每項僅回傳簡短狀態摘要（待辦已處理、檔案已變更、測試已執行/跳過、阻礙事項）。
 
-For large sets, use a scratch directory at `.context/compound-engineering/ce-todo-resolve/<run-id>/` for per-resolver artifacts. Return only completion summaries to parent.
+大量項目時，使用臨時目錄 `.context/compound-engineering/ce-todo-resolve/<run-id>/` 存放各解析器產物。僅回傳完成摘要予上層。
 
-### 4. Commit & Resolve
+### 四、提交與解決
 
-Commit changes, mark todos resolved, push to remote.
+提交變更，標記待辦已解決，推送至遠端。
 
-GATE: STOP. Verify todos resolved and changes committed before proceeding.
+關卡：停。驗證待辦已解決且變更已提交，方得繼續。
 
-### 5. Compound on Lessons Learned
+### 五、複合所學經驗
 
-Load the `ce-compound` skill to document what was learned. Todo resolutions often surface patterns and architectural insights worth capturing.
+載入 `ce-compound` 技能以記錄所學。待辦解決常揭露值得捕捉之模式與架構洞見。
 
-GATE: STOP. Verify the compound skill produced a solution document in `docs/solutions/`. If none (user declined or no learnings), continue.
+關卡：停。驗證複合技能已於 `docs/solutions/` 產出解決方案文檔。若無（用戶拒絕或無可記錄者），繼續。
 
-### 6. Clean Up
+### 六、清理
 
-Delete completed/resolved todo files from both paths. If a scratch directory was created at `.context/compound-engineering/ce-todo-resolve/<run-id>/`, delete it (unless user asked to inspect).
+刪除兩路徑下已完成/已解決之待辦檔案。若有建立臨時目錄 `.context/compound-engineering/ce-todo-resolve/<run-id>/`，刪除之（除非用戶要求檢視）。
 
 ```
 Todos resolved: [count]
@@ -59,7 +59,7 @@ Lessons documented: [path to solution doc, or "skipped"]
 Todos cleaned up: [count deleted]
 ```
 
-If pending todos were skipped, list them:
+若有跳過之 pending 待辦，列出之：
 
 ```
 Skipped pending todos (run /ce-todo-triage to approve):
